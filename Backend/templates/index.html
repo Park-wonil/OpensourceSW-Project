@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Face Detection</title>
+</head>
+<body>
+
+<h1>얼굴 인식 테스트</h1>
+
+<button onclick="startCamera()">카메라 ON</button>
+<button onclick="stopCamera()">카메라 OFF</button>
+<button onclick="checkFace()">얼굴 확인</button>
+
+<br><br>
+
+<img id="video" width="500">
+
+<p id="result">결과: 없음</p>
+
+<script>
+function startCamera() {
+    fetch('/start')
+        .then(() => {
+            document.getElementById("video").src = "/video"
+        })
+}
+
+function stopCamera() {
+    fetch('/stop')
+    document.getElementById("video").src = ""
+}
+
+function checkFace() {
+    fetch('/detect')
+        .then(res => res.json())
+        .then(data => {
+            if (data.error) {
+                document.getElementById("result").innerText = data.error;
+                return;
+            }
+
+            document.getElementById("result").innerText =
+                "얼굴 있음: " + data.face_detected +
+                " / 개수: " + data.face_count;
+        });
+}
+</script>
+
+</body>
+</html>
