@@ -67,3 +67,4 @@ def run_face_detection():  # 얼굴 탐지를 실행하는 함수 정의
 
     release_camera()  # 카메라 자원 해제
     cv2.destroyAllWindows()  # 모든 OpenCV 창 닫기
+run_face_detection()
