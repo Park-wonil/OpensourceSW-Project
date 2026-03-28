@@ -1,14 +1,41 @@
 import cv2
 import time
+import mediapipe as mp
+import numpy as np
 
 # 전역 상태
 cap = None
 is_running = False
 
-# 얼굴 인식 모델
-face_cascade = cv2.CascadeClassifier(
-    cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
+# Mediapipe 초기화
+mp_face_mesh = mp.solutions.face_mesh
+face_mesh = mp_face_mesh.FaceMesh(
+    max_num_faces=1,
+    refine_landmarks=True
 )
+
+# 눈 랜드마크 (Mediapipe 기준)
+LEFT_EYE = [33, 160, 158, 133, 153, 144]
+RIGHT_EYE = [362, 385, 387, 263, 373, 380]
+
+
+# EAR 계산 함수 (눈 감김 판단)
+def calculate_ear(landmarks, eye_indices, w, h):
+    points = []
+
+    for idx in eye_indices:
+        lm = landmarks[idx]
+        x, y = int(lm.x * w), int(lm.y * h)
+        points.append((x, y))
+
+    # EAR 공식
+    A = np.linalg.norm(np.array(points[1]) - np.array(points[5]))
+    B = np.linalg.norm(np.array(points[2]) - np.array(points[4]))
+    C = np.linalg.norm(np.array(points[0]) - np.array(points[3]))
+
+    ear = (A + B) / (2.0 * C)
+    return ear
+
 
 def start_camera():
     global cap, is_running
@@ -23,10 +50,9 @@ def start_camera():
 def stop_camera():
     global cap, is_running
 
-    # 먼저 상태 OFF
     is_running = False
+    time.sleep(0.2)
 
-    # 카메라 해제 (여기서만 담당)
     if cap is not None:
         cap.release()
         cap = None
@@ -37,50 +63,97 @@ def stop_camera():
 def generate_frames():
     global cap, is_running
 
-    try:
-        while True:
-            if not is_running or cap is None:
-                break
+    while True:
+        if not is_running:
+            break
 
-            ret, frame = cap.read()
-            if not ret:
-                time.sleep(0.1)
-                continue
+        if cap is None:
+            time.sleep(0.1)
+            continue
 
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+        ret, frame = cap.read()
+        if not ret:
+            time.sleep(0.1)
+            continue
 
-            for (x, y, w, h) in faces:
-                cv2.rectangle(frame, (x,y), (x+w, y+h), (0,255,0), 2)
+        h, w, _ = frame.shape
 
-            _, buffer = cv2.imencode('.jpg', frame)
-            frame = buffer.tobytes()
+        # Mediapipe 처리
+        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        results = face_mesh.process(rgb)
 
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+        status_text = "No Face"
 
-    finally:
-        # 🔥 이게 핵심
-        if cap is not None:
-            cap.release()
+        if results.multi_face_landmarks:
+            for face_landmarks in results.multi_face_landmarks:
+
+                # EAR 계산
+                left_ear = calculate_ear(face_landmarks.landmark, LEFT_EYE, w, h)
+                right_ear = calculate_ear(face_landmarks.landmark, RIGHT_EYE, w, h)
+
+                ear = (left_ear + right_ear) / 2.0
+
+                # 눈 감김 판단
+                if ear < 0.2:
+                    status_text = "Eyes Closed 😴"
+                else:
+                    status_text = "Eyes Open 👀"
+
+                # 눈 좌표 찍기 (디버그용)
+                for idx in LEFT_EYE + RIGHT_EYE:
+                    lm = face_landmarks.landmark[idx]
+                    x, y = int(lm.x * w), int(lm.y * h)
+                    cv2.circle(frame, (x, y), 2, (0, 255, 0), -1)
+
+        # 상태 표시
+        cv2.putText(frame, status_text, (30, 50),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1,
+                    (0, 0, 255), 2)
+
+        # 스트리밍
+        _, buffer = cv2.imencode('.jpg', frame)
+        frame = buffer.tobytes()
+
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
 
 def get_focus_data():
     global cap
 
-    # 카메라 꺼져있으면
     if cap is None:
         return {"error": "camera off"}
 
     ret, frame = cap.read()
-
     if not ret:
         return {"error": "no frame"}
 
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+    h, w, _ = frame.shape
+
+    rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    results = face_mesh.process(rgb)
+
+    if not results.multi_face_landmarks:
+        return {
+            "face_detected": False,
+            "focus": "no face"
+        }
+
+    face_landmarks = results.multi_face_landmarks[0]
+
+    left_ear = calculate_ear(face_landmarks.landmark, LEFT_EYE, w, h)
+    right_ear = calculate_ear(face_landmarks.landmark, RIGHT_EYE, w, h)
+
+    ear = (left_ear + right_ear) / 2.0
+
+    if ear < 0.2:
+        state = "sleepy"
+    else:
+        state = "focused"
 
     return {
-        "face_detected": len(faces) > 0,
-        "face_count": len(faces)
+        "face_detected": True,
+        "ear": float(ear),
+        "state": state
     }
+
