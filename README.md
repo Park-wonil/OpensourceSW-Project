@@ -31,6 +31,8 @@ pip install opencv-python
 pip install numpy
 pip install flask
 
+5.서버 실행(flask)
+python3 -m Backend.server  
 ///
 다시작업시작할 때 
 1. cd OpensourceSW-Project(해당폴더로이동)
