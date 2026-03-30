@@ -19,7 +19,7 @@ LEFT_EYE = [33, 160, 158, 133, 153, 144]
 RIGHT_EYE = [362, 385, 387, 263, 373, 380]
 
 
-# EAR 계산 함수 (눈 감김 판단)
+# 눈의 랜드마크 좌표를 바탕으로 EAR(눈 종횡비) 값을 계산하여 눈 감김 여부를 수치화하는 함수입니다.
 def calculate_ear(landmarks, eye_indices, w, h):
     points = []
 
@@ -37,6 +37,7 @@ def calculate_ear(landmarks, eye_indices, w, h):
     return ear
 
 
+# 웹캠 캡처 객체를 초기화하고 카메라 작동 상태를 활성화하는 함수입니다.
 def start_camera():
     global cap, is_running
 
@@ -47,6 +48,7 @@ def start_camera():
     return True
 
 
+# 실행 중인 카메라 장치를 안전하게 해제하고 영상 캡처 상태를 종료하는 함수입니다.
 def stop_camera():
     global cap, is_running
 
@@ -60,6 +62,7 @@ def stop_camera():
     return True
 
 
+# 실시간으로 프레임을 읽어와 눈 감김 상태(시각적 피드백)를 그리고, 웹 스트리밍용 포맷으로 변환하여 송출하는 제너레이터 함수입니다.
 def generate_frames():
     global cap, is_running
 
@@ -118,6 +121,7 @@ def generate_frames():
                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
 
+# 단일 프레임을 분석하여 얼굴 인식 여부, EAR 수치, 그리고 사용자의 현재 상태(집중/졸음)를 데이터(JSON 형식)로 반환하는 함수입니다.
 def get_focus_data():
     global cap
 
