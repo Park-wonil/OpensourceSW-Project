@@ -177,6 +177,6 @@ if __name__ == "__main__":
     # 세션 결과 저장 및 터미널 출력
     session_result = detector.get_stats()
     print("\n===== result =====")
-    print(f"absence_count : {session_result['absence_count']}회")
-    print(f"absence_time : {session_result['total_absence_s']}초")
+    print(f"absence_count : {session_result['absence_count']}")
+    print(f"absence_time : {session_result['total_absence_s']}s")
     
