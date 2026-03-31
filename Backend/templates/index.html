@@ -1,33 +1,53 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Face Detection</title>
+    <title>AI 집중도 모니터링</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; margin-top: 50px; }
+        button { padding: 10px 20px; font-size: 16px; margin: 5px; cursor: pointer; }
+        #video { border: 3px solid #ccc; margin-top: 20px; border-radius: 8px; }
+        .data-box { 
+            background: #f4f4f9; border-radius: 8px; padding: 20px; 
+            width: 500px; margin: 20px auto; text-align: left;
+        }
+        .status { font-weight: bold; font-size: 1.2em; }
+        .focused { color: green; }
+        .sleepy { color: orange; }
+        .absent { color: red; }
+    </style>
 </head>
 <body>
 
-<h1>얼굴 인식 테스트</h1>
+<h1>👨‍💻 AI 집중도 및 자리이탈 모니터링</h1>
 
 <button onclick="startCamera()">카메라 ON</button>
 <button onclick="stopCamera()">카메라 OFF</button>
-<button onclick="checkFace()">얼굴 확인</button>
+<button onclick="checkFace()">현재 상태 확인 (API 호출)</button>
 
-<br><br>
+<br>
+<img id="video" width="640" height="480">
 
-<img id="video" width="500">
-
-<p id="result">결과: 없음</p>
+<div class="data-box">
+    <h3>📊 실시간 분석 결과</h3>
+    <p id="result">결과: API를 호출해주세요.</p>
+</div>
 
 <script>
 function startCamera() {
     fetch('/start')
         .then(() => {
-            document.getElementById("video").src = "/video"
-        })
+            // 카메라가 켜지는 시간을 벌어준 뒤 소스 할당
+            setTimeout(() => {
+                document.getElementById("video").src = "/video";
+            }, 1000);
+        });
 }
 
 function stopCamera() {
-    fetch('/stop')
-    document.getElementById("video").src = ""
+    fetch('/stop').then(() => {
+        document.getElementById("video").src = "";
+        document.getElementById("result").innerText = "카메라가 꺼졌습니다.";
+    });
 }
 
 function checkFace() {
@@ -35,13 +55,32 @@ function checkFace() {
         .then(res => res.json())
         .then(data => {
             if (data.error) {
-                document.getElementById("result").innerText = data.error;
+                document.getElementById("result").innerText = "에러: " + data.error;
                 return;
             }
 
-            document.getElementById("result").innerText =
-                "얼굴 있음: " + data.face_detected +
-                " / 개수: " + data.face_count;
+            // 상태에 따른 색상 클래스 부여
+            let stateClass = "";
+            let stateKo = "";
+            if (data.state === "focused") { stateClass = "focused"; stateKo = "집중 중 👀"; }
+            else if (data.state === "sleepy") { stateClass = "sleepy"; stateKo = "졸음 감지 😴"; }
+            else if (data.state === "absent") { stateClass = "absent"; stateKo = "자리 비움 🪑"; }
+            else { stateClass = ""; stateKo = "탐색 중..."; }
+
+            let html = `
+                <p>얼굴 인식: <b>${data.face_detected ? "O" : "X"}</b></p>
+                <p>현재 상태: <span class="status ${stateClass}">${stateKo}</span></p>
+                <p>총 자리비움 횟수: <b>${data.absence_count}회</b></p>
+                <p>누적 자리비움 시간: <b>${data.total_absence_s}초</b></p>
+            `;
+            
+            if (data.is_absent) {
+                html += `<p style="color:red;">현재 이탈 경과: <b>${data.current_absence_s}초</b></p>`;
+            } else if (data.face_detected) {
+                html += `<p>눈 깜빡임(EAR) 수치: ${data.ear.toFixed(3)}</p>`;
+            }
+
+            document.getElementById("result").innerHTML = html;
         });
 }
 </script>
