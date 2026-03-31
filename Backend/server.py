@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, render_template, Response
-from Vision.face import start_camera, stop_camera, get_focus_data, generate_frames
+# 통합된 vision.py에서 함수들을 가져옵니다.
+from Vision.vision import start_camera, stop_camera, get_focus_data, generate_frames
 
 app = Flask(__name__)
 
