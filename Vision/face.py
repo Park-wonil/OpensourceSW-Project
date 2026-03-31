@@ -1,69 +1,163 @@
-import cv2  #영상처리임
+import cv2
+import time
+import mediapipe as mp
+import numpy as np
 
-# 카메라 
-cap = cv2.VideoCapture(0)
+# 전역 상태
+cap = None
+is_running = False
 
-# 얼굴 인식 모델
-face_cascade = cv2.CascadeClassifier(
-    cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
+# Mediapipe 초기화
+mp_face_mesh = mp.solutions.face_mesh
+face_mesh = mp_face_mesh.FaceMesh(
+    max_num_faces=1,
+    refine_landmarks=True
 )
 
-def get_frame():
-    # 카메라 객체(cap)로부터 현재 프레임을 읽어옵니다.
-    # ret은 프레임을 성공적으로 읽었는지 여부(True/False)를 나타내는 불리언 값입니다.
-    # frame은 읽어온 실제 이미지 데이터(numpy 배열)입니다.
+# 눈 랜드마크 (Mediapipe 기준)
+LEFT_EYE = [33, 160, 158, 133, 153, 144]
+RIGHT_EYE = [362, 385, 387, 263, 373, 380]
+
+
+# 눈의 랜드마크 좌표를 바탕으로 EAR(눈 종횡비) 값을 계산하여 눈 감김 여부를 수치화하는 함수입니다.
+def calculate_ear(landmarks, eye_indices, w, h):
+    points = []
+
+    for idx in eye_indices:
+        lm = landmarks[idx]
+        x, y = int(lm.x * w), int(lm.y * h)
+        points.append((x, y))
+
+    # EAR 공식
+    A = np.linalg.norm(np.array(points[1]) - np.array(points[5]))
+    B = np.linalg.norm(np.array(points[2]) - np.array(points[4]))
+    C = np.linalg.norm(np.array(points[0]) - np.array(points[3]))
+
+    ear = (A + B) / (2.0 * C)
+    return ear
+
+
+# 웹캠 캡처 객체를 초기화하고 카메라 작동 상태를 활성화하는 함수입니다.
+def start_camera():
+    global cap, is_running
+
+    if not is_running:
+        cap = cv2.VideoCapture(0)
+        is_running = True
+
+    return True
+
+
+# 실행 중인 카메라 장치를 안전하게 해제하고 영상 캡처 상태를 종료하는 함수입니다.
+def stop_camera():
+    global cap, is_running
+
+    is_running = False
+    time.sleep(0.2)
+
+    if cap is not None:
+        cap.release()
+        cap = None
+
+    return True
+
+
+# 실시간으로 프레임을 읽어와 눈 감김 상태(시각적 피드백)를 그리고, 웹 스트리밍용 포맷으로 변환하여 송출하는 제너레이터 함수입니다.
+def generate_frames():
+    global cap, is_running
+
+    while True:
+        if not is_running:
+            break
+
+        if cap is None:
+            time.sleep(0.1)
+            continue
+
+        ret, frame = cap.read()
+        if not ret:
+            time.sleep(0.1)
+            continue
+
+        h, w, _ = frame.shape
+
+        # Mediapipe 처리
+        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        results = face_mesh.process(rgb)
+
+        status_text = "No Face"
+
+        if results.multi_face_landmarks:
+            for face_landmarks in results.multi_face_landmarks:
+
+                # EAR 계산
+                left_ear = calculate_ear(face_landmarks.landmark, LEFT_EYE, w, h)
+                right_ear = calculate_ear(face_landmarks.landmark, RIGHT_EYE, w, h)
+
+                ear = (left_ear + right_ear) / 2.0
+
+                # 눈 감김 판단
+                if ear < 0.2:
+                    status_text = "Eyes Closed 😴"
+                else:
+                    status_text = "Eyes Open 👀"
+
+                # 눈 좌표 찍기 (디버그용)
+                for idx in LEFT_EYE + RIGHT_EYE:
+                    lm = face_landmarks.landmark[idx]
+                    x, y = int(lm.x * w), int(lm.y * h)
+                    cv2.circle(frame, (x, y), 2, (0, 255, 0), -1)
+
+        # 상태 표시
+        cv2.putText(frame, status_text, (30, 50),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1,
+                    (0, 0, 255), 2)
+
+        # 스트리밍
+        _, buffer = cv2.imencode('.jpg', frame)
+        frame = buffer.tobytes()
+
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+
+
+# 단일 프레임을 분석하여 얼굴 인식 여부, EAR 수치, 그리고 사용자의 현재 상태(집중/졸음)를 데이터(JSON 형식)로 반환하는 함수입니다.
+def get_focus_data():
+    global cap
+
+    if cap is None:
+        return {"error": "camera off"}
+
     ret, frame = cap.read()
-    
-    # 프레임을 성공적으로 읽지 못했다면(예: 카메라 연결 끊김 등) None을 반환합니다.
     if not ret:
-        return None
-        
-    # 성공적으로 읽어왔다면 해당 프레임을 반환합니다.
-    return frame
+        return {"error": "no frame"}
 
-def detect_faces(frame):
-    # 얼굴 인식은 흑백 이미지에서 더 빠르고 정확하게 동작하므로 
-    # 입력받은 컬러 프레임(BGR 형식)을 흑백(Grayscale) 이미지로 변환합니다.
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    
-    # 변환된 흑백 이미지에서 얼굴을 검출합니다.
+    h, w, _ = frame.shape
 
-    faces = face_cascade.detectMultiScale(gray, 1.3, 5)
-    
-    # 검출된 얼굴들의 위치 정보 리스트를 반환합니다. 
-    # (얼굴이 없으면 빈 튜플이나 배열 반환)
-    return faces
+    rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    results = face_mesh.process(rgb)
 
-def is_face_detected(frame):
-    # 위에서 정의한 detect_faces 함수를 호출하여 얼굴을 검출합니다.
-    faces = detect_faces(frame)
-    
-    # 검출된 얼굴 리스트의 길이가 0보다 크면(즉, 1개 이상의 얼굴이 인식되면) True를 반환하고,
-    # 그렇지 않으면 False를 반환합니다.
-    return len(faces) > 0
+    if not results.multi_face_landmarks:
+        return {
+            "face_detected": False,
+            "focus": "no face"
+        }
 
-def release_camera():
-    # 사용이 끝난 카메라 장치를 해제(release)합니다.
-    # 이를 통해 다른 프로그램이 카메라를 사용할 수 있게 되며, 시스템 자원을 반환합니다.
-    cap.release()
+    face_landmarks = results.multi_face_landmarks[0]
 
-#main.py에 이용될것 어떤 버튼을 누르면
-def run_face_detection():  # 얼굴 탐지를 실행하는 함수 정의
-    while True:  # 무한 반복으로 실시간 프레임 처리
-        frame = get_frame()  # 카메라로부터 한 프레임을 가져옴
-        if frame is None:  # 프레임을 가져오지 못했으면
-            break  # 반복 종료
+    left_ear = calculate_ear(face_landmarks.landmark, LEFT_EYE, w, h)
+    right_ear = calculate_ear(face_landmarks.landmark, RIGHT_EYE, w, h)
 
-        faces = detect_faces(frame)  # 현재 프레임에서 얼굴 위치 탐지
+    ear = (left_ear + right_ear) / 2.0
 
-        # 얼굴 네모 표시
-        for (x, y, w, h) in faces:  # 탐지된 각 얼굴의 좌표와 크기 순회
-            cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)  # 얼굴 위치에 사각형 표시
+    if ear < 0.2:
+        state = "sleepy"
+    else:
+        state = "focused"
 
-        cv2.imshow('Face Detection', frame)  # 결과 프레임을 화면에 출력
+    return {
+        "face_detected": True,
+        "ear": float(ear),
+        "state": state
+    }
 
-        if cv2.waitKey(1) == 27:  # 키 입력 대기 후 ESC(27) 키가 눌리면
-            break  # 반복 종료
-
-    release_camera()  # 카메라 자원 해제
-    cv2.destroyAllWindows()  # 모든 OpenCV 창 닫기
