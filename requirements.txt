@@ -1,3 +1,7 @@
 opencv-python
-mediapipe
+mediapipe==0.10.9
+numpy
 flask
+
+
+Python 3.11 사용 권장
