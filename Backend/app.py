@@ -1,4 +1,5 @@
 from flask import Flask, Response, jsonify, render_template
+import time
 
 # vision.py
 from Vision.vision import start_camera, stop_camera, generate_frames, get_focus_data
@@ -22,7 +23,7 @@ def index():
 @app.route("/start")
 def start():
     global start_time
-    start_time = time.time()  # 시작 시점 기록
+    start_time = time.time()  #  시작 시점 기록
     start_camera()
     return jsonify({"status": "started"})
 
