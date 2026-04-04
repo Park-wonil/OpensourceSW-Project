@@ -22,21 +22,21 @@
 
 <button onclick="startCamera()">카메라 ON</button>
 <button onclick="stopCamera()">카메라 OFF</button>
-<button onclick="checkFace()">현재 상태 확인 (API 호출)</button>
-
+<button onclick="checkAll()">API 호출 (상태 + 점수 갱신)</button>
 <br>
+
 <img id="video" width="640" height="480">
 
 <div class="data-box">
     <h3>📊 실시간 분석 결과</h3>
-    <p id="result">결과: API를 호출해주세요.</p>
+    <p id="result">결과: 버튼을 눌러주세요.</p>
+    <p id="score">집중도 점수: 0</p>
 </div>
 
 <script>
 function startCamera() {
     fetch('/start')
         .then(() => {
-            // 카메라가 켜지는 시간을 벌어준 뒤 소스 할당
             setTimeout(() => {
                 document.getElementById("video").src = "/video";
             }, 1000);
@@ -50,7 +50,9 @@ function stopCamera() {
     });
 }
 
-function checkFace() {
+// 상태 + 점수 동시에 호출
+function checkAll() {
+    // 상태 가져오기
     fetch('/detect')
         .then(res => res.json())
         .then(data => {
@@ -59,13 +61,21 @@ function checkFace() {
                 return;
             }
 
-            // 상태에 따른 색상 클래스 부여
             let stateClass = "";
             let stateKo = "";
-            if (data.state === "focused") { stateClass = "focused"; stateKo = "집중 중 👀"; }
-            else if (data.state === "sleepy") { stateClass = "sleepy"; stateKo = "졸음 감지 😴"; }
-            else if (data.state === "absent") { stateClass = "absent"; stateKo = "자리 비움 🪑"; }
-            else { stateClass = ""; stateKo = "탐색 중..."; }
+
+            if (data.state === "focused") {
+                stateClass = "focused";
+                stateKo = "집중 중 👀";
+            } else if (data.state === "sleepy") {
+                stateClass = "sleepy";
+                stateKo = "졸음 감지 😴";
+            } else if (data.state === "absent") {
+                stateClass = "absent";
+                stateKo = "자리 비움 🪑";
+            } else {
+                stateKo = "탐색 중...";
+            }
 
             let html = `
                 <p>얼굴 인식: <b>${data.face_detected ? "O" : "X"}</b></p>
@@ -82,6 +92,23 @@ function checkFace() {
 
             document.getElementById("result").innerHTML = html;
         });
+
+    // 점수 가져오기
+    fetch('/score')
+        .then(res => res.json())
+        .then(data => updateScoreUI(data.score));
+}
+
+// 점수 UI
+function updateScoreUI(score) {
+    let color = "black";
+
+    if (score >= 80) color = "green";
+    else if (score >= 50) color = "orange";
+    else color = "red";
+
+    document.getElementById("score").innerHTML =
+        `집중도 점수: <span style="color:${color}">${score}</span>`;
 }
 </script>
 

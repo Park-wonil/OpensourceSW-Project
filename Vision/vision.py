@@ -4,6 +4,7 @@ import threading
 import mediapipe as mp
 import numpy as np
 from collections import deque
+from Backend.database import save_data
 
 # --- 상수 및 설정 ---
 ABSENCE_THRESHOLD_S = 2.0
@@ -93,6 +94,7 @@ detector = AbsenceDetector()
 
 def _capture_loop():
     global cap, is_running, latest_frame, latest_data, detector
+    last_save_time = 0
 
     while is_running:
         if cap is None or not cap.isOpened():
@@ -124,6 +126,8 @@ def _capture_loop():
         # 얼굴이 있을 때 EAR 계산 및 시각화
         status_text = "No Face"
         status_color = (0, 0, 255)
+        
+        
 
         if face_present:
             face_landmarks = results.multi_face_landmarks[0]
@@ -131,6 +135,7 @@ def _capture_loop():
             right_ear = calculate_ear(face_landmarks.landmark, RIGHT_EYE, w, h)
             ear = (left_ear + right_ear) / 2.0
             current_data["ear"] = float(ear)
+            
 
             if ear < 0.2:
                 current_data["state"] = "sleepy"
@@ -140,6 +145,7 @@ def _capture_loop():
                 current_data["state"] = "focused"
                 status_text = "Eyes Open (Focused)"
                 status_color = (0, 255, 0) # 초록
+            
                 
             # 눈 좌표 디버그 점 찍기
             for idx in LEFT_EYE + RIGHT_EYE:
@@ -156,12 +162,19 @@ def _capture_loop():
         
         if detector.is_absent:
             cv2.putText(frame, f"Absent: {int(current_data['current_absence_s'])}s", (w - 150, h - 12), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (80, 80, 255), 1)
-
-        # 데이터 안전하게 전역 변수에 업데이트
+            
+         # [수정] 프레임 업데이트는 계속
         with lock:
-            latest_data = current_data
             _, buffer = cv2.imencode('.jpg', frame)
             latest_frame = buffer.tobytes()
+
+        #  [수정] DB 저장 1초 제한
+        now = time.time()
+        if now - last_save_time >= 1:
+            with lock:
+                latest_data = current_data
+                save_data(current_data)
+            last_save_time = now
 
 def start_camera():
     global cap, is_running, capture_thread
