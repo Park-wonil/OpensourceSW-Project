@@ -1,5 +1,5 @@
 from flask import Flask, Response, jsonify, render_template
-import time
+import time #수정, 이거 안 넣어었어요.
 
 # vision.py
 from Vision.vision import start_camera, stop_camera, generate_frames, get_focus_data
@@ -51,6 +51,9 @@ def video():
 # 점수 반환
 @app.route("/score")
 def score():
+    if start_time is None:
+        return jsonify({"score": 0}) #카메라가 켜지지 않았을때 점수 0.
+     
     return jsonify(get_score(start_time))
 
 
