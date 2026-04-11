@@ -32,8 +32,9 @@ pip install mediapipe==0.10.8 opencv-python numpy flask
 python3 -m Backend.server
 ```
 
-///
-다시작업시작할 때 
+
+### 다시작업시작할 때 
+```bash
 1. cd OpensourceSW-Project(해당폴더로이동)
 2.
 git checkout dev (dev 최신화)
@@ -52,6 +53,7 @@ git push origin feature/본인
 PR후 merge 끝나면
 git checkout dev
 git pull origin dev
+```
 
 
 PR시 조심할점 
