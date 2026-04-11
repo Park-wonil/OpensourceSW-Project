@@ -35,12 +35,11 @@ python3 -m Backend.server
 
 ### 다시작업시작할 때 
 ```bash
-1. cd OpensourceSW-Project(해당폴더로이동)
-2.
+cd OpensourceSW-Project(해당폴더로이동)
 git checkout dev (dev 최신화)
 git pull origin dev
-3.git checkout feature/본인feature브랜치
-4.git merge dev (최신코드가져옴)
+git checkout feature/본인feature브랜치
+git merge dev (최신코드가져옴)
 
 
 작업후
