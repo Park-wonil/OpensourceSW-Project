@@ -50,9 +50,8 @@ python3 -m Backend.server
 
 ---
 ## 🛠 기술 스택
-- OpenCV
+- Mediapipe(CV)
 - FE(html,css)
-- Flask (Backend)
-- Git & GitHub (협업)
+- BE (Flask)
 
 ---
