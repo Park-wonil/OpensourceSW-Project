@@ -49,7 +49,7 @@ python3 -m Backend.server
 ```
 
 ---
-## 🛠 기술 스택
+##  기술 스택
 - Mediapipe(CV)
 - FE(html,css)
 - BE (Flask)
