@@ -38,3 +38,13 @@ toggleTimer(): 타이머 시작/일시정지 전환 및 아이콘 변경.
 resetTimer(): 타이머 25분 초기화.
 
 updateTimerDisplay(): 초 단위 숫자를 분:초 형식으로 변환해 화면에 표시.
+
+
+CV
+-absence_detection
+is_absent :	이탈 중 여부 (bool)
+absence_duration_s : 현재 이탈 경과 시간 (float)
+absence_count : 세션 총 이탈 횟수
+total_absence_s : 세션 총 이탈 시간 (초)
+get_stats() : 세션 종료 후 호출. 이탈 통계 dict 반환
+def _detect_face(frame) : 프레임에서 얼굴 존재 여부를 반환하는 함수 (bool)
