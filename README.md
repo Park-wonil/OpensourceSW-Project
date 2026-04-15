@@ -1,46 +1,45 @@
 # OpensourceSW-Project
-프로젝트 실행 방법 (Mac 기준)
-1. Python 버전
+## 프로젝트 실행 방법 (macOS 기준)
 
-본 프로젝트는 Python 3.11 환경에서 실행됩니다.
+이 프로젝트의 원활한 실행을 위해 아래 단계를 차례대로 따라해 주세요.
 
-python3 --version
-
-👉 3.11이 아니면 설치:
-
+### 1. Python 환경 확인
+본 프로젝트는 **Python 3.11** 환경에서 최적화되어 있습니다.
+```bash
 brew install python@3.11
-2. 프로젝트 클론
-git clone https://github.com/Park-wonil/OpensourceSW-Project.git
+git clone [https://github.com/Park-wonil/OpensourceSW-Project.git](https://github.com/Park-wonil/OpensourceSW-Project.git)
 cd OpensourceSW-Project
-3. 가상환경 생성 및 활성화
+```
+### 2. 프로젝트 클론
+```bash
+git clone [https://github.com/Park-wonil/OpensourceSW-Project.git](https://github.com/Park-wonil/OpensourceSW-Project.git)
+cd OpensourceSW-Project
+```
+### 3. 가상환경설정
+```bash
+conda deactivate
 python3.11 -m venv venv
 source venv/bin/activate
-
-활성화 확인:
-
-(venv)
-(중요) conda 사용 중이면 비활성화
-conda deactivate
-
-(base)가 없어야 정상
-
-4. 필수 라이브러리 설치
+```
+### 4.필수 라이브러리 설치
+```bash
 pip install --upgrade pip
-pip install mediapipe==0.10.8
-pip install opencv-python
-pip install numpy
-pip install flask
+pip install mediapipe==0.10.8 opencv-python numpy flask
+```
 
-5.서버 실행(flask)
-python3 -m Backend.server  
-///
-다시작업시작할 때 
-1. cd OpensourceSW-Project(해당폴더로이동)
-2.
+### 5. 서버실행 Flask
+```bash
+python3 -m Backend.server
+```
+
+
+### 다시작업시작할 때 
+```bash
+cd OpensourceSW-Project(해당폴더로이동)
 git checkout dev (dev 최신화)
 git pull origin dev
-3.git checkout feature/본인feature브랜치
-4.git merge dev (최신코드가져옴)
+git checkout feature/본인feature브랜치
+git merge dev (최신코드가져옴)
 
 
 작업후
@@ -53,6 +52,7 @@ git push origin feature/본인
 PR후 merge 끝나면
 git checkout dev
 git pull origin dev
+```
 
 
 PR시 조심할점 
