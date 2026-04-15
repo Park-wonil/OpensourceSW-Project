@@ -38,3 +38,17 @@ toggleTimer(): 타이머 시작/일시정지 전환 및 아이콘 변경.
 resetTimer(): 타이머 25분 초기화.
 
 updateTimerDisplay(): 초 단위 숫자를 분:초 형식으로 변환해 화면에 표시.
+
+5. 상태 표시 및 분석 데이터 출력
+
+state-badge: 현재 상태를 표시하는 요소. 초기에는 대기 중으로 표시되며, checkAll() 실행 시 집중 중, 졸음 감지, 자리 비움 상태로 변경.
+
+face-detected: 얼굴 인식 여부를 O 또는 X로 표시하는 요소.
+
+cam-ear: 실시간 EAR 값을 표시하는 요소.
+
+absence-stats: 누적 자리비움 횟수와 누적 시간을 표시하는 요소.
+
+current-absence-row: 현재 자리비움 상태일 때만 표시되는 영역.
+
+current-absence-time: 현재 자리비움 경과 시간을 초 단위로 표시하는 요소.
