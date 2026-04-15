@@ -53,13 +53,16 @@ current-absence-row: 현재 자리비움 상태일 때만 표시되는 영역.
 
 current-absence-time: 현재 자리비움 경과 시간을 초 단위로 표시하는 요소.
 
+
 CV
--absence_detection
-is_absent :	이탈 중 여부 (bool)
+-absence detection
+is_absent : 이탈 중 여부 (bool)
 absence_duration_s : 현재 이탈 경과 시간 (float)
 absence_count : 세션 총 이탈 횟수
 total_absence_s : 세션 총 이탈 시간 (초)
 get_stats() : 세션 종료 후 호출. 이탈 통계 dict 반환
+def _detect_face(frame) : 프레임에서 얼굴 존재 여부를 반환하는 함수 bool  
+current_absence_s : 현재 이탈 경과 시간(이탈 중 아니면 0)
 def _detect_face(frame) : 프레임에서 얼굴 존재 여부를 반환하는 함수 (bool)
 
 database function
