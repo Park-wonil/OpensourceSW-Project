@@ -61,3 +61,21 @@ absence_count : 세션 총 이탈 횟수
 total_absence_s : 세션 총 이탈 시간 (초)
 get_stats() : 세션 종료 후 호출. 이탈 통계 dict 반환
 def _detect_face(frame) : 프레임에서 얼굴 존재 여부를 반환하는 함수 (bool)
+
+database function
+# 데이터베이스 관련 함수
+
+- DB 연결: get_
+   get_conn()
+
+- DB 초기화: init_
+   init_db()
+
+- 데이터 저장: save_ / insert_
+   save_data()
+
+# 데이터 처리 및 계산 함수
+
+- 데이터 조회 및 반환: get_
+  - get_score()
+
