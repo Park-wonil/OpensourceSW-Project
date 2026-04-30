@@ -187,27 +187,29 @@ def start_camera():
     return True
 
 def stop_camera():
-    global cap, is_running, latest_data
+    global cap, is_running, latest_data, latest_frame
 
     is_running = False
-    time.sleep(0.2) # 스레드 종료 대기
+    time.sleep(0.5)  # 맥OS 카메라 해제 대기 시간 증가
 
     with lock:
         if cap is not None:
             cap.release()
             cap = None
         latest_data = {"error": "camera off"}
+        latest_frame = None  # 이전 프레임 초기화
     return True
 
 def generate_frames():
-    global is_running, latest_frame
     while True:
-        if not is_running:
-            break
-        
         with lock:
+            running = is_running
             frame_bytes = latest_frame
-            
+
+        if not running:
+            time.sleep(0.1)  # break 대신 대기 → 재시작 시 재연결 가능
+            continue
+
         if frame_bytes is not None:
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
