@@ -18,6 +18,7 @@ RIGHT_EYE = [362, 385, 387, 263, 373, 380]
 cap = None
 is_running = False
 capture_thread = None
+current_subject = ""  # 현재 공부 중인 과목
 
 # 웹 라우트에서 가져갈 최신 프레임과 데이터
 latest_frame = None
@@ -28,7 +29,7 @@ lock = threading.Lock()
 mp_face_mesh = mp.solutions.face_mesh
 face_mesh = mp_face_mesh.FaceMesh(
     max_num_faces=1,
-    refine_landmarks=True # EAR 계산을 위해 True 유지
+    refine_landmarks=True
 )
 
 def calculate_ear(landmarks, eye_indices, w, h):
@@ -58,7 +59,6 @@ class AbsenceDetector:
     def update(self, face_present: bool):
         now = time.time()
         
-        # 노이즈 필터링
         self.buffer.append(face_present)
         smoothed_present = sum(self.buffer) > len(self.buffer) // 2
 
@@ -68,7 +68,6 @@ class AbsenceDetector:
                 if self.return_since is None:
                     self.return_since = now
                 elif now - self.return_since >= RETURN_CONFIRM_S:
-                    # 복귀 확정
                     self.is_absent = False
                     if self.absence_start:
                         self.total_absence_s += (now - self.absence_start)
@@ -81,7 +80,6 @@ class AbsenceDetector:
             self.return_since = None
             if not self.is_absent:
                 if (now - self.last_seen_ts) >= ABSENCE_THRESHOLD_S:
-                    # 이탈 확정
                     self.is_absent = True
                     self.absence_start = self.last_seen_ts
 
@@ -123,11 +121,8 @@ def _capture_loop():
             "state": "absent" if detector.is_absent else "searching..."
         }
 
-        # 얼굴이 있을 때 EAR 계산 및 시각화
         status_text = "No Face"
         status_color = (0, 0, 255)
-        
-        
 
         if face_present:
             face_landmarks = results.multi_face_landmarks[0]
@@ -135,24 +130,20 @@ def _capture_loop():
             right_ear = calculate_ear(face_landmarks.landmark, RIGHT_EYE, w, h)
             ear = (left_ear + right_ear) / 2.0
             current_data["ear"] = float(ear)
-            
 
             if ear < 0.2:
                 current_data["state"] = "sleepy"
                 status_text = "Eyes Closed (Sleepy)"
-                status_color = (0, 165, 255) # 주황
+                status_color = (0, 165, 255)
             else:
                 current_data["state"] = "focused"
                 status_text = "Eyes Open (Focused)"
-                status_color = (0, 255, 0) # 초록
-            
-                
-            # 눈 좌표 디버그 점 찍기
+                status_color = (0, 255, 0)
+
             for idx in LEFT_EYE + RIGHT_EYE:
                 lm = face_landmarks.landmark[idx]
                 cv2.circle(frame, (int(lm.x * w), int(lm.y * h)), 2, (255, 0, 0), -1)
 
-        # 오버레이 (자리 이탈 테두리 및 텍스트)
         border_color = (0, 0, 220) if detector.is_absent else (0, 200, 80)
         cv2.rectangle(frame, (0, 0), (w - 1, h - 1), border_color, 3)
         cv2.rectangle(frame, (0, h - 40), (w, h), (30, 30, 30), -1)
@@ -162,16 +153,15 @@ def _capture_loop():
         
         if detector.is_absent:
             cv2.putText(frame, f"Absent: {int(current_data['current_absence_s'])}s", (w - 150, h - 12), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (80, 80, 255), 1)
-            
-         # [수정] 프레임 업데이트는 계속
+
         with lock:
             _, buffer = cv2.imencode('.jpg', frame)
             latest_frame = buffer.tobytes()
 
-        #  [수정] DB 저장 1초 제한
         now = time.time()
         if now - last_save_time >= 1:
             with lock:
+                current_data["subject"] = current_subject
                 latest_data = current_data
                 save_data(current_data)
             last_save_time = now
@@ -190,14 +180,14 @@ def stop_camera():
     global cap, is_running, latest_data, latest_frame
 
     is_running = False
-    time.sleep(0.5)  # 맥OS 카메라 해제 대기 시간 증가
+    time.sleep(0.5)
 
     with lock:
         if cap is not None:
             cap.release()
             cap = None
         latest_data = {"error": "camera off"}
-        latest_frame = None  # 이전 프레임 초기화
+        latest_frame = None
     return True
 
 def generate_frames():
@@ -207,7 +197,7 @@ def generate_frames():
             frame_bytes = latest_frame
 
         if not running:
-            time.sleep(0.1)  # break 대신 대기 → 재시작 시 재연결 가능
+            time.sleep(0.1)
             continue
 
         if frame_bytes is not None:
@@ -219,3 +209,7 @@ def generate_frames():
 def get_focus_data():
     with lock:
         return latest_data
+
+def set_current_subject(subject):
+    global current_subject
+    current_subject = subject
