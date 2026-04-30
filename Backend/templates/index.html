@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Focus AI</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
+  <style>
+    /* 라이트모드 CSS 변수 */
+    body.light-mode {
+      --bg-color: #f5f5f5;
+      --panel-bg: #ffffff;
+      --stats-bg: rgba(0, 0, 0, 0.05);
+      --text-main: #1a1a1a;
+      --text-sub: #666666;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <nav class="nav-bar">
+      <button class="nav-tab active" onclick="showSection('main', this)">대시보드</button>
+      <button class="nav-tab" onclick="showSection('stats', this)">상세 통계</button>
+      <button class="nav-tab" onclick="showSection('settings', this)">설정</button>
+    </nav>
+
+    <div id="section-main" class="container">
+      
+      <div class="panel left-panel">
+        <div class="cam-header">
+          <div>
+            <div id="state-badge" class="state-badge waiting"><span></span> 대기 중</div>
+            <span id="cam-status" class="status-label">CAM OFF</span>
+            <span id="cam-ear" class="status-label">| EAR: 0.000</span>
+          </div>
+          <div class="cam-controls">
+            <button class="btn-on" onclick="startCamera()">카메라 ON</button>
+            <button class="btn-off" onclick="stopCamera()">카메라 OFF</button>
+          </div>
+        </div>
+        <div class="video-container">
+          <div id="cam-placeholder">카메라가 꺼져 있습니다.</div>
+          <img id="video" src="" alt="Live Feed" style="display:none;"> 
+        </div>
+      </div>
+
+      <div class="right-panel">
+        <div class="panel">
+          <div class="stats-box">
+            <div class="stats-title">현재 실시간 집중 점수</div>
+            <div class="stats-value" id="score-text">100점</div>
+            <div class="score-bar-bg"><div id="score-bar" style="width: 100%;"></div></div>
+          </div>
+
+          <div class="stats-box" style="margin-bottom:0;">
+            <div class="stats-title">📊 분석 데이터</div>
+            <div class="detail-row"><span>얼굴 인식:</span> <b id="face-detected">X</b></div>
+            <div class="detail-row"><span>누적 자리비움:</span> <b id="absence-stats">0회 (누적 0초)</b></div>
+            <div id="current-absence-row" class="detail-row" style="display: none;">
+              <span style="color: var(--accent-red);">현재 이탈 경과:</span> 
+              <b id="current-absence-time" style="color: var(--accent-red);">0초</b>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel timer-container">
+          <div class="subject-input-box">
+            <label>📚 공부 중인 과목</label>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <select id="subject-select" onchange="selectSubject()" style="flex: 1; min-width: 150px;">
+                <option value="">-- 새 과목 또는 선택 --</option>
+              </select>
+              <input type="text" id="subject-input" placeholder="새 과목 입력" maxlength="20" style="flex: 2; min-width: 150px;">
+              <button onclick="updateSubject()" style="flex-shrink: 0;">저장</button>
+            </div>
+          </div>
+
+          <div id="timer-display">25:00</div>
+          <div class="timer-controls">
+            <button id="play-btn" class="timer-btn btn-play" onclick="toggleTimer()">
+              <div id="timer-icon" class="play-icon"></div>
+            </button>
+            <button class="timer-btn btn-reset" onclick="resetTimer()">↻</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="section-stats" class="panel extra-section">
+      <h2 class="section-title">📊 상세 통계</h2>
+      <div class="stats-grid">
+        <div class="stats-item">
+          <p class="stats-title">오늘의 총 집중 시간</p>
+          <p class="stats-highlight" id="stats-focus-time">00:00:00</p>
+        </div>
+        <div class="stats-item">
+          <p class="stats-title">평균 집중 점수</p>
+          <p class="stats-highlight" id="stats-avg-score" style="color: var(--text-main);">0점</p>
+        </div>
+      </div>
+      <div class="stats-chart">
+        <h3 class="chart-title">과목별 공부 시간</h3>
+        <canvas id="subject-chart"></canvas>
+      </div>
+    </div>
+
+    <div id="section-settings" class="panel extra-section">
+      <h2 class="section-title">⚙️ 환경 설정</h2>
+      <div class="detail-row">
+        <span>🌓 다크 모드</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="theme-toggle" onchange="toggleTheme()" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="detail-row">
+        <span>데이터 초기화</span>
+        <button onclick="confirmReset()" class="reset-btn">RESET</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let monitoring = null;
+    let seconds = 1500;
+    let running = false;
+    let timerInterval = null;
+    let lastAbsenceCount = 0;
+    let lastTotalAbsenceS = 0;
+    let subjectChart = null;
+
+    // 페이지 로드 시 초기화
+    window.addEventListener('DOMContentLoaded', () => {
+      loadSubjects();
+      loadTheme();
+    });
+
+    /**
+     * [Theme] 다크/라이트 모드 토글
+     */
+    function toggleTheme() {
+      const isDark = document.getElementById('theme-toggle').checked;
+      if (isDark) {
+        document.body.classList.remove('light-mode');
+        localStorage.setItem('theme', 'dark');
+      } else {
+        document.body.classList.add('light-mode');
+        localStorage.setItem('theme', 'light');
+      }
+      
+      // 차트가 있으면 색상 변경을 위해 다시 렌더링
+      if (subjectChart) {
+        fetch('/stats').then(res => res.json()).then(data => {
+          renderSubjectChart(data.subject_stats);
+        });
+      }
+    }
+
+    function loadTheme() {
+      const theme = localStorage.getItem('theme') || 'dark';
+      const toggle = document.getElementById('theme-toggle');
+      if (theme === 'light') {
+        document.body.classList.add('light-mode');
+        toggle.checked = false;
+      } else {
+        toggle.checked = true;
+      }
+    }
+
+    /**
+     * [Subject] 과목 목록 불러오기 (DB에서)
+     */
+    function loadSubjects() {
+      fetch('/subjects')
+        .then(res => res.json())
+        .then(data => {
+          const select = document.getElementById('subject-select');
+          select.innerHTML = '<option value="">-- 새 과목 또는 선택 --</option>';
+          data.subjects.forEach(sub => {
+            const option = document.createElement('option');
+            option.value = sub;
+            option.textContent = sub;
+            select.appendChild(option);
+          });
+        })
+        .catch(err => console.log('과목 목록 로드 실패:', err));
+    }
+
+    /**
+     * [Subject] 드롭다운에서 선택
+     */
+    function selectSubject() {
+      const select = document.getElementById('subject-select');
+      const input = document.getElementById('subject-input');
+      if (select.value) {
+        input.value = select.value;
+      }
+    }
+
+    /**
+     * [Subject] 과목 저장
+     */
+    function updateSubject() {
+      const input = document.getElementById('subject-input');
+      const subject = input.value.trim();
+      if (!subject) {
+        alert('과목을 입력하거나 선택해주세요.');
+        return;
+      }
+      fetch('/subject', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({subject})
+      }).then(res => res.json()).then(data => {
+        alert(`과목 "${data.subject}" 저장 완료`);
+        loadSubjects(); // 목록 새로고침
+        input.value = ''; // 입력창 비우기
+        // 드롭다운을 방금 저장한 과목으로 선택
+        setTimeout(() => {
+          document.getElementById('subject-select').value = data.subject;
+        }, 300);
+      });
+    }
+
+    /**
+     * [Reset] 데이터 초기화
+     */
+    function confirmReset() {
+      if (!confirm('모든 학습 데이터가 삭제됩니다. 계속하시겠습니까?')) return;
+      fetch('/reset', {method: 'POST'})
+        .then(res => res.json())
+        .then(data => {
+          alert('데이터 초기화 완료');
+          location.reload();
+        });
+    }
+
+    /**
+     * [UI Control] 섹션 이동
+     */
+    function showSection(id, btn) {
+      const section = document.getElementById('section-' + id);
+      section.scrollIntoView({ behavior: 'smooth' });
+
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+
+      if (id === 'stats') {
+        fetch('/stats').then(res => res.json()).then(data => {
+          document.getElementById('stats-focus-time').innerText = data.total_focus_time;
+          const avgEl = document.getElementById('stats-avg-score');
+          avgEl.innerText = data.avg_score + '점';
+          if (data.avg_score >= 80) avgEl.style.color = 'var(--accent-green)';
+          else if (data.avg_score >= 50) avgEl.style.color = 'var(--accent-orange)';
+          else avgEl.style.color = 'var(--accent-red)';
+          renderSubjectChart(data.subject_stats);
+        }).catch(err => console.log('통계 로드 실패:', err));
+      }
+    }
+
+    /**
+     * [Camera] 카메라 시작
+     */
+    function startCamera() {
+      fetch('/start').then(() => {
+        const videoTag = document.getElementById("video");
+        videoTag.style.display = "block";
+        videoTag.src = "/video?t=" + Date.now();
+        document.getElementById("cam-placeholder").style.display = "none";
+        
+        const statusTag = document.getElementById("cam-status");
+        statusTag.innerText = "LIVE";
+        statusTag.style.color = "var(--accent-green)";
+        
+        if (monitoring) clearInterval(monitoring);
+        monitoring = setInterval(checkAll, 1000);
+      });
+    }
+
+    /**
+     * [Camera] 카메라 중지
+     */
+    function stopCamera() {
+      fetch('/stop').then(() => {
+        const videoTag = document.getElementById("video");
+        videoTag.src = "";
+        videoTag.style.display = "none";
+        document.getElementById("cam-placeholder").style.display = "flex";
+        
+        const statusTag = document.getElementById("cam-status");
+        statusTag.innerText = "OFF";
+        statusTag.style.color = "var(--text-sub)";
+        
+        if (monitoring) clearInterval(monitoring);
+      });
+    }
+
+    /**
+     * [Data] 실시간 데이터 동기화
+     */
+    function checkAll() {
+      fetch('/detect').then(res => res.json()).then(data => {
+        if (data.absence_count !== undefined) {
+          lastAbsenceCount = data.absence_count;
+          lastTotalAbsenceS = data.total_absence_s;
+        }
+
+        document.getElementById("face-detected").innerText = data.face_detected ? "O" : "X";
+        document.getElementById("cam-ear").innerText = `| EAR: ${data.ear ? data.ear.toFixed(3) : '0.000'}`;
+        document.getElementById("absence-stats").innerText = `${lastAbsenceCount}회 (누적 ${lastTotalAbsenceS}초)`;
+
+        const badge = document.getElementById("state-badge");
+        const row = document.getElementById("current-absence-row");
+        
+        if (data.is_absent) {
+          badge.className = "state-badge away";
+          badge.innerHTML = "<span></span> 자리 비움";
+          row.style.display = "flex";
+          document.getElementById("current-absence-time").innerText = `${data.current_absence_s}초`;
+        } else if (data.state === "sleepy") {
+          badge.className = "state-badge drowsy";
+          badge.innerHTML = "<span></span> 졸음 감지";
+          row.style.display = "none";
+        } else if (data.state === "focused") {
+          badge.className = "state-badge studying";
+          badge.innerHTML = "<span></span> 집중 중";
+          row.style.display = "none";
+        }
+      }).catch(err => console.log("서버 응답 대기 중..."));
+
+      fetch('/score').then(res => res.json()).then(data => {
+        updateScoreUI(Math.floor(data.score));
+      }).catch(err => console.log("점수 응답 대기 중..."));
+      
+      // 10초마다 도넛 그래프 자동 업데이트
+      if (!window.lastStatsUpdate || Date.now() - window.lastStatsUpdate > 10000) {
+        fetch('/stats').then(res => res.json()).then(data => {
+          // 도넛 그래프 즉시 업데이트
+          if (data.subject_stats && data.subject_stats.length > 0) {
+            renderSubjectChart(data.subject_stats);
+          }
+        }).catch(err => {});
+        window.lastStatsUpdate = Date.now();
+      }
+    }
+
+    /**
+     * [UI] 점수 업데이트
+     */
+    function updateScoreUI(score) {
+      const txt = document.getElementById("score-text");
+      const bar = document.getElementById("score-bar");
+      txt.innerText = score + "점";
+      bar.style.width = Math.min(score, 100) + "%";
+
+      if (score >= 80) { 
+        txt.style.color = "var(--accent-green)"; 
+        bar.style.background = "var(--accent-green)"; 
+      } else if (score >= 50) { 
+        txt.style.color = "var(--accent-orange)"; 
+        bar.style.background = "var(--accent-orange)"; 
+      } else { 
+        txt.style.color = "var(--accent-red)"; 
+        bar.style.background = "var(--accent-red)"; 
+      }
+    }
+
+    /**
+     * [Timer] 뽀모도로 타이머
+     */
+    function toggleTimer() {
+      running = !running;
+      const icon = document.getElementById('timer-icon');
+      if (running) {
+        icon.className = "pause-icon";
+        icon.innerHTML = '<div class="pause-bar"></div><div class="pause-bar"></div>';
+        timerInterval = setInterval(() => {
+          if (seconds > 0) { seconds--; updateTimerDisplay(); }
+        }, 1000);
+      } else {
+        clearInterval(timerInterval);
+        icon.className = "play-icon";
+        icon.innerHTML = "";
+      }
+    }
+
+    function resetTimer() {
+      clearInterval(timerInterval);
+      running = false;
+      seconds = 1500;
+      updateTimerDisplay();
+      const icon = document.getElementById('timer-icon');
+      icon.className = "play-icon";
+      icon.innerHTML = "";
+    }
+
+    function updateTimerDisplay() {
+      const m = Math.floor(seconds / 60);
+      const s = seconds % 60;
+      document.getElementById('timer-display').innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    }
+
+    /**
+     * [Chart] 과목별 도넛 그래프
+     */
+    function renderSubjectChart(subjectStats) {
+      const ctx = document.getElementById('subject-chart').getContext('2d');
+      
+      if (subjectChart) subjectChart.destroy();
+
+      // 라이트모드 체크
+      const isLightMode = document.body.classList.contains('light-mode');
+
+      if (!subjectStats || subjectStats.length === 0) {
+        subjectChart = new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels: ['데이터 없음'],
+            datasets: [{
+              data: [1],
+              backgroundColor: ['#444']
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                labels: {
+                  color: isLightMode ? '#1a1a1a' : '#fff'
+                }
+              }
+            }
+          }
+        });
+        return;
+      }
+
+      const labels = subjectStats.map(s => s.subject);
+      const data = subjectStats.map(s => s.seconds);
+      const colors = ['#6ee7c0', '#fac775', '#f0997b', '#8be9fd', '#ff79c6'];
+
+      subjectChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels,
+          datasets: [{
+            data,
+            backgroundColor: colors.slice(0, labels.length),
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                color: isLightMode ? '#1a1a1a' : '#fff',
+                font: {size: 14}
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => {
+                  const label = ctx.label || '';
+                  const value = subjectStats[ctx.dataIndex].label;
+                  return `${label}: ${value}`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
