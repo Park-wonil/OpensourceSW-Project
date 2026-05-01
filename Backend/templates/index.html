@@ -55,6 +55,7 @@
       <button class="nav-tab" onclick="showSection('stats', this)">상세 통계</button>
       <button class="nav-tab" onclick="showSection('weekly', this)">주간</button>
       <button class="nav-tab" onclick="showSection('ranking', this)">랭킹</button>
+      <button class="nav-tab" onclick="showSection('chat', this)">💬 채팅</button>
       <button class="nav-tab" onclick="showSection('community', this)">커뮤니티</button>
       <button class="nav-tab" onclick="showSection('settings', this)">설정</button>
       <span id="username-display" style="margin-left:auto; font-size:13px; font-weight:700; color:var(--accent-green); padding:8px 14px;"></span>
@@ -248,7 +249,120 @@
         <span>🚪 로그아웃</span>
         <button onclick="logout()" class="logout-btn">로그아웃</button>
       </div>
+      <div class="detail-row" style="flex-direction:column; align-items:flex-start; gap:12px;">
+        <span>🎨 테마 색상</span>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="theme-btn" data-theme="default" onclick="setTheme('default')" style="--c:#6ee7c0;" title="그린 (기본)">🟢 그린</button>
+          <button class="theme-btn" data-theme="blue"    onclick="setTheme('blue')"    style="--c:#60b4ff;" title="블루">🔵 블루</button>
+          <button class="theme-btn" data-theme="purple"  onclick="setTheme('purple')"  style="--c:#b088f9;" title="퍼플">🟣 퍼플</button>
+          <button class="theme-btn" data-theme="orange"  onclick="setTheme('orange')"  style="--c:#ffaa5c;" title="오렌지">🟠 오렌지</button>
+          <button class="theme-btn" data-theme="pink"    onclick="setTheme('pink')"    style="--c:#ff80b5;" title="핑크">🩷 핑크</button>
+        </div>
+      </div>
     </div>
+<!-- 스터디룸 허브 (채팅 + 캠) -->
+<div id="section-chat" class="panel extra-section" style="padding:0; overflow:hidden;">
+
+  <!-- 뷰 1: 방 목록 -->
+  <div id="room-lobby" style="padding:24px;">
+    <h2 class="section-title">💬 스터디룸</h2>
+    <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
+      <input type="text" id="room-name-input" placeholder="방 이름 입력..." maxlength="30"
+        style="flex:1; min-width:160px; padding:11px 16px; border-radius:12px;
+        border:1px solid rgba(255,255,255,0.1); background:var(--stats-bg);
+        color:var(--text-main); font-size:14px;">
+      <button onclick="createRoom()" style="padding:11px 22px; background:var(--accent-green);
+        color:#111; border:none; border-radius:12px; font-weight:700; cursor:pointer; flex-shrink:0;">
+        + 방 만들기
+      </button>
+    </div>
+    <div style="font-size:13px; color:var(--text-sub); margin-bottom:12px;">
+      🟢 <span id="lobby-online-count">0</span>명 온라인
+    </div>
+    <div id="room-list-container" style="display:flex; flex-direction:column; gap:10px; min-height:80px;">
+      <div style="text-align:center; padding:30px; color:var(--text-sub); font-size:14px;">
+        아직 열린 방이 없습니다. 첫 번째 방을 만들어보세요! 🎉
+      </div>
+    </div>
+  </div>
+
+  <!-- 뷰 2: 방 내부 (채팅 + 캠) -->
+  <div id="room-inside" style="display:none; flex-direction:column; height:640px;">
+
+    <!-- 방 헤더 -->
+    <div style="display:flex; align-items:center; justify-content:space-between;
+      padding:16px 20px; border-bottom:1px solid rgba(255,255,255,0.07); flex-shrink:0;">
+      <div>
+        <div id="room-title" style="font-size:16px; font-weight:800; color:var(--text-main);"></div>
+        <div id="room-member-count" style="font-size:12px; color:var(--text-sub); margin-top:2px;"></div>
+      </div>
+      <button onclick="leaveRoom()"
+        style="padding:8px 18px; background:rgba(240,153,123,0.15); color:var(--accent-red);
+        border:1.5px solid var(--accent-red); border-radius:10px; font-size:13px;
+        font-weight:700; cursor:pointer;">나가기</button>
+    </div>
+
+    <!-- 메인 콘텐츠 (캠 + 채팅 좌우 분할) -->
+    <div style="display:flex; flex:1; overflow:hidden; gap:0;">
+
+      <!-- 왼쪽: 캠 영역 -->
+      <div id="room-cam-area" style="width:45%; display:flex; flex-direction:column;
+        gap:10px; padding:14px; overflow-y:auto; border-right:1px solid rgba(255,255,255,0.07);">
+        <div style="font-size:12px; color:var(--text-sub); font-weight:700;">📹 스터디 캠</div>
+
+        <!-- 내 캠 -->
+        <div style="border-radius:14px; overflow:hidden; background:#000;
+          border:2px solid var(--accent-green); flex-shrink:0;">
+          <div style="padding:6px 12px; font-size:11px; font-weight:700;
+            color:var(--accent-green); background:rgba(0,0,0,0.4);">
+            나 (<span id="room-my-nickname"></span>)
+          </div>
+          <div style="position:relative; aspect-ratio:4/3;">
+            <video id="room-local-video" autoplay playsinline muted
+              style="width:100%; height:100%; object-fit:cover;"></video>
+            <div id="room-cam-placeholder" style="position:absolute; inset:0; display:flex;
+              align-items:center; justify-content:center; color:var(--text-sub); font-size:13px;
+              background:#111;">카메라 꺼짐</div>
+          </div>
+          <div style="padding:8px 12px; display:flex; gap:8px; background:rgba(0,0,0,0.3);">
+            <button onclick="toggleRoomCam()" id="room-cam-btn"
+              style="flex:1; padding:6px; background:var(--accent-green); color:#111;
+              border:none; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">
+              📷 캠 켜기
+            </button>
+          </div>
+        </div>
+
+        <!-- 다른 멤버 캠들 -->
+        <div id="room-peer-cams" style="display:flex; flex-direction:column; gap:10px;"></div>
+      </div>
+
+      <!-- 오른쪽: 채팅 -->
+      <div style="flex:1; display:flex; flex-direction:column; padding:14px; gap:10px;">
+        <div style="font-size:12px; color:var(--text-sub); font-weight:700; flex-shrink:0;">
+          💬 채팅
+        </div>
+        <div id="room-chat-messages" style="flex:1; overflow-y:auto; display:flex;
+          flex-direction:column; gap:8px; padding:8px; background:var(--stats-bg);
+          border-radius:12px; min-height:0;">
+        </div>
+        <div style="display:flex; gap:8px; flex-shrink:0;">
+          <input type="text" id="room-chat-input" placeholder="메시지..." maxlength="200"
+            onkeydown="if(event.key==='Enter') sendRoomChat()"
+            style="flex:1; padding:10px 14px; border-radius:10px;
+            border:1px solid rgba(255,255,255,0.1); background:var(--stats-bg);
+            color:var(--text-main); font-size:13px;">
+          <button onclick="sendRoomChat()"
+            style="padding:10px 18px; background:var(--accent-green); color:#111;
+            border:none; border-radius:10px; font-weight:700; cursor:pointer; flex-shrink:0;">
+            전송
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- 커뮤니티 섹션 - 개선된 버전 -->
 <div id="section-community" class="panel extra-section">
   <h2 class="section-title">💬 커뮤니티</h2>
@@ -442,6 +556,8 @@
       } else if (id === 'goals') {
         loadSubjects();   // 과목 드롭다운 최신화
         loadGoals();
+      } else if (id === 'chat') {
+        initChat();
       } else if (id === 'weekly') {
         loadWeeklyStats();
       } else if (id === 'ranking') {
@@ -1236,6 +1352,7 @@ function escapeHtml(text) {
 
     // 🔥 핵심 3: 소켓에 유저 등록 (온라인 목록 표시)
     registerSocket();
+    loadTheme();
 
   } else {
     const card = document.querySelector('.auth-card');
@@ -1306,6 +1423,7 @@ async function checkLogin() {
       // 세션 유지 상태에서 소켓 등록
       window.currentUser = data.user;
       registerSocket();
+      loadTheme();
     }
 
   } catch (err) {
@@ -1615,6 +1733,414 @@ window.onload = checkLogin;
       const pc = peerConnections[data.sid];
       if (pc && data.candidate) {
         try { await pc.addIceCandidate(new RTCIceCandidate(data.candidate)); } catch(e) {}
+      }
+    });
+
+    // =============================================
+    // 🎨 테마 시스템
+    // =============================================
+    const THEMES = ['default','blue','purple','orange','pink'];
+
+    function setTheme(theme) {
+      // 기존 테마 클래스 제거
+      THEMES.forEach(t => document.body.classList.remove('theme-' + t));
+      if (theme !== 'default') document.body.classList.add('theme-' + theme);
+      localStorage.setItem('theme-color', theme);
+
+      // 버튼 활성 표시
+      document.querySelectorAll('.theme-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.theme === theme);
+      });
+    }
+
+    function loadTheme() {
+      const saved = localStorage.getItem('theme-color') || 'default';
+      setTheme(saved);
+    }
+
+    // =============================================
+    // 💬 스터디룸 (방 목록 + 채팅 + 단체 캠)
+    // =============================================
+
+    // 온라인 유저 추적
+    window._onlineUsers = {};
+    function _updateLobbyCount() {
+      const n = Object.keys(window._onlineUsers).length + 1;
+      const el = document.getElementById('lobby-online-count');
+      if (el) el.innerText = n;
+    }
+    socket.on('user_online',  d => { window._onlineUsers[d.sid]=d.nickname; _updateLobbyCount(); });
+    socket.on('user_offline', d => { delete window._onlineUsers[d.sid]; _updateLobbyCount(); });
+    socket.on('online_users', d => {
+      window._onlineUsers={};
+      d.users.forEach(u => { window._onlineUsers[u.sid]=u.nickname; });
+      _updateLobbyCount();
+    });
+
+    // 방 상태
+    let currentRoomId   = null;
+    let roomLocalStream = null;
+    let roomCamOn       = false;
+    const roomPeers     = {};   // {sid: RTCPeerConnection}
+
+    const RTC_CFG = { iceServers:[{urls:"stun:stun.l.google.com:19302"}] };
+
+    // ── 로비 ──
+    function initChat() {
+      socket.emit('get_rooms');
+    }
+
+    function renderRoomList(rooms) {
+      const box = document.getElementById('room-list-container');
+      if (!box) return;
+      if (!rooms.length) {
+        box.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-sub);font-size:14px;">아직 열린 방이 없습니다. 첫 번째 방을 만들어보세요! 🎉</div>';
+        return;
+      }
+      box.innerHTML = rooms.map(r => `
+        <div style="display:flex; justify-content:space-between; align-items:center;
+          padding:14px 18px; background:var(--stats-bg); border-radius:14px;
+          border:1.5px solid rgba(255,255,255,0.06);">
+          <div>
+            <div style="font-weight:700; font-size:15px; color:var(--text-main);">🏠 ${r.name}</div>
+            <div style="font-size:12px; color:var(--text-sub); margin-top:3px;">
+              호스트: ${r.host} &nbsp;·&nbsp; 👥 ${r.count}명 참여 중
+            </div>
+          </div>
+          <button onclick="joinRoom('${r.id}','${r.name.replace(/'/g,"\'")}')"
+            style="padding:9px 20px; background:var(--accent-green); color:#111;
+            border:none; border-radius:10px; font-weight:700; cursor:pointer; font-size:13px;">
+            입장
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function createRoom() {
+      if (!window.currentUser) { showToastMsg('⚠️ 로그인 후 이용하세요.'); return; }
+      const name = document.getElementById('room-name-input').value.trim() || window.currentUser + '의 스터디룸';
+      socket.emit('create_room', { name });
+      document.getElementById('room-name-input').value = '';
+    }
+
+    function joinRoom(roomId, roomName) {
+      if (!window.currentUser) { showToastMsg('⚠️ 로그인 후 이용하세요.'); return; }
+      socket.emit('join_room_req', { room_id: roomId });
+    }
+
+    function leaveRoom() {
+      if (!currentRoomId) return;
+      // 모든 피어 연결 종료
+      Object.values(roomPeers).forEach(pc => pc.close());
+      Object.keys(roomPeers).forEach(k => delete roomPeers[k]);
+      // 로컬 캠 종료
+      stopRoomCam();
+      socket.emit('leave_room_req', { room_id: currentRoomId });
+      currentRoomId = null;
+      // 로비로 복귀
+      document.getElementById('room-inside').style.display = 'none';
+      document.getElementById('room-lobby').style.display  = 'block';
+      document.getElementById('room-peer-cams').innerHTML  = '';
+      document.getElementById('room-chat-messages').innerHTML = '';
+    }
+
+    function showRoomInside(roomId, roomName, members) {
+      currentRoomId = roomId;
+      document.getElementById('room-lobby').style.display   = 'none';
+      document.getElementById('room-inside').style.display  = 'flex';
+      document.getElementById('room-title').innerText       = '🏠 ' + roomName;
+      document.getElementById('room-my-nickname').innerText = window.currentUser || '나';
+      updateRoomMemberCount(members);
+      appendRoomSystem(`${roomName}에 입장했습니다.`);
+    }
+
+    function updateRoomMemberCount(members) {
+      const el = document.getElementById('room-member-count');
+      if (el) el.innerText = `👥 ${members.length}명 참여 중`;
+    }
+
+    // ── 방 채팅 ──
+    function sendRoomChat() {
+      const inp = document.getElementById('room-chat-input');
+      const msg = inp.value.trim();
+      if (!msg || !currentRoomId) return;
+      socket.emit('room_chat', { room_id: currentRoomId, msg });
+      inp.value = '';
+    }
+
+    function appendRoomMsg(nickname, msg, time, isMe) {
+      const box = document.getElementById('room-chat-messages');
+      if (!box) return;
+      const div = document.createElement('div');
+      div.style.cssText = `display:flex;flex-direction:column;align-items:${isMe?'flex-end':'flex-start'};gap:2px;`;
+      div.innerHTML = `
+        <span style="font-size:10px;color:var(--text-sub);margin:0 4px;">
+          ${isMe?'':`<b style="color:var(--accent-green);">${nickname}</b> · `}${time}
+        </span>
+        <div style="max-width:85%;padding:8px 12px;
+          border-radius:${isMe?'16px 16px 3px 16px':'16px 16px 16px 3px'};
+          background:${isMe?'var(--accent-green)':'var(--stats-bg)'};
+          color:${isMe?'#111':'var(--text-main)'};
+          font-size:13px;line-height:1.5;word-break:break-word;">
+          ${msg.replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+        </div>`;
+      box.appendChild(div);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function appendRoomSystem(msg) {
+      const box = document.getElementById('room-chat-messages');
+      if (!box) return;
+      const div = document.createElement('div');
+      div.style.cssText = 'text-align:center;font-size:11px;color:var(--text-sub);padding:4px 0;';
+      div.innerText = msg;
+      box.appendChild(div);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    // ── 캠 ──
+    async function toggleRoomCam() {
+      if (roomCamOn) { stopRoomCam(); return; }
+      try {
+        // Flask 카메라가 켜져 있으면 먼저 끄기 (카메라 충돌 방지)
+        const camStatus = document.getElementById('cam-status');
+        if (camStatus && camStatus.innerText === 'LIVE') {
+          await fetch('/stop');
+          const videoTag = document.getElementById('video');
+          if (videoTag) { videoTag.src = ''; videoTag.style.display = 'none'; }
+          const ph = document.getElementById('cam-placeholder');
+          if (ph) ph.style.display = 'flex';
+          camStatus.innerText = 'OFF';
+          camStatus.style.color = 'var(--text-sub)';
+          // 잠시 대기 (Flask 카메라 릴리즈)
+          await new Promise(r => setTimeout(r, 800));
+        }
+
+        // 브라우저 캠 스트림
+        roomLocalStream = await navigator.mediaDevices.getUserMedia({
+          video: { width:640, height:480, facingMode:'user' },
+          audio: false
+        });
+        const vid = document.getElementById('room-local-video');
+        vid.srcObject = roomLocalStream;
+        vid.muted     = true;
+        vid.autoplay  = true;
+        vid.play().catch(()=>{});
+
+        document.getElementById('room-cam-placeholder').style.display = 'none';
+        document.getElementById('room-cam-btn').innerText = '📷 캠 끄기';
+        document.getElementById('room-cam-btn').style.background = 'rgba(240,153,123,0.8)';
+        roomCamOn = true;
+
+        // 모든 피어에게 트랙 추가 후 offer 전송
+        for (const [sid, pc] of Object.entries(roomPeers)) {
+          // 트랙 추가
+          for (const track of roomLocalStream.getTracks()) {
+            const senders = pc.getSenders();
+            const existing = senders.find(s => s.track && s.track.kind === track.kind);
+            if (existing) {
+              try { await existing.replaceTrack(track); } catch(e){}
+            } else {
+              pc.addTrack(track, roomLocalStream);
+            }
+          }
+          // 재협상 offer 전송 (캠 트랙 상대방에게 알림)
+          try {
+            if (pc.signalingState === 'stable') {
+              const offer = await pc.createOffer();
+              await pc.setLocalDescription(offer);
+              socket.emit('room_offer', {target: sid, sdp: offer, room_id: currentRoomId});
+            }
+          } catch(e) { console.warn('[재협상 오류]', e); }
+        }
+      } catch(e) {
+        console.error('캠 오류:', e);
+        showToastMsg('❌ 카메라 권한이 필요합니다. (chrome://flags 설정 확인)');
+      }
+    }
+
+    function stopRoomCam() {
+      if (roomLocalStream) {
+        roomLocalStream.getTracks().forEach(t => t.stop());
+        roomLocalStream = null;
+      }
+      const vid = document.getElementById('room-local-video');
+      if (vid) vid.srcObject = null;
+      const ph = document.getElementById('room-cam-placeholder');
+      if (ph) ph.style.display = 'flex';
+      const btn = document.getElementById('room-cam-btn');
+      if (btn) { btn.innerText='📷 캠 켜기'; btn.style.background='var(--accent-green)'; }
+      roomCamOn = false;
+    }
+
+    // 스터디룸 퇴장 시 Flask 카메라 상태 복원 (필요하면)
+    async function restoreFlaskCam() {
+      // 스터디룸 나가면 대시보드 카메라는 사용자가 직접 켜도록 안내만
+      stopRoomCam();
+      showToastMsg('📷 대시보드에서 카메라를 다시 켤 수 있습니다.');
+    }
+
+    function createPeerCamBox(sid, nickname) {
+      if (document.getElementById('peer-cam-'+sid)) return;
+      const box = document.createElement('div');
+      box.id = 'peer-cam-'+sid;
+      box.style.cssText = 'border-radius:14px;overflow:hidden;background:#000;border:1.5px solid rgba(255,255,255,0.1);flex-shrink:0;';
+      box.innerHTML = `
+        <div style="padding:6px 12px;font-size:11px;font-weight:700;color:var(--text-sub);background:rgba(0,0,0,0.4);">
+          ${nickname}
+        </div>
+        <div style="position:relative;aspect-ratio:4/3;">
+          <video id="peer-video-${sid}" autoplay playsinline muted
+            style="width:100%;height:100%;object-fit:cover;"></video>
+          <div id="peer-loading-${sid}" style="position:absolute;inset:0;display:flex;
+            align-items:center;justify-content:center;color:var(--text-sub);font-size:12px;
+            background:#111;">연결 중...</div>
+        </div>`;
+      document.getElementById('room-peer-cams').appendChild(box);
+    }
+
+    function removePeerCamBox(sid) {
+      const el = document.getElementById('peer-cam-'+sid);
+      if (el) el.remove();
+    }
+
+    async function createRoomPeer(sid, nickname, isInitiator) {
+      if (roomPeers[sid]) return roomPeers[sid];
+      const pc = new RTCPeerConnection(RTC_CFG);
+      roomPeers[sid] = pc;
+
+      if (roomLocalStream) {
+        roomLocalStream.getTracks().forEach(t => pc.addTrack(t, roomLocalStream));
+      }
+
+      pc.ontrack = e => {
+        // 캠박스가 아직 없으면 생성 후 스트림 연결
+        if (!document.getElementById('peer-cam-'+sid)) {
+          createPeerCamBox(sid, window._onlineUsers[sid] || '스터디원');
+        }
+        const vid = document.getElementById('peer-video-'+sid);
+        const ld  = document.getElementById('peer-loading-'+sid);
+        if (vid) {
+          vid.srcObject = e.streams[0];
+          vid.play().catch(()=>{});
+          if (ld) ld.style.display = 'none';
+        }
+      };
+
+      pc.onicecandidate = e => {
+        if (e.candidate)
+          socket.emit('room_ice', {target:sid, candidate:e.candidate, room_id:currentRoomId});
+      };
+
+      pc.onconnectionstatechange = () => {
+        console.log(`[WebRTC ${sid.slice(0,6)}] 상태: ${pc.connectionState}`);
+        // disconnected는 일시적일 수 있으므로 failed/closed만 정리
+        if (['failed','closed'].includes(pc.connectionState)) {
+          removePeerCamBox(sid);
+          pc.close();
+          delete roomPeers[sid];
+        }
+      };
+
+      createPeerCamBox(sid, nickname);
+
+      if (isInitiator) {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        socket.emit('room_offer', {target:sid, sdp:offer, room_id:currentRoomId});
+      }
+      return pc;
+    }
+
+    // ICE candidate 큐 (remoteDescription 설정 전 도착 대비)
+    const iceQueue = {};
+
+    async function flushIceQueue(sid) {
+      const pc = roomPeers[sid];
+      if (!pc || !iceQueue[sid]) return;
+      for (const c of iceQueue[sid]) {
+        try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch(e){}
+      }
+      delete iceQueue[sid];
+    }
+
+    // ── Socket.IO 방 이벤트 ──
+    socket.on('room_list',  d => renderRoomList(d.rooms));
+    socket.on('room_error', d => showToastMsg('⚠️ '+d.msg));
+    socket.on('room_created', d => showToastMsg(`✅ "${d.name}" 방이 생성됐습니다!`));
+
+    socket.on('room_joined', d => {
+      showRoomInside(d.room_id, d.name, d.members);
+      // 기존 멤버 _onlineUsers 등록 (offer는 캠 켤 때 보냄)
+      d.members.forEach(m => {
+        if (m.sid !== socket.id) {
+          window._onlineUsers[m.sid] = m.nickname;
+          // 피어 생성만 (isInitiator=false, offer는 캠 ON 후 전송)
+          createRoomPeer(m.sid, m.nickname, false);
+        }
+      });
+    });
+
+    socket.on('room_member_joined', async d => {
+      appendRoomSystem(`${d.nickname}님이 입장했습니다.`);
+      window._onlineUsers[d.sid] = d.nickname;
+      createRoomPeer(d.sid, d.nickname, false);
+      const cnt = document.getElementById('room-member-count');
+      if (cnt) cnt.innerText = `👥 ${Object.keys(roomPeers).length+1}명 참여 중`;
+    });
+
+    socket.on('room_member_left', d => {
+      appendRoomSystem(`${d.nickname}님이 나갔습니다.`);
+      removePeerCamBox(d.sid);
+      if (roomPeers[d.sid]) { roomPeers[d.sid].close(); delete roomPeers[d.sid]; }
+      delete iceQueue[d.sid];
+      const cnt = document.getElementById('room-member-count');
+      if (cnt) cnt.innerText = `👥 ${Object.keys(roomPeers).length+1}명 참여 중`;
+    });
+
+    socket.on('room_left', () => {});
+
+    socket.on('room_chat', d => {
+      const isMe = d.sid === socket.id;
+      appendRoomMsg(d.nickname, d.msg, d.time, isMe);
+      if (!document.getElementById('section-chat').classList.contains('active')) {
+        showToastMsg(`💬 ${d.nickname}: ${d.msg.slice(0,30)}${d.msg.length>30?'...':''}`);
+      }
+    });
+
+    // WebRTC 시그널링
+    socket.on('room_offer', async d => {
+      const nickname = window._onlineUsers[d.sid] || '스터디원';
+      let pc = roomPeers[d.sid];
+      if (!pc) pc = await createRoomPeer(d.sid, nickname, false);
+      try {
+        await pc.setRemoteDescription(new RTCSessionDescription(d.sdp));
+        await flushIceQueue(d.sid);
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        socket.emit('room_answer', {target:d.sid, sdp:answer, room_id:currentRoomId});
+      } catch(e) { console.error('[room_offer 오류]', e); }
+    });
+
+    socket.on('room_answer', async d => {
+      const pc = roomPeers[d.sid];
+      if (!pc) return;
+      try {
+        if (pc.signalingState === 'have-local-offer') {
+          await pc.setRemoteDescription(new RTCSessionDescription(d.sdp));
+          await flushIceQueue(d.sid);
+        }
+      } catch(e) { console.warn('[room_answer 오류]', e); }
+    });
+
+    socket.on('room_ice', async d => {
+      if (!d.candidate) return;
+      const pc = roomPeers[d.sid];
+      if (pc && pc.remoteDescription && pc.remoteDescription.type) {
+        try { await pc.addIceCandidate(new RTCIceCandidate(d.candidate)); } catch(e){}
+      } else {
+        if (!iceQueue[d.sid]) iceQueue[d.sid] = [];
+        iceQueue[d.sid].push(d.candidate);
       }
     });
 
