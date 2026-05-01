@@ -18,7 +18,8 @@ RIGHT_EYE = [362, 385, 387, 263, 373, 380]
 cap = None
 is_running = False
 capture_thread = None
-current_subject = ""  # 현재 공부 중인 과목
+current_subject = ""   # 현재 공부 중인 과목
+current_username = ""  # 현재 로그인 유저 username
 
 # 웹 라우트에서 가져갈 최신 프레임과 데이터
 latest_frame = None
@@ -159,9 +160,10 @@ def _capture_loop():
             latest_frame = buffer.tobytes()
 
         now = time.time()
-        if now - last_save_time >= 1:
+        if now - last_save_time >= 3:
             with lock:
                 current_data["subject"] = current_subject
+                current_data["username"] = current_username
                 latest_data = current_data
                 save_data(current_data)
             last_save_time = now
@@ -213,3 +215,7 @@ def get_focus_data():
 def set_current_subject(subject):
     global current_subject
     current_subject = subject
+
+def set_current_username(username):
+    global current_username
+    current_username = username

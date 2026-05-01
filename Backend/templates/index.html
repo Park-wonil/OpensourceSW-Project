@@ -6,8 +6,8 @@
   <title>Focus AI</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <style>
-    /* 라이트모드 CSS 변수 */
     body.light-mode {
       --bg-color: #f5f5f5;
       --panel-bg: #ffffff;
@@ -17,33 +17,79 @@
     }
   </style>
 </head>
-<body>
+ <body>
+  <div id="auth-screen" class="auth-container">
+
+  <!-- 🔥 로그인 화면 -->
+  <div id="login-view" class="auth-card">
+    <h1 class="auth-title">Focus AI</h1>
+    <p class="auth-subtitle">집중을 기록하고 관리하세요</p>
+
+    <input id="login-username" type="text" placeholder="아이디" class="auth-input">
+    <input id="login-password" type="password" placeholder="비밀번호" class="auth-input">
+
+    <button class="auth-btn primary" onclick="login()">로그인</button>
+    <button class="auth-btn secondary" onclick="showRegister()">회원가입</button>
+  </div>
+
+  <!-- 🔥 회원가입 화면 -->
+  <div id="register-view" class="auth-card" style="display:none;">
+    <h1 class="auth-title">회원가입</h1>
+
+    <input id="reg-username" type="text" placeholder="아이디" class="auth-input">
+    <input id="reg-password" type="password" placeholder="비밀번호" class="auth-input">
+    <input id="reg-nickname" type="text" placeholder="닉네임" class="auth-input">
+
+    <button class="auth-btn primary" onclick="register()">가입하기</button>
+    <button class="auth-btn secondary" onclick="showLogin()">뒤로가기</button>
+  </div>
+
+</div>
+  <div id="app" style="display:none;">
 
   <div class="app-container">
+    <!-- 네비게이션 -->
     <nav class="nav-bar">
       <button class="nav-tab active" onclick="showSection('main', this)">대시보드</button>
+      <button class="nav-tab" onclick="showSection('goals', this)">목표</button>
       <button class="nav-tab" onclick="showSection('stats', this)">상세 통계</button>
+      <button class="nav-tab" onclick="showSection('weekly', this)">주간</button>
+      <button class="nav-tab" onclick="showSection('ranking', this)">랭킹</button>
+      <button class="nav-tab" onclick="showSection('community', this)">커뮤니티</button>
       <button class="nav-tab" onclick="showSection('settings', this)">설정</button>
+      <span id="username-display" style="margin-left:auto; font-size:13px; font-weight:700; color:var(--accent-green); padding:8px 14px;"></span>
     </nav>
 
-    <div id="section-main" class="container">
-      
+    <!-- 대시보드 -->
+    <div id="section-main" class="container active">
       <div class="panel left-panel">
         <div class="cam-header">
           <div>
             <div id="state-badge" class="state-badge waiting"><span></span> 대기 중</div>
             <span id="cam-status" class="status-label">CAM OFF</span>
-            <span id="cam-ear" class="status-label">| EAR: 0.000</span>
+            <span id="cam-ear" class="status-label" style="display:none;">| EAR: 0.000</span>
           </div>
           <div class="cam-controls">
             <button class="btn-on" onclick="startCamera()">카메라 ON</button>
             <button class="btn-off" onclick="stopCamera()">카메라 OFF</button>
           </div>
         </div>
-        <div class="video-container">
+        <!-- 내 캠 -->
+        <div class="video-container" id="my-video-container">
           <div id="cam-placeholder">카메라가 꺼져 있습니다.</div>
           <img id="video" src="" alt="Live Feed" style="display:none;"> 
         </div>
+
+        <!-- 온라인 유저 목록 -->
+        <div id="study-room-bar" style="margin-top:14px;">
+          <div id="online-users-box" style="display:none;">
+            <div style="font-size:13px; font-weight:700; color:var(--text-sub); margin-bottom:8px;">🟢 지금 온라인</div>
+            <div id="online-users-list" style="display:flex; flex-direction:column; gap:6px;"></div>
+          </div>
+        </div>
+
+        <!-- 친구 캠 목록 (내 캠 아래에 독립적으로 배치) -->
+        <div id="friend-cams" style="margin-top:12px; display:flex; flex-direction:column; gap:12px;"></div>
       </div>
 
       <div class="right-panel">
@@ -68,15 +114,30 @@
         <div class="panel timer-container">
           <div class="subject-input-box">
             <label>📚 공부 중인 과목</label>
-            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom:8px;">
               <select id="subject-select" onchange="selectSubject()" style="flex: 1; min-width: 150px;">
-                <option value="">-- 새 과목 또는 선택 --</option>
+                <option value="">-- 기존 과목 선택 --</option>
               </select>
-              <input type="text" id="subject-input" placeholder="새 과목 입력" maxlength="20" style="flex: 2; min-width: 150px;">
+              <button onclick="startWithSelected()" style="flex-shrink:0; padding:10px 14px; background:var(--accent-green); color:#111; border:none; border-radius:8px; font-weight:700; cursor:pointer;">선택</button>
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <input type="text" id="subject-input" placeholder="새 과목 입력" maxlength="20" style="flex: 2; min-width: 120px;">
+              <input type="number" id="subject-goal-minutes" placeholder="목표(분)" min="10" max="600" style="flex: 1; min-width: 80px; max-width:100px;">
               <button onclick="updateSubject()" style="flex-shrink: 0;">저장</button>
             </div>
+            <div id="current-subject-display" style="margin-top:8px; font-size:13px; color:var(--accent-green); font-weight:700; display:none;"></div>
           </div>
 
+          <!-- 타이머 시간 설정 -->
+          <div style="display:flex; justify-content:center; gap:8px; margin-bottom:8px; align-items:center;">
+            <input type="number" id="timer-set-min" placeholder="분" min="1" max="180" value="25"
+              style="width:90px; text-align:center; padding:8px 10px; border-radius:8px;
+              border:1px solid #444; background:#1a1a1a; color:white; font-size:16px; font-weight:700;">
+            <span style="color:var(--text-sub); font-size:14px;">분</span>
+            <button onclick="applyTimerSetting()"
+              style="padding:6px 14px; background:var(--accent-green); color:#111;
+              border:none; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer;">설정</button>
+          </div>
           <div id="timer-display">25:00</div>
           <div class="timer-controls">
             <button id="play-btn" class="timer-btn btn-play" onclick="toggleTimer()">
@@ -88,6 +149,25 @@
       </div>
     </div>
 
+    <!-- 목표 섹션 -->
+    <div id="section-goals" class="panel extra-section">
+      <h2 class="section-title">🎯 오늘의 목표</h2>
+
+      <!-- 과목 선택 (클릭하면 해당 과목으로 공부 시작) -->
+      <div class="goal-subject-picker">
+        <div style="font-size:13px; font-weight:700; color:var(--text-sub); margin-bottom:10px;">📚 과목 선택 (클릭하면 해당 과목으로 공부 시작)</div>
+        <div id="goal-subject-chips" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px;"></div>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="new-subject-input" placeholder="새 과목 직접 입력" maxlength="20" style="flex:1;">
+          <button onclick="addNewSubjectFromGoal()" style="padding:10px 18px; background:var(--accent-green); color:#111; border:none; border-radius:10px; font-weight:700; cursor:pointer;">추가</button>
+        </div>
+      </div>
+
+      <!-- 목표 목록 (각 카드에서 목표시간 수정 가능) -->
+      <div id="goals-list" class="goals-container"></div>
+    </div>
+
+    <!-- 상세 통계 -->
     <div id="section-stats" class="panel extra-section">
       <h2 class="section-title">📊 상세 통계</h2>
       <div class="stats-grid">
@@ -106,6 +186,50 @@
       </div>
     </div>
 
+    <!-- 주간 통계 -->
+    <div id="section-weekly" class="panel extra-section">
+      <h2 class="section-title">📅 주간 학습 현황</h2>
+      <div class="weekly-summary">
+        <div class="summary-card">
+          <p class="summary-title">이번 주 총 시간</p>
+          <p class="summary-value" id="week-total">0시간</p>
+        </div>
+        <div class="summary-card">
+          <p class="summary-title">일평균</p>
+          <p class="summary-value" id="week-avg">0시간</p>
+        </div>
+        <div class="summary-card">
+          <p class="summary-title">최고 기록</p>
+          <p class="summary-value" id="week-best">0시간</p>
+        </div>
+      </div>
+      <div class="weekly-chart">
+        <canvas id="weekly-bar-chart"></canvas>
+      </div>
+      <h3 class="section-subtitle">이번 달 과목별 시간</h3>
+      <div id="month-subjects-list" class="month-subjects"></div>
+    </div>
+
+    <!-- 랭킹 -->
+    <div id="section-ranking" class="panel extra-section">
+      <h2 class="section-title">🏆 친구 랭킹</h2>
+      <div style="text-align:center; padding:12px 20px; background:rgba(110,231,192,0.07);
+        border-radius:12px; margin-bottom:20px; font-size:14px; color:var(--text-sub); line-height:1.8;">
+        접속 후 로그인한 모든 유저의 랭킹이 자동으로 표시됩니다.<br>
+        <span style="color:var(--accent-green); font-weight:700;">로그인 → 공부 시작 → 랭킹 탭 클릭</span>
+      </div>
+      <div class="ranking-table">
+        <div class="ranking-header">
+          <span>순위</span>
+          <span>이름</span>
+          <span>시간</span>
+        </div>
+        <div id="ranking-list" class="ranking-body"></div>
+      </div>
+    </div>
+
+    
+    <!-- 설정 -->
     <div id="section-settings" class="panel extra-section">
       <h2 class="section-title">⚙️ 환경 설정</h2>
       <div class="detail-row">
@@ -119,11 +243,92 @@
         <span>데이터 초기화</span>
         <button onclick="confirmReset()" class="reset-btn">RESET</button>
       </div>
+      <div class="detail-row">
+        <span>🚪 로그아웃</span>
+        <button onclick="logout()" class="logout-btn">로그아웃</button>
+      </div>
     </div>
-
+<!-- 커뮤니티 섹션 - 개선된 버전 -->
+<div id="section-community" class="panel extra-section">
+  <h2 class="section-title">💬 커뮤니티</h2>
+  
+  <!-- 카테고리 탭 -->
+  <div class="community-tabs">
+    <button class="community-tab active" onclick="switchCategory('tutor', event)">📚 과외 구인</button>
+    <button class="community-tab" onclick="switchCategory('free', event)">💬 자유게시판</button>
+  </div>
+  
+  <!-- 플로팅 글쓰기 버튼 -->
+  <button class="btn-write" onclick="showWriteForm()">✏️</button>
+  
+  <!-- 글쓰기 폼 (모달) -->
+  <div id="write-form" class="write-form" style="display: none;">
+    <input type="text" id="post-title" placeholder="제목을 입력하세요" maxlength="100">
+    <textarea id="post-content" placeholder="내용을 입력하세요" rows="8"></textarea>
+    <label style="margin-top:10px;">
+  <input type="checkbox" id="anonymous-check">
+  익명으로 작성
+</label>
+    <div class="write-actions">
+      <button class="btn-submit" onclick="submitPost()">작성하기</button>
+      <button class="btn-cancel" onclick="cancelWrite()">취소</button>
+    </div>
+  </div>
+  
+  <!-- 게시글 목록 -->
+  <div id="posts-list" class="posts-list"></div>
+  
+  <!-- 게시글 상세 -->
+  <div id="post-detail" class="post-detail" style="display: none;">
+    <button class="btn-back" onclick="backToList()">← 목록으로</button>
+    <div class="post-detail-content">
+      <h3 id="detail-title"></h3>
+      <div class="post-meta">
+        <span id="detail-author"></span>
+        <span id="detail-date"></span>
+        <span id="detail-views"></span>
+      </div>
+      <div class="post-content" id="detail-content"></div>
+    </div>
+    
+    <!-- 댓글 -->
+    <div class="comments-section">
+      <h4>💬 댓글</h4>
+      <div id="comments-list"></div>
+      <div class="comment-write">
+        <textarea id="comment-input" placeholder="댓글을 입력하세요"></textarea>
+        <button onclick="submitComment()">작성</button>
+      </div>
+    </div>
+  </div>
+</div>
+  </div>
+<!-- 초대 수신 팝업 -->
+  <div id="invite-popup" style="display:none; position:fixed; top:30px; right:30px; z-index:9999;
+    background:#242734; border:2px solid var(--accent-green); border-radius:20px;
+    padding:24px 28px; box-shadow:0 8px 32px rgba(0,0,0,0.5); min-width:280px; animation: slideIn 0.3s ease;">
+    <div style="font-size:16px; font-weight:700; color:var(--text-main); margin-bottom:6px;">
+      📹 스터디 초대
+    </div>
+    <div id="invite-msg" style="font-size:14px; color:var(--text-sub); margin-bottom:18px;"></div>
+    <div style="display:flex; gap:10px;">
+      <button onclick="acceptInvite()" style="flex:1; padding:12px; background:var(--accent-green);
+        color:#111; border:none; border-radius:12px; font-weight:700; font-size:14px; cursor:pointer;">✅ 수락</button>
+      <button onclick="rejectInvite()" style="flex:1; padding:12px; background:rgba(240,153,123,0.15);
+        color:var(--accent-red); border:1.5px solid var(--accent-red); border-radius:12px;
+        font-weight:700; font-size:14px; cursor:pointer;">✕ 거절</button>
+    </div>
   </div>
 
+  <!-- 알림 토스트 -->
+  <div id="toast" style="display:none; position:fixed; bottom:30px; right:30px; z-index:9999;
+    background:#333; color:white; padding:14px 22px; border-radius:14px;
+    font-size:14px; font-weight:600; box-shadow:0 4px 16px rgba(0,0,0,0.4);"></div>
+
+</div> <!-- app-container 끝 -->
+  </div> <!-- 🔥 app 끝 -->
   <script>
+    // 전역 변수
     let monitoring = null;
     let seconds = 1500;
     let running = false;
@@ -131,16 +336,24 @@
     let lastAbsenceCount = 0;
     let lastTotalAbsenceS = 0;
     let subjectChart = null;
+    let weeklyChart = null;
+    let currentCategory = 'tutor';
+    let currentPostId = null;
 
-    // 페이지 로드 시 초기화
+    // 초기화
     window.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('section-main').classList.add('active');
       loadSubjects();
       loadTheme();
+      if (window.currentUser) {
+  const input = document.getElementById('my-username');
+  if (input) {
+    input.value = window.currentUser;
+  }
+}
     });
 
-    /**
-     * [Theme] 다크/라이트 모드 토글
-     */
+    // 테마
     function toggleTheme() {
       const isDark = document.getElementById('theme-toggle').checked;
       if (isDark) {
@@ -150,12 +363,13 @@
         document.body.classList.add('light-mode');
         localStorage.setItem('theme', 'light');
       }
-      
-      // 차트가 있으면 색상 변경을 위해 다시 렌더링
       if (subjectChart) {
         fetch('/stats').then(res => res.json()).then(data => {
           renderSubjectChart(data.subject_stats);
         });
+      }
+      if (weeklyChart) {
+        loadWeeklyStats();
       }
     }
 
@@ -170,81 +384,17 @@
       }
     }
 
-    /**
-     * [Subject] 과목 목록 불러오기 (DB에서)
-     */
-    function loadSubjects() {
-      fetch('/subjects')
-        .then(res => res.json())
-        .then(data => {
-          const select = document.getElementById('subject-select');
-          select.innerHTML = '<option value="">-- 새 과목 또는 선택 --</option>';
-          data.subjects.forEach(sub => {
-            const option = document.createElement('option');
-            option.value = sub;
-            option.textContent = sub;
-            select.appendChild(option);
-          });
-        })
-        .catch(err => console.log('과목 목록 로드 실패:', err));
-    }
-
-    /**
-     * [Subject] 드롭다운에서 선택
-     */
-    function selectSubject() {
-      const select = document.getElementById('subject-select');
-      const input = document.getElementById('subject-input');
-      if (select.value) {
-        input.value = select.value;
-      }
-    }
-
-    /**
-     * [Subject] 과목 저장
-     */
-    function updateSubject() {
-      const input = document.getElementById('subject-input');
-      const subject = input.value.trim();
-      if (!subject) {
-        alert('과목을 입력하거나 선택해주세요.');
-        return;
-      }
-      fetch('/subject', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({subject})
-      }).then(res => res.json()).then(data => {
-        alert(`과목 "${data.subject}" 저장 완료`);
-        loadSubjects(); // 목록 새로고침
-        input.value = ''; // 입력창 비우기
-        // 드롭다운을 방금 저장한 과목으로 선택
-        setTimeout(() => {
-          document.getElementById('subject-select').value = data.subject;
-        }, 300);
-      });
-    }
-
-    /**
-     * [Reset] 데이터 초기화
-     */
-    function confirmReset() {
-      if (!confirm('모든 학습 데이터가 삭제됩니다. 계속하시겠습니까?')) return;
-      fetch('/reset', {method: 'POST'})
-        .then(res => res.json())
-        .then(data => {
-          alert('데이터 초기화 완료');
-          location.reload();
-        });
-    }
-
-    /**
-     * [UI Control] 섹션 이동
-     */
+    // 섹션 전환
     function showSection(id, btn) {
-      const section = document.getElementById('section-' + id);
-      section.scrollIntoView({ behavior: 'smooth' });
-
+      document.querySelectorAll('.container, .panel.extra-section').forEach(section => {
+        section.classList.remove('active');
+      });
+      
+      const targetSection = document.getElementById('section-' + id);
+      if (targetSection) {
+        targetSection.classList.add('active');
+      }
+      
       document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
       btn.classList.add('active');
 
@@ -257,64 +407,189 @@
           else if (data.avg_score >= 50) avgEl.style.color = 'var(--accent-orange)';
           else avgEl.style.color = 'var(--accent-red)';
           renderSubjectChart(data.subject_stats);
-        }).catch(err => console.log('통계 로드 실패:', err));
+        });
+      } else if (id === 'goals') {
+        loadSubjects();   // 과목 드롭다운 최신화
+        loadGoals();
+      } else if (id === 'weekly') {
+        loadWeeklyStats();
+      } else if (id === 'ranking') {
+        if (window.currentUser) updateMyRanking();
+        loadRanking();
+      } else if (id === 'community') {
+        loadPosts();
       }
     }
 
-    /**
-     * [Camera] 카메라 시작
-     */
+    // 과목
+    function loadSubjects() {
+      fetch('/subjects').then(res => res.json()).then(data => {
+        // 대시보드 셀렉트
+        const sel = document.getElementById('subject-select');
+        const prevVal = sel.value;
+        sel.innerHTML = '<option value="">-- 기존 과목 선택 --</option>';
+        data.subjects.forEach(sub => {
+          const opt = document.createElement('option');
+          opt.value = sub; opt.textContent = sub;
+          sel.appendChild(opt);
+        });
+        if (prevVal) sel.value = prevVal;
+
+
+      }).catch(err => console.log('과목 목록 로드 실패:', err));
+    }
+
+    // 드롭다운에서 기존 과목 선택 → 바로 적용
+    function selectSubject() {
+      const select = document.getElementById('subject-select');
+      const input = document.getElementById('subject-input');
+      if (select.value) input.value = select.value;
+    }
+
+    // 드롭다운 선택 후 [선택] 버튼 → 서버에 현재 과목 설정
+    function startWithSelected() {
+      const select = document.getElementById('subject-select');
+      const subject = select.value.trim();
+      if (!subject) { alert('과목을 선택해주세요.'); return; }
+      fetch('/subject', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({subject})
+      }).then(res => res.json()).then(data => {
+        showCurrentSubject(data.subject);
+      });
+    }
+
+    // 새 과목 입력 + 목표시간 함께 저장
+    function updateSubject() {
+      const input   = document.getElementById('subject-input');
+      const goalMin = document.getElementById('subject-goal-minutes');
+      const subject = input.value.trim();
+      if (!subject) { alert('과목을 입력해주세요.'); return; }
+
+      // 1. 현재 공부 과목 설정
+      fetch('/subject', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({subject})
+      }).then(res => res.json()).then(data => {
+        showCurrentSubject(data.subject);
+        input.value = '';
+        loadSubjects();
+
+        // 2. 목표 시간이 입력됐으면 목표도 같이 저장
+        const minutes = parseInt(goalMin.value);
+        if (minutes >= 10) {
+          fetch('/goals', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({subject, target_minutes: minutes})
+          }).then(() => {
+            goalMin.value = '';
+            showToastMsg(`✅ "${subject}" 과목 저장 + 목표 ${minutes}분 설정 완료`);
+          });
+        } else {
+          showToastMsg(`✅ "${subject}" 과목 저장 완료`);
+        }
+
+        setTimeout(() => {
+          document.getElementById('subject-select').value = subject;
+        }, 400);
+      });
+    }
+
+    function showCurrentSubject(subject) {
+      const el = document.getElementById('current-subject-display');
+      if (el) {
+        el.innerText = `📚 현재 공부 중: ${subject}`;
+        el.style.display = 'block';
+      }
+    }
+
+    // 간단한 토스트 (toast 요소 있으면 쓰고 없으면 alert 대체)
+    function showToastMsg(msg) {
+      const t = document.getElementById('toast');
+      if (t) {
+        t.innerText = msg;
+        t.style.display = 'block';
+        clearTimeout(t._timer);
+        t._timer = setTimeout(() => { t.style.display = 'none'; }, 3000);
+      }
+    }
+
+
+
+    function logout() {
+      if (!confirm('로그아웃 하시겠습니까?')) return;
+      // 카메라 끄기
+      stopCamera();
+      // 소켓 정리
+      if (typeof socket !== 'undefined') socket.emit('leave_study', {});
+      // 서버 세션 삭제
+      fetch('/logout', { method: 'POST', credentials: 'include' })
+        .then(() => {
+          window.currentUser = null;
+          // 앱 숨기고 로그인 화면 표시
+          document.getElementById('app').style.display = 'none';
+          document.getElementById('auth-screen').style.display = 'flex';
+          document.getElementById('auth-screen').classList.remove('fade-out');
+          // 로그인 화면 초기화
+          showLogin();
+          document.getElementById('login-username').value = '';
+          document.getElementById('login-password').value = '';
+          // username-display 초기화
+          const nameEl = document.getElementById('username-display');
+          if (nameEl) nameEl.innerText = '';
+        });
+    }
+
+    function confirmReset() {
+      if (!confirm('모든 학습 데이터가 삭제됩니다. 계속하시겠습니까?')) return;
+      fetch('/reset', {method: 'POST'}).then(res => res.json()).then(data => {
+        alert('데이터 초기화 완료');
+        location.reload();
+      });
+    }
+
+    // 카메라
     function startCamera() {
       fetch('/start').then(() => {
         const videoTag = document.getElementById("video");
         videoTag.style.display = "block";
         videoTag.src = "/video?t=" + Date.now();
         document.getElementById("cam-placeholder").style.display = "none";
-        
         const statusTag = document.getElementById("cam-status");
         statusTag.innerText = "LIVE";
         statusTag.style.color = "var(--accent-green)";
-        
         if (monitoring) clearInterval(monitoring);
         monitoring = setInterval(checkAll, 1000);
       });
     }
 
-    /**
-     * [Camera] 카메라 중지
-     */
     function stopCamera() {
       fetch('/stop').then(() => {
         const videoTag = document.getElementById("video");
         videoTag.src = "";
         videoTag.style.display = "none";
         document.getElementById("cam-placeholder").style.display = "flex";
-        
         const statusTag = document.getElementById("cam-status");
         statusTag.innerText = "OFF";
         statusTag.style.color = "var(--text-sub)";
-        
         if (monitoring) clearInterval(monitoring);
       });
     }
 
-    /**
-     * [Data] 실시간 데이터 동기화
-     */
     function checkAll() {
       fetch('/detect').then(res => res.json()).then(data => {
         if (data.absence_count !== undefined) {
           lastAbsenceCount = data.absence_count;
           lastTotalAbsenceS = data.total_absence_s;
         }
-
         document.getElementById("face-detected").innerText = data.face_detected ? "O" : "X";
         document.getElementById("cam-ear").innerText = `| EAR: ${data.ear ? data.ear.toFixed(3) : '0.000'}`;
         document.getElementById("absence-stats").innerText = `${lastAbsenceCount}회 (누적 ${lastTotalAbsenceS}초)`;
-
         const badge = document.getElementById("state-badge");
         const row = document.getElementById("current-absence-row");
-        
         if (data.is_absent) {
           badge.className = "state-badge away";
           badge.innerHTML = "<span></span> 자리 비움";
@@ -329,16 +604,12 @@
           badge.innerHTML = "<span></span> 집중 중";
           row.style.display = "none";
         }
-      }).catch(err => console.log("서버 응답 대기 중..."));
-
+      }).catch(err => {});
       fetch('/score').then(res => res.json()).then(data => {
         updateScoreUI(Math.floor(data.score));
-      }).catch(err => console.log("점수 응답 대기 중..."));
-      
-      // 10초마다 도넛 그래프 자동 업데이트
+      }).catch(err => {});
       if (!window.lastStatsUpdate || Date.now() - window.lastStatsUpdate > 10000) {
         fetch('/stats').then(res => res.json()).then(data => {
-          // 도넛 그래프 즉시 업데이트
           if (data.subject_stats && data.subject_stats.length > 0) {
             renderSubjectChart(data.subject_stats);
           }
@@ -347,15 +618,11 @@
       }
     }
 
-    /**
-     * [UI] 점수 업데이트
-     */
     function updateScoreUI(score) {
       const txt = document.getElementById("score-text");
       const bar = document.getElementById("score-bar");
       txt.innerText = score + "점";
       bar.style.width = Math.min(score, 100) + "%";
-
       if (score >= 80) { 
         txt.style.color = "var(--accent-green)"; 
         bar.style.background = "var(--accent-green)"; 
@@ -368,9 +635,7 @@
       }
     }
 
-    /**
-     * [Timer] 뽀모도로 타이머
-     */
+    // 타이머
     function toggleTimer() {
       running = !running;
       const icon = document.getElementById('timer-icon');
@@ -379,6 +644,14 @@
         icon.innerHTML = '<div class="pause-bar"></div><div class="pause-bar"></div>';
         timerInterval = setInterval(() => {
           if (seconds > 0) { seconds--; updateTimerDisplay(); }
+          else {
+            // 타이머 종료
+            clearInterval(timerInterval);
+            running = false;
+            icon.className = "play-icon";
+            icon.innerHTML = "";
+            showToastMsg("⏰ 타이머가 종료됐습니다!");
+          }
         }, 1000);
       } else {
         clearInterval(timerInterval);
@@ -387,10 +660,28 @@
       }
     }
 
+    // 타이머 분 설정 적용
+    function applyTimerSetting() {
+      if (running) {
+        showToastMsg('⚠️ 타이머 실행 중에는 변경할 수 없습니다.');
+        return;
+      }
+      const min = parseInt(document.getElementById('timer-set-min').value);
+      if (!min || min < 1 || min > 180) {
+        showToastMsg('⚠️ 1~180분 사이로 입력하세요.');
+        return;
+      }
+      seconds = min * 60;
+      updateTimerDisplay();
+      showToastMsg(`✅ 타이머 ${min}분으로 설정됐습니다.`);
+    }
+
     function resetTimer() {
       clearInterval(timerInterval);
       running = false;
-      seconds = 1500;
+      // 설정한 분으로 초기화
+      const min = parseInt(document.getElementById('timer-set-min')?.value) || 25;
+      seconds = min * 60;
       updateTimerDisplay();
       const icon = document.getElementById('timer-icon');
       icon.className = "play-icon";
@@ -403,80 +694,892 @@
       document.getElementById('timer-display').innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
     }
 
-    /**
-     * [Chart] 과목별 도넛 그래프
-     */
+    // 차트
     function renderSubjectChart(subjectStats) {
       const ctx = document.getElementById('subject-chart').getContext('2d');
-      
       if (subjectChart) subjectChart.destroy();
-
-      // 라이트모드 체크
       const isLightMode = document.body.classList.contains('light-mode');
-
       if (!subjectStats || subjectStats.length === 0) {
         subjectChart = new Chart(ctx, {
           type: 'doughnut',
-          data: {
-            labels: ['데이터 없음'],
-            datasets: [{
-              data: [1],
-              backgroundColor: ['#444']
-            }]
-          },
+          data: { labels: ['데이터 없음'], datasets: [{ data: [1], backgroundColor: ['#444'] }] },
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-              legend: {
-                labels: {
-                  color: isLightMode ? '#1a1a1a' : '#fff'
-                }
-              }
-            }
+            plugins: { legend: { labels: { color: isLightMode ? '#1a1a1a' : '#fff' } } }
           }
         });
         return;
       }
-
       const labels = subjectStats.map(s => s.subject);
       const data = subjectStats.map(s => s.seconds);
       const colors = ['#6ee7c0', '#fac775', '#f0997b', '#8be9fd', '#ff79c6'];
-
       subjectChart = new Chart(ctx, {
         type: 'doughnut',
+        data: { labels, datasets: [{ data, backgroundColor: colors.slice(0, labels.length), borderWidth: 0 }] },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { color: isLightMode ? '#1a1a1a' : '#fff', font: {size: 14} } },
+            tooltip: { callbacks: { label: (ctx) => `${ctx.label || ''}: ${subjectStats[ctx.dataIndex].label}` } }
+          }
+        }
+      });
+    }
+
+    // =============================================
+    // 목표 섹션
+    // =============================================
+
+    // 과목 칩 렌더링 + 목표 목록 로드
+    function loadGoals() {
+      fetch('/subjects').then(r => r.json()).then(sData => {
+        const subjects = sData.subjects || [];
+        const chips = document.getElementById('goal-subject-chips');
+        if (!chips) return;
+
+        if (subjects.length === 0) {
+          chips.innerHTML = '<span style="font-size:13px; color:var(--text-sub);">저장된 과목이 없습니다. 아래에 입력해주세요.</span>';
+        } else {
+          chips.innerHTML = subjects.map(sub => `
+            <button class="subject-chip" id="chip-${encodeURIComponent(sub)}"
+              onclick="selectGoalSubject('${sub.replace(/'/g,"\'")}')">
+              ${sub}
+            </button>
+          `).join('');
+        }
+
+        // 현재 공부 중인 과목 칩 활성화
+        fetch('/detect').then(r => r.json()).then(d => {
+          // vision에서 현재 과목 확인 불가능하므로 window 변수 사용
+          if (window.currentStudySubject) {
+            highlightChip(window.currentStudySubject);
+          }
+        }).catch(() => {});
+      });
+
+      // 목표 목록 로드
+      fetch('/goals').then(r => r.json()).then(data => {
+        const container = document.getElementById('goals-list');
+        if (!data.goals || data.goals.length === 0) {
+          container.innerHTML = '<p style="text-align:center; color:var(--text-sub); padding:30px;">등록된 목표가 없습니다.<br>과목을 선택하면 목표를 설정할 수 있습니다.</p>';
+          return;
+        }
+        container.innerHTML = data.goals.map(g => {
+          const colorClass = g.progress >= 80 ? '' : g.progress >= 50 ? 'warning' : 'danger';
+          return `
+            <div class="goal-item" id="goal-item-${encodeURIComponent(g.subject)}">
+              <button class="goal-delete" onclick="deleteGoal('${g.subject.replace(/'/g,"\'")}')">×</button>
+              <div class="goal-header">
+                <span class="goal-subject" style="cursor:pointer;" onclick="selectGoalSubject('${g.subject.replace(/'/g,"\'")}')">
+                  📚 ${g.subject}
+                </span>
+                <span class="goal-time">${g.actual}분 / <span id="target-display-${encodeURIComponent(g.subject)}">${g.target}</span>분</span>
+              </div>
+              <div class="goal-progress-bar">
+                <div class="goal-progress-fill ${colorClass}" style="width:${g.progress}%"></div>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+                <span class="goal-percent">${g.progress}% 달성</span>
+                <div style="display:flex; gap:6px; align-items:center;">
+                  <input type="number" id="edit-target-${encodeURIComponent(g.subject)}"
+                    value="${g.target}" min="10" max="600"
+                    style="width:70px; padding:4px 8px; border-radius:8px; border:1px solid #444;
+                    background:#1a1a1a; color:white; font-size:13px; text-align:center;">
+                  <span style="font-size:12px; color:var(--text-sub);">분</span>
+                  <button onclick="updateGoalTarget('${g.subject.replace(/'/g,"\'")}', '${encodeURIComponent(g.subject)}')"
+                    style="padding:4px 12px; background:var(--accent-green); color:#111;
+                    border:none; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">
+                    수정
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      });
+    }
+
+    // 과목 칩/카드 클릭 → 해당 과목으로 공부 시작
+    function selectGoalSubject(subject) {
+      fetch('/subject', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({subject})
+      }).then(r => r.json()).then(data => {
+        window.currentStudySubject = subject;
+        highlightChip(subject);
+        showToastMsg(`📚 "${subject}" 과목으로 공부 시작!`);
+        // 대시보드 과목 입력창에도 반영
+        const inp = document.getElementById('subject-input');
+        if (inp) inp.value = subject;
+        const sel = document.getElementById('subject-select');
+        if (sel) {
+          setTimeout(() => { sel.value = subject; }, 300);
+        }
+        // 현재 과목 표시 업데이트
+        showCurrentSubject(subject);
+      });
+    }
+
+    // 활성 칩 표시
+    function highlightChip(subject) {
+      document.querySelectorAll('.subject-chip').forEach(c => c.classList.remove('active'));
+      const chip = document.getElementById('chip-' + encodeURIComponent(subject));
+      if (chip) chip.classList.add('active');
+    }
+
+    // 새 과목 추가 (목표 섹션에서)
+    function addNewSubjectFromGoal() {
+      const inp = document.getElementById('new-subject-input');
+      const subject = inp.value.trim();
+      if (!subject) { showToastMsg('⚠️ 과목명을 입력하세요.'); return; }
+
+      fetch('/subject', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({subject})
+      }).then(r => r.json()).then(() => {
+        inp.value = '';
+        window.currentStudySubject = subject;
+        showToastMsg(`✅ "${subject}" 과목 추가 완료! 공부 시작`);
+        loadGoals();
+        loadSubjects();
+        showCurrentSubject(subject);
+      });
+    }
+
+    // 목표 시간 수정
+    function updateGoalTarget(subject, encodedSubject) {
+      const inp = document.getElementById('edit-target-' + encodedSubject);
+      const minutes = parseInt(inp.value);
+      if (!minutes || minutes < 10) { showToastMsg('⚠️ 최소 10분 이상 입력하세요.'); return; }
+      fetch('/goals', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({subject, target_minutes: minutes})
+      }).then(r => r.json()).then(() => {
+        showToastMsg(`✅ "${subject}" 목표 ${minutes}분으로 수정 완료`);
+        loadGoals();
+      });
+    }
+
+    function deleteGoal(subject) {
+      if (!confirm(`"${subject}" 목표를 삭제하시겠습니까?`)) return;
+      fetch(`/goals/${encodeURIComponent(subject)}`, {method: 'DELETE'}).then(() => loadGoals());
+    }
+
+    // 주간 통계
+    function loadWeeklyStats() {
+      fetch('/stats/weekly').then(res => res.json()).then(data => {
+        const weekData = data.data;
+        const total = weekData.reduce((sum, d) => sum + d.minutes, 0);
+        const avg = Math.round(total / 7 * 10) / 10;
+        const best = Math.max(...weekData.map(d => d.minutes));
+        document.getElementById('week-total').innerText = `${Math.floor(total / 60)}시간 ${total % 60}분`;
+        document.getElementById('week-avg').innerText = `${Math.floor(avg / 60)}시간 ${Math.round(avg % 60)}분`;
+        document.getElementById('week-best').innerText = `${Math.floor(best / 60)}시간 ${best % 60}분`;
+        renderWeeklyChart(weekData);
+      });
+      fetch('/stats/monthly').then(res => res.json()).then(data => {
+        const container = document.getElementById('month-subjects-list');
+        if (!data.subjects || data.subjects.length === 0) {
+          container.innerHTML = '<p style="text-align:center; color: var(--text-sub); padding: 20px;">이번 달 학습 기록이 없습니다</p>';
+          return;
+        }
+        container.innerHTML = data.subjects.map(s => `
+          <div class="month-subject-item">
+            <span class="month-subject-name">${s.subject}</span>
+            <span class="month-subject-time">${s.hours}시간 (${s.minutes}분)</span>
+          </div>
+        `).join('');
+      });
+    }
+
+    function renderWeeklyChart(weekData) {
+      const ctx = document.getElementById('weekly-bar-chart').getContext('2d');
+      if (weeklyChart) weeklyChart.destroy();
+      const isLightMode = document.body.classList.contains('light-mode');
+      const textColor = isLightMode ? '#1a1a1a' : '#fff';
+      weeklyChart = new Chart(ctx, {
+        type: 'bar',
         data: {
-          labels,
+          labels: weekData.map(d => `${d.weekday} ${d.date}`),
           datasets: [{
-            data,
-            backgroundColor: colors.slice(0, labels.length),
-            borderWidth: 0
+            label: '학습 시간 (분)',
+            data: weekData.map(d => d.minutes),
+            backgroundColor: 'rgba(110, 231, 192, 0.8)',
+            borderColor: 'rgba(110, 231, 192, 1)',
+            borderWidth: 2,
+            borderRadius: 8
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: {
-              position: 'bottom',
-              labels: {
-                color: isLightMode ? '#1a1a1a' : '#fff',
-                font: {size: 14}
-              }
-            },
-            tooltip: {
-              callbacks: {
-                label: (ctx) => {
-                  const label = ctx.label || '';
-                  const value = subjectStats[ctx.dataIndex].label;
-                  return `${label}: ${value}`;
-                }
-              }
-            }
+            legend: { labels: {color: textColor} },
+            tooltip: { callbacks: { label: (ctx) => {
+              const min = ctx.parsed.y;
+              return `${Math.floor(min/60)}시간 ${min%60}분`;
+            }}}
+          },
+          scales: {
+            y: { beginAtZero: true, ticks: {color: textColor}, grid: {color: 'rgba(255,255,255,0.1)'} },
+            x: { ticks: {color: textColor}, grid: {display: false} }
           }
         }
       });
     }
+
+    // 랭킹 (친구 추가 불필요 - 로그인한 모든 유저 자동 표시)
+
+    function loadRanking() {
+      fetch('/ranking').then(res => res.json()).then(data => {
+        const container = document.getElementById('ranking-list');
+        if (!data.ranking || data.ranking.length === 0) {
+          container.innerHTML = '<p style="text-align:center; color: var(--text-sub); padding: 40px;">아직 랭킹 데이터가 없습니다</p>';
+          return;
+        }
+        container.innerHTML = data.ranking.map(r => {
+          const displayName = r.username || r.nickname || '알 수 없음';
+          const isMe = displayName === window.currentUser;
+          const rankClass = r.rank === 1 ? 'top1' : r.rank === 2 ? 'top2' : r.rank === 3 ? 'top3' : '';
+          const nameClass = isMe ? 'me' : '';
+          return `
+            <div class="ranking-row">
+              <span class="ranking-rank ${rankClass}">${r.rank}</span>
+              <span class="ranking-name ${nameClass}">${displayName}${isMe ? ' (나)' : ''}</span>
+              <span class="ranking-time">${r.minutes}분</span>
+            </div>
+          `;
+        }).join('');
+      });
+    }
+
+    // 랭킹 업데이트 함수 (1분마다 자동 실행 + 랭킹 탭 진입 시 수동 호출)
+    function updateMyRanking() {
+      fetch('/stats', { credentials: 'include' })
+        .then(res => res.json())
+        .then(data => {
+          const parts = data.total_focus_time.split(':');
+          const todayMinutes = parseInt(parts[0]) * 60 + parseInt(parts[1]);
+          if (todayMinutes > 0) {
+            fetch('/ranking/update', {
+              method: 'POST',
+              credentials: 'include',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({ minutes: todayMinutes, nickname: window.currentUser })
+            }).then(res => {
+              if (!res.ok) console.warn('랭킹 업데이트 실패:', res.status);
+            });
+          }
+        });
+    }
+
+    // 1분마다 자동 업데이트
+    setInterval(() => {
+      if (window.currentUser) {
+        updateMyRanking();
+        loadRanking();
+      }
+    }, 60000);
+
+    // 커뮤니티
+    // 커뮤니티 JavaScript - 버그 수정
+
+function switchCategory(category, event) {
+  currentCategory = category;
+  
+  // 탭 활성화
+  document.querySelectorAll('.community-tab').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  event.target.classList.add('active');
+  
+  // 목록 새로고침
+  loadPosts();
+}
+
+function loadPosts() {
+  fetch(`/community/posts?category=${currentCategory}`)
+    .then(res => res.json())
+    .then(data => {
+      const container = document.getElementById('posts-list');
+      
+      if (!data.posts || data.posts.length === 0) {
+        container.innerHTML = '<div class="empty-state">아직 작성된 글이 없습니다</div>';
+        return;
+      }
+      
+      container.innerHTML = data.posts.map(post => `
+        <div class="post-item" onclick="viewPost(${post.id})">
+          <div class="post-item-main">
+            <div class="post-item-title">${escapeHtml(post.title)}</div>
+            <div class="post-item-meta">
+              <span>👤 ${escapeHtml(post.author)}</span>
+              <span>🕐 ${post.created_at}</span>
+            </div>
+          </div>
+          <div class="post-item-views">👁️ ${post.views}</div>
+        </div>
+      `).join('');
+    })
+    .catch(err => {
+      console.error('게시글 로드 실패:', err);
+    });
+}
+
+function showWriteForm() {
+  document.getElementById('write-form').style.display = 'block';
+  document.getElementById('post-title').focus();
+}
+
+function cancelWrite() {
+  document.getElementById('write-form').style.display = 'none';
+  document.getElementById('post-title').value = '';
+  document.getElementById('post-content').value = '';
+}
+
+function submitPost() {
+  const title = document.getElementById('post-title').value.trim();
+  const content = document.getElementById('post-content').value.trim();
+  
+  if (!title || !content) {
+    alert('제목과 내용을 입력하세요.');
+    return;
+  }
+  
+  const isAnonymous = document.getElementById('anonymous-check').checked;
+
+  const author = isAnonymous
+    ? '익명'
+    : (window.currentUser || '익명');
+  
+  fetch('/community/posts', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      category: currentCategory,
+      author: author,
+      title: title,
+      content: content
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    alert('✅ 글이 작성되었습니다!');
+    cancelWrite();
+    loadPosts();
+  })
+  .catch(err => {
+    console.error('작성 실패:', err);
+    alert('작성 실패. 다시 시도해주세요.');
+  });
+}
+
+function viewPost(postId) {
+  currentPostId = postId;
+  
+  fetch(`/community/posts/${postId}`)
+    .then(res => res.json())
+    .then(post => {
+      document.getElementById('posts-list').style.display = 'none';
+      document.querySelector('.btn-write').style.display = 'none';
+      document.getElementById('post-detail').style.display = 'block';
+      
+      document.getElementById('detail-title').textContent = post.title;
+      document.getElementById('detail-author').textContent = '👤 ' + post.author;
+      document.getElementById('detail-date').textContent = '🕐 ' + post.created_at;
+      document.getElementById('detail-views').textContent = '👁️ ' + post.views;
+      document.getElementById('detail-content').textContent = post.content;
+      
+      const commentsList = document.getElementById('comments-list');
+      if (post.comments && post.comments.length > 0) {
+        commentsList.innerHTML = post.comments.map(c => `
+          <div class="comment-item">
+            <div>
+              <span class="comment-author">${escapeHtml(c.author)}</span>
+              <span class="comment-date">${c.created_at}</span>
+            </div>
+            <div class="comment-content">${escapeHtml(c.content)}</div>
+          </div>
+        `).join('');
+      } else {
+        commentsList.innerHTML = '<div class="empty-state">첫 댓글을 작성해보세요!</div>';
+      }
+      
+      document.getElementById('comment-input').value = '';
+    })
+    .catch(err => {
+      console.error('게시글 로드 실패:', err);
+      alert('게시글을 불러올 수 없습니다.');
+    });
+}
+
+function backToList() {
+  document.getElementById('posts-list').style.display = 'flex';
+  document.querySelector('.btn-write').style.display = 'flex';
+  document.getElementById('post-detail').style.display = 'none';
+  loadPosts();
+}
+
+function submitComment() {
+  const content = document.getElementById('comment-input').value.trim();
+  
+  if (!content) {
+    alert('댓글 내용을 입력하세요.');
+    return;
+  }
+  
+  const author = window.currentUser || '익명';
+  
+  fetch(`/community/posts/${currentPostId}/comments`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      author: author,
+      content: content
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    viewPost(currentPostId); // 댓글 추가 후 재로드
+  })
+  .catch(err => {
+    console.error('댓글 작성 실패:', err);
+    alert('댓글 작성 실패. 다시 시도해주세요.');
+  });
+}
+
+// XSS 방지
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+    
+    async function login() {
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value.trim();
+
+  if (!username || !password) {
+    alert('아이디와 비밀번호를 입력하세요');
+    return;
+  }
+
+  const res = await fetch('/login', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ username, password })
+  });
+
+  const data = await res.json(); // 🔥 중요
+
+  if (res.ok) {
+    const auth = document.getElementById('auth-screen');
+
+    // 🔥 fade-out
+    auth.classList.add('fade-out');
+
+    setTimeout(() => {
+      auth.style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+    }, 500);
+
+    // 🔥 핵심 1: 닉네임 저장
+    window.currentUser = data.nickname;
+
+    // 🔥 핵심 2: 닉네임 표시
+    const displayEl = document.getElementById('username-display');
+    if (displayEl) displayEl.innerText = '🟢 ' + data.nickname;
+
+    // 🔥 핵심 3: 소켓에 유저 등록 (온라인 목록 표시)
+    registerSocket();
+
+  } else {
+    const card = document.querySelector('.auth-card');
+    card.classList.add('shake');
+    setTimeout(() => card.classList.remove('shake'), 300);
+
+    alert(data.error || '로그인 실패');
+  }
+}
+
+async function register() {
+  const username = document.getElementById('reg-username').value.trim();
+  const password = document.getElementById('reg-password').value.trim();
+  const nickname = document.getElementById('reg-nickname').value.trim();
+
+  if (!username || !password || !nickname) {
+    alert('아이디, 비밀번호, 닉네임을 모두 입력하세요');
+    return;
+  }
+
+  try {
+    const res = await fetch('/register', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ username, password, nickname })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      alert('회원가입 성공!');
+
+      // 🔥 로그인 화면으로 이동
+      showLogin();
+
+      // 🔥 입력 초기화
+      document.getElementById('reg-username').value = '';
+      document.getElementById('reg-password').value = '';
+      document.getElementById('reg-nickname').value = '';
+
+    } else {
+      alert(data.error || '회원가입 실패');
+    }
+
+  } catch (err) {
+    console.error(err);
+    alert('서버 연결 오류');
+  }
+}
+
+async function checkLogin() {
+  try {
+    const res = await fetch('/me');
+
+    // 🔥 서버 없거나 에러면 그냥 로그인 화면 유지
+    if (!res.ok) return;
+
+    const data = await res.json();
+
+    if (data.user) {
+      document.getElementById('auth-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+
+      // 🔥 username 표시 (없어도 에러 안 나게)
+      const nameEl = document.getElementById('username-display');
+      if (nameEl) nameEl.innerText = '🟢 ' + data.user;
+
+      // 세션 유지 상태에서 소켓 등록
+      window.currentUser = data.user;
+      registerSocket();
+    }
+
+  } catch (err) {
+    console.log('로그인 체크 실패:', err);
+  }
+}
+function showRegister() {
+  document.getElementById('login-view').style.display = 'none';
+  document.getElementById('register-view').style.display = 'block';
+}
+
+function showLogin() {
+  document.getElementById('login-view').style.display = 'block';
+  document.getElementById('register-view').style.display = 'none';
+}
+// 페이지 로드 시 자동 실행
+window.onload = checkLogin;
+    // =============================================
+    // 스터디룸 - 초대 기반 WebRTC (같은 와이파이 LAN 전용)
+    // =============================================
+    const socket = io();
+    const peerConnections = {};   // {sid: RTCPeerConnection}
+    let pendingInvite = null;     // 수신된 초대 정보 {from_sid, from_nickname}
+    let localStream = null;       // 브라우저 캠 스트림
+
+    const RTC_CONFIG = {
+      iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+    };
+
+    // --- 토스트 알림 ---
+    function showToast(msg, duration=3000) {
+      const t = document.getElementById("toast");
+      t.innerText = msg;
+      t.style.display = "block";
+      clearTimeout(t._timer);
+      t._timer = setTimeout(() => { t.style.display = "none"; }, duration);
+    }
+
+    // --- 로그인 후 소켓 등록 ---
+    function registerSocket() {
+      if (!window.currentUser) return;
+      socket.emit("register_user", { nickname: window.currentUser });
+    }
+
+    // --- 온라인 유저 목록 렌더링 ---
+    function renderOnlineUsers(users) {
+      const box = document.getElementById("online-users-box");
+      const list = document.getElementById("online-users-list");
+      if (!users || users.length === 0) {
+        box.style.display = "none";
+        return;
+      }
+      box.style.display = "block";
+      list.innerHTML = users.map(u => `
+        <div style="display:flex; justify-content:space-between; align-items:center;
+          background:rgba(110,231,192,0.07); padding:8px 12px; border-radius:10px;">
+          <span style="font-size:13px; color:var(--text-main);">🟢 ${u.nickname}</span>
+          <button onclick="sendInvite('${u.sid}', '${u.nickname}')"
+            style="padding:5px 12px; background:var(--accent-green); color:#111;
+            border:none; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">
+            초대
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function addOnlineUser(sid, nickname) {
+      const list = document.getElementById("online-users-list");
+      const box = document.getElementById("online-users-box");
+      box.style.display = "block";
+      if (document.getElementById("online-" + sid)) return;
+      const div = document.createElement("div");
+      div.id = "online-" + sid;
+      div.style.cssText = "display:flex; justify-content:space-between; align-items:center; background:rgba(110,231,192,0.07); padding:8px 12px; border-radius:10px;";
+      div.innerHTML = `
+        <span style="font-size:13px; color:var(--text-main);">🟢 ${nickname}</span>
+        <button onclick="sendInvite('${sid}', '${nickname}')"
+          style="padding:5px 12px; background:var(--accent-green); color:#111;
+          border:none; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">
+          초대
+        </button>
+      `;
+      list.appendChild(div);
+    }
+
+    function removeOnlineUser(sid) {
+      const el = document.getElementById("online-" + sid);
+      if (el) el.remove();
+      const list = document.getElementById("online-users-list");
+      if (list.children.length === 0) {
+        document.getElementById("online-users-box").style.display = "none";
+      }
+    }
+
+    // --- 초대 보내기 ---
+    function sendInvite(targetSid, targetNickname) {
+      socket.emit("send_invite", { target_sid: targetSid });
+      showToast(`📨 ${targetNickname}님께 초대를 보냈습니다`);
+    }
+
+    // --- 초대 수신 팝업 ---
+    function showInvitePopup(fromSid, fromNickname) {
+      pendingInvite = { from_sid: fromSid, from_nickname: fromNickname };
+      document.getElementById("invite-msg").innerText = `${fromNickname}님이 같이 공부하자고 했어요!`;
+      document.getElementById("invite-popup").style.display = "block";
+    }
+
+    // --- 수락 ---
+    async function acceptInvite() {
+      if (!pendingInvite) return;
+      document.getElementById("invite-popup").style.display = "none";
+
+      // 카메라 권한 확보
+      if (!localStream) {
+        try {
+          localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        } catch(e) {
+          showToast("❌ 카메라 권한이 필요합니다");
+          return;
+        }
+      }
+
+      socket.emit("accept_invite", { from_sid: pendingInvite.from_sid });
+      pendingInvite = null;
+    }
+
+    // --- 거절 ---
+    function rejectInvite() {
+      if (!pendingInvite) return;
+      socket.emit("reject_invite", { from_sid: pendingInvite.from_sid });
+      document.getElementById("invite-popup").style.display = "none";
+      pendingInvite = null;
+    }
+
+    // --- 친구 캠 박스 생성 ---
+    function createFriendCamBox(sid, nickname) {
+      if (document.getElementById("friend-cam-" + sid)) return;
+      const box = document.createElement("div");
+      box.id = "friend-cam-" + sid;
+      box.className = "friend-cam-box";
+      box.innerHTML = `
+        <div class="friend-cam-header">
+          <span class="friend-cam-name">📹 ${nickname}</span>
+          <button class="btn-disconnect" onclick="endCam('${sid}')">✕ 끊기</button>
+        </div>
+        <div class="friend-video-container">
+          <video id="friend-video-${sid}" autoplay playsinline muted
+            style="width:100%; height:100%; object-fit:cover; border-radius:0 0 12px 12px;"></video>
+          <div id="friend-loading-${sid}" class="friend-loading">🔗 연결 중...</div>
+        </div>
+      `;
+      document.getElementById("friend-cams").appendChild(box);
+    }
+
+    // --- 캠 끊기 ---
+    function endCam(sid) {
+      if (peerConnections[sid]) {
+        peerConnections[sid].close();
+        delete peerConnections[sid];
+      }
+      const el = document.getElementById("friend-cam-" + sid);
+      if (el) el.remove();
+      socket.emit("end_cam", { target_sid: sid });
+
+      // 로컬 스트림도 다른 연결 없으면 종료
+      if (Object.keys(peerConnections).length === 0 && localStream) {
+        localStream.getTracks().forEach(t => t.stop());
+        localStream = null;
+      }
+    }
+
+    // --- WebRTC 연결 생성 ---
+    async function createPeerConnection(sid, nickname, isInitiator) {
+      if (peerConnections[sid]) return peerConnections[sid];
+
+      const pc = new RTCPeerConnection(RTC_CONFIG);
+      peerConnections[sid] = pc;
+
+      // 로컬 트랙 추가
+      if (localStream) {
+        localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+      }
+
+      // 원격 스트림 수신
+      pc.ontrack = (e) => {
+        const video = document.getElementById("friend-video-" + sid);
+        const loading = document.getElementById("friend-loading-" + sid);
+        if (video) {
+          video.srcObject = e.streams[0];
+          video.onloadedmetadata = () => { if(loading) loading.style.display = "none"; };
+        }
+      };
+
+      // ICE candidate 전송
+      pc.onicecandidate = (e) => {
+        if (e.candidate) {
+          socket.emit("webrtc_ice", { target: sid, candidate: e.candidate });
+        }
+      };
+
+      pc.onconnectionstatechange = () => {
+        if (["disconnected","failed","closed"].includes(pc.connectionState)) {
+          const el = document.getElementById("friend-cam-" + sid);
+          if (el) el.remove();
+          delete peerConnections[sid];
+        }
+      };
+
+      createFriendCamBox(sid, nickname);
+
+      if (isInitiator) {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        socket.emit("webrtc_offer", { target: sid, sdp: offer });
+      }
+
+      return pc;
+    }
+
+    // --- Socket.IO 이벤트 수신 ---
+
+    // 온라인 유저 목록 (최초 접속 시)
+    socket.on("online_users", (data) => {
+      renderOnlineUsers(data.users);
+    });
+
+    // 새 유저 온라인
+    socket.on("user_online", (data) => {
+      addOnlineUser(data.sid, data.nickname);
+      showToast(`🟢 ${data.nickname}님이 접속했습니다`);
+    });
+
+    // 유저 오프라인
+    socket.on("user_offline", (data) => {
+      removeOnlineUser(data.sid);
+      // 연결된 캠이면 자동 정리
+      if (peerConnections[data.sid]) {
+        const el = document.getElementById("friend-cam-" + data.sid);
+        if (el) el.remove();
+        peerConnections[data.sid].close();
+        delete peerConnections[data.sid];
+      }
+    });
+
+    // 초대 수신
+    socket.on("invite_received", (data) => {
+      showInvitePopup(data.from_sid, data.from_nickname);
+    });
+
+    // 초대 수락됨 (A 입장) → A가 offer 생성
+    socket.on("invite_accepted", async (data) => {
+      showToast(`✅ ${data.from_nickname}님이 수락했습니다!`);
+
+      // A도 카메라 확보
+      if (!localStream) {
+        try {
+          localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        } catch(e) {
+          showToast("❌ 카메라 권한이 필요합니다");
+          return;
+        }
+      }
+
+      // A가 initiator로 WebRTC 시작
+      await createPeerConnection(data.from_sid, data.from_nickname, true);
+    });
+
+    // 초대 거절됨
+    socket.on("invite_rejected", (data) => {
+      showToast(`❌ ${data.from_nickname}님이 거절했습니다`);
+    });
+
+    // 초대 실패
+    socket.on("invite_failed", (data) => {
+      showToast(`⚠️ ${data.msg}`);
+    });
+
+    // 상대가 캠 끊음
+    socket.on("cam_ended", (data) => {
+      const sid = data.from_sid;
+      if (peerConnections[sid]) {
+        peerConnections[sid].close();
+        delete peerConnections[sid];
+      }
+      const el = document.getElementById("friend-cam-" + sid);
+      if (el) el.remove();
+      showToast("📴 상대방이 캠을 종료했습니다");
+    });
+
+    // WebRTC 시그널링
+    socket.on("webrtc_offer", async (data) => {
+      // B 입장: offer 받고 answer 생성
+      const nickname = document.getElementById("online-" + data.sid)?.querySelector("span")?.innerText?.replace("🟢 ","") || "스터디원";
+      const pc = await createPeerConnection(data.sid, nickname, false);
+      await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      socket.emit("webrtc_answer", { target: data.sid, sdp: answer });
+    });
+
+    socket.on("webrtc_answer", async (data) => {
+      const pc = peerConnections[data.sid];
+      if (pc) await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+    });
+
+    socket.on("webrtc_ice", async (data) => {
+      const pc = peerConnections[data.sid];
+      if (pc && data.candidate) {
+        try { await pc.addIceCandidate(new RTCIceCandidate(data.candidate)); } catch(e) {}
+      }
+    });
+
+    // --- 로그인 완료 시 소켓 등록 연동 ---
+    // login() 함수 안에서 registerSocket() 호출하도록 기존 login 함수에 추가
   </script>
 </body>
-</html>

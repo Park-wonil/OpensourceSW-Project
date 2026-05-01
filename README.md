@@ -41,6 +41,7 @@ source venv/bin/activate
 ```bash
 pip install --upgrade pip
 pip install mediapipe==0.10.8 opencv-python numpy flask
+pip install flask-socketio
 ```
 
 ### 5. 서버실행 Flask
