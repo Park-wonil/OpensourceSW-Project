@@ -29,7 +29,10 @@ start_time = None
 current_subject = ""
 
 # 스터디룸 접속 유저 관리 {sid: nickname}
-study_room_users = {}
+study_room_users = {}  # {sid: nickname} - 온라인 유저 전체
+
+# 스터디룸 방 관리 {room_id: {name, host_sid, host_nickname, members:[{sid,nickname}]}}
+study_rooms = {}
 
 # =========================
 # 페이지
@@ -330,11 +333,28 @@ def on_register(data):
 
 @socketio.on("disconnect")
 def on_disconnect():
-    """연결 끊김 - 온라인 목록에서 제거, 연결된 캠도 정리"""
-    if request.sid in study_room_users:
-        nickname = study_room_users.pop(request.sid)
+    """연결 끊김 - 온라인 목록 + 스터디룸 방에서도 자동 제거"""
+    nickname = study_room_users.pop(request.sid, None)
+    if nickname:
         emit("user_offline", {"sid": request.sid}, to=STUDY_ROOM)
         print(f"[오프라인] {nickname} 연결 끊김 (총 {len(study_room_users)}명)")
+
+    # 참여 중인 방에서 자동 퇴장
+    for room_id in list(study_rooms.keys()):
+        room = study_rooms.get(room_id)
+        if not room:
+            continue
+        if any(m["sid"] == request.sid for m in room["members"]):
+            room["members"] = [m for m in room["members"] if m["sid"] != request.sid]
+            if not room["members"]:
+                del study_rooms[room_id]
+            else:
+                if room["host_sid"] == request.sid:
+                    room["host_sid"]      = room["members"][0]["sid"]
+                    room["host_nickname"] = room["members"][0]["nickname"]
+                emit("room_member_left", {"sid": request.sid, "nickname": nickname or "익명"},
+                     to=room_id)
+    _broadcast_room_list()
 
 # --- 초대 시스템 ---
 
@@ -398,8 +418,168 @@ def on_ice(data):
     """ICE candidate를 특정 유저에게 전달"""
     emit("webrtc_ice", {"sid": request.sid, "candidate": data["candidate"]}, to=data["target"])
 
+# --- 실시간 채팅 ---
+@socketio.on("chat_message")
+def on_chat(data):
+    """채팅 메시지 전체 브로드캐스트 (같은 와이파이 스터디룸)"""
+    nickname = study_room_users.get(request.sid, "익명")
+    msg = str(data.get("msg", "")).strip()[:200]   # 200자 제한
+    if not msg:
+        return
+    emit("chat_message", {
+        "nickname": nickname,
+        "msg":      msg,
+        "time":     __import__("time").strftime("%H:%M"),
+        "sid":      request.sid,
+    }, to=STUDY_ROOM)
+
 # =========================
-#  중요: 반드시 맨 아래
+# 스터디룸 방 시스템
+# =========================
+
+import uuid as _uuid
+
+def _broadcast_room_list():
+    """전체 유저에게 최신 방 목록 브로드캐스트"""
+    room_list = [
+        {
+            "id":       rid,
+            "name":     r["name"],
+            "host":     r["host_nickname"],
+            "count":    len(r["members"]),
+            "members":  [m["nickname"] for m in r["members"]],
+        }
+        for rid, r in study_rooms.items()
+    ]
+    emit("room_list", {"rooms": room_list}, to=STUDY_ROOM)
+
+@socketio.on("create_room")
+def on_create_room(data):
+    """방 만들기"""
+    name = str(data.get("name", "")).strip()[:30] or "스터디룸"
+    nickname = study_room_users.get(request.sid, "익명")
+    room_id  = _uuid.uuid4().hex[:8]
+
+    study_rooms[room_id] = {
+        "name":          name,
+        "host_sid":      request.sid,
+        "host_nickname": nickname,
+        "members":       [{"sid": request.sid, "nickname": nickname}],
+        "room_socket":   room_id,
+    }
+    join_room(room_id)
+    emit("room_created", {"room_id": room_id, "name": name})
+    _broadcast_room_list()
+    print(f"[방 생성] {name} ({room_id}) by {nickname}")
+
+@socketio.on("join_room_req")
+def on_join_room(data):
+    """방 입장"""
+    room_id  = data.get("room_id", "")
+    nickname = study_room_users.get(request.sid, "익명")
+
+    if room_id not in study_rooms:
+        emit("room_error", {"msg": "존재하지 않는 방입니다."})
+        return
+
+    room = study_rooms[room_id]
+    # 이미 입장한 경우
+    if any(m["sid"] == request.sid for m in room["members"]):
+        emit("room_joined", {"room_id": room_id, "name": room["name"],
+                             "members": room["members"]})
+        return
+
+    room["members"].append({"sid": request.sid, "nickname": nickname})
+    join_room(room_id)
+
+    # 기존 멤버에게 새 유저 알림
+    emit("room_member_joined", {"sid": request.sid, "nickname": nickname},
+         to=room_id, include_self=False)
+
+    # 입장 유저에게 방 정보 + 기존 멤버 목록 전달
+    emit("room_joined", {
+        "room_id": room_id,
+        "name":    room["name"],
+        "members": room["members"],
+    })
+    _broadcast_room_list()
+    print(f"[방 입장] {nickname} → {room['name']}")
+
+@socketio.on("leave_room_req")
+def on_leave_room(data):
+    """방 퇴장"""
+    room_id  = data.get("room_id", "")
+    nickname = study_room_users.get(request.sid, "익명")
+
+    if room_id not in study_rooms:
+        return
+
+    room = study_rooms[room_id]
+    room["members"] = [m for m in room["members"] if m["sid"] != request.sid]
+    leave_room(room_id)
+
+    # 방이 비면 삭제
+    if not room["members"]:
+        del study_rooms[room_id]
+        print(f"[방 삭제] {room_id} (인원 없음)")
+    else:
+        # 방장이 나가면 다음 멤버가 방장
+        if room["host_sid"] == request.sid and room["members"]:
+            room["host_sid"]      = room["members"][0]["sid"]
+            room["host_nickname"] = room["members"][0]["nickname"]
+        emit("room_member_left", {"sid": request.sid, "nickname": nickname},
+             to=room_id)
+
+    emit("room_left", {})
+    _broadcast_room_list()
+    print(f"[방 퇴장] {nickname} ← {room_id}")
+
+@socketio.on("get_rooms")
+def on_get_rooms():
+    """방 목록 요청"""
+    room_list = [
+        {
+            "id":      rid,
+            "name":    r["name"],
+            "host":    r["host_nickname"],
+            "count":   len(r["members"]),
+            "members": [m["nickname"] for m in r["members"]],
+        }
+        for rid, r in study_rooms.items()
+    ]
+    emit("room_list", {"rooms": room_list})
+
+@socketio.on("room_chat")
+def on_room_chat(data):
+    """방 내 채팅"""
+    room_id  = data.get("room_id", "")
+    msg      = str(data.get("msg", "")).strip()[:200]
+    nickname = study_room_users.get(request.sid, "익명")
+    if not msg or room_id not in study_rooms:
+        return
+    emit("room_chat", {
+        "nickname": nickname,
+        "msg":      msg,
+        "time":     __import__("time").strftime("%H:%M"),
+        "sid":      request.sid,
+    }, to=room_id)
+
+# 방 내 WebRTC 시그널링
+@socketio.on("room_offer")
+def on_room_offer(data):
+    emit("room_offer", {"sid": request.sid, "sdp": data["sdp"]}, to=data["target"])
+
+@socketio.on("room_answer")
+def on_room_answer(data):
+    emit("room_answer", {"sid": request.sid, "sdp": data["sdp"]}, to=data["target"])
+
+@socketio.on("room_ice")
+def on_room_ice(data):
+    emit("room_ice", {"sid": request.sid, "candidate": data["candidate"]}, to=data["target"])
+
+# disconnect 시 방에서도 자동 퇴장 처리 (기존 on_disconnect 수정)
+# =========================
+# 🔥 중요: 반드시 맨 아래
 # =========================
 if __name__ == "__main__":
     socketio.run(app, host="0.0.0.0", port=5001, debug=True, use_reloader=False, allow_unsafe_werkzeug=True)
