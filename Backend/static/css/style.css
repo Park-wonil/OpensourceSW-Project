@@ -2577,3 +2577,84 @@ body.light-mode input[id^="edit-target-"] {
   color: #1a1a1a !important;
   border-color: #ddd !important;
 }
+
+/* =========================================
+   라이트모드 - 대시보드 집중점수 / 분석데이터
+   ========================================= */
+body.light-mode .stats-value {
+  color: #1a1a1a !important;
+  -webkit-text-fill-color: #1a1a1a !important;
+}
+
+body.light-mode .stats-title {
+  color: #555 !important;
+}
+
+body.light-mode .detail-row {
+  color: #1a1a1a;
+  border-bottom-color: rgba(0,0,0,0.08);
+}
+
+body.light-mode .detail-row b {
+  color: #1a1a1a;
+}
+
+body.light-mode .detail-row span {
+  color: #444;
+}
+
+body.light-mode .score-bar-bg {
+  background: #e0e0e0;
+}
+
+body.light-mode .stats-box {
+  background: linear-gradient(135deg, #e8ecff 0%, #f3e8ff 100%);
+  color: #1a1a1a;
+  box-shadow: 0 8px 24px rgba(102,126,234,0.15);
+}
+
+body.light-mode .stats-box .stats-title {
+  color: #555 !important;
+}
+
+/* 라이트모드 타이머 */
+body.light-mode #timer-display {
+  background: linear-gradient(135deg, #667eea 0%, #f093fb 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* 라이트모드 스트레칭 팝업 */
+body.light-mode #neck-alert-popup,
+body.light-mode #stretching-popup {
+  background: #fff;
+  color: #1a1a1a;
+}
+
+body.light-mode #stretching-list > div {
+  background: rgba(0,0,0,0.04);
+}
+
+body.light-mode #stretching-list .desc {
+  color: #555;
+}
+
+/* 라이트모드 타이머 설정 인풋 */
+body.light-mode #timer-set-min {
+  background: #fff !important;
+  color: #1a1a1a !important;
+  border-color: #ccc !important;
+}
+
+/* 라이트모드 목표 수정 인풋 */
+body.light-mode .goals-container input[type="number"] {
+  background: #fff !important;
+  color: #1a1a1a !important;
+  border-color: #ddd !important;
+}
+
+/* 라이트모드 과목 칩 */
+body.light-mode .subject-chip {
+  color: #1a1a1a;
+}
