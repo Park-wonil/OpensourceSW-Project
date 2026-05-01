@@ -16,7 +16,35 @@
     }
   </style>
 </head>
-<body>
+ <body>
+  <div id="auth-screen" class="auth-container">
+
+  <!-- 🔥 로그인 화면 -->
+  <div id="login-view" class="auth-card">
+    <h1 class="auth-title">Focus AI</h1>
+    <p class="auth-subtitle">집중을 기록하고 관리하세요</p>
+
+    <input id="login-username" type="text" placeholder="아이디" class="auth-input">
+    <input id="login-password" type="password" placeholder="비밀번호" class="auth-input">
+
+    <button class="auth-btn primary" onclick="login()">로그인</button>
+    <button class="auth-btn secondary" onclick="showRegister()">회원가입</button>
+  </div>
+
+  <!-- 🔥 회원가입 화면 -->
+  <div id="register-view" class="auth-card" style="display:none;">
+    <h1 class="auth-title">회원가입</h1>
+
+    <input id="reg-username" type="text" placeholder="아이디" class="auth-input">
+    <input id="reg-password" type="password" placeholder="비밀번호" class="auth-input">
+    <input id="reg-nickname" type="text" placeholder="닉네임" class="auth-input">
+
+    <button class="auth-btn primary" onclick="register()">가입하기</button>
+    <button class="auth-btn secondary" onclick="showLogin()">뒤로가기</button>
+  </div>
+
+</div>
+  <div id="app" style="display:none;">
 
   <div class="app-container">
     <!-- 네비게이션 -->
@@ -200,6 +228,10 @@
   <div id="write-form" class="write-form" style="display: none;">
     <input type="text" id="post-title" placeholder="제목을 입력하세요" maxlength="100">
     <textarea id="post-content" placeholder="내용을 입력하세요" rows="8"></textarea>
+    <label style="margin-top:10px;">
+  <input type="checkbox" id="anonymous-check">
+  익명으로 작성
+</label>
     <div class="write-actions">
       <button class="btn-submit" onclick="submitPost()">작성하기</button>
       <button class="btn-cancel" onclick="cancelWrite()">취소</button>
@@ -234,7 +266,8 @@
   </div>
 </div>
   </div>
-
+</div> <!-- app-container 끝 -->
+  </div> <!-- 🔥 app 끝 -->
   <script>
     // 전역 변수
     let monitoring = null;
@@ -245,7 +278,6 @@
     let lastTotalAbsenceS = 0;
     let subjectChart = null;
     let weeklyChart = null;
-    let myUsername = localStorage.getItem('myUsername') || '';
     let currentCategory = 'tutor';
     let currentPostId = null;
 
@@ -254,9 +286,12 @@
       document.getElementById('section-main').classList.add('active');
       loadSubjects();
       loadTheme();
-      if (myUsername) {
-        document.getElementById('my-username').value = myUsername;
-      }
+      if (window.currentUser) {
+  const input = document.getElementById('my-username');
+  if (input) {
+    input.value = window.currentUser;
+  }
+}
     });
 
     // 테마
@@ -643,16 +678,8 @@
 
     // 랭킹
     function saveUsername() {
-      const username = document.getElementById('my-username').value.trim();
-      if (!username) {
-        alert('이름을 입력하세요.');
-        return;
-      }
-      localStorage.setItem('myUsername', username);
-      myUsername = username;
-      alert(`이름 설정: ${username}`);
-      loadRanking();
-    }
+  alert('닉네임은 회원가입 시 설정됩니다.');
+}
 
     function addFriend() {
       const friendName = document.getElementById('friend-name').value.trim();
@@ -679,7 +706,7 @@
           return;
         }
         container.innerHTML = data.ranking.map(r => {
-          const isMe = r.username === myUsername;
+          const isMe = r.username === window.currentUser;
           const rankClass = r.rank === 1 ? 'top1' : r.rank === 2 ? 'top2' : r.rank === 3 ? 'top3' : '';
           const nameClass = isMe ? 'me' : '';
           return `
@@ -694,20 +721,27 @@
     }
 
     setInterval(() => {
-      if (myUsername) {
-        fetch('/stats').then(res => res.json()).then(data => {
-          const parts = data.total_focus_time.split(':');
-          const todayMinutes = parseInt(parts[0]) * 60 + parseInt(parts[1]);
-          if (todayMinutes > 0) {
-            fetch('/ranking/update', {
-              method: 'POST',
-              headers: {'Content-Type': 'application/json'},
-              body: JSON.stringify({username: myUsername, minutes: todayMinutes})
-            });
-          }
+      if (window.currentUser) {
+  fetch('/stats')
+    .then(res => res.json())
+    .then(data => {
+      const parts = data.total_focus_time.split(':');
+      const todayMinutes = parseInt(parts[0]) * 60 + parseInt(parts[1]);
+
+      if (todayMinutes > 0) {
+        fetch('/ranking/update', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            username: window.currentUser,  // 🔥 여기 핵심
+            minutes: todayMinutes
+          })
         });
-        loadRanking();
       }
+    });
+
+  loadRanking();
+}
     }, 600000);
 
     // 커뮤니티
@@ -775,7 +809,11 @@ function submitPost() {
     return;
   }
   
-  const author = myUsername || '익명';
+  const isAnonymous = document.getElementById('anonymous-check').checked;
+
+  const author = isAnonymous
+    ? '익명'
+    : (window.currentUser || '익명');
   
   fetch('/community/posts', {
     method: 'POST',
@@ -853,7 +891,7 @@ function submitComment() {
     return;
   }
   
-  const author = myUsername || '익명';
+  const author = window.currentUser || '익명';
   
   fetch(`/community/posts/${currentPostId}/comments`, {
     method: 'POST',
@@ -880,7 +918,122 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
     
-    
+    async function login() {
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value.trim();
+
+  if (!username || !password) {
+    alert('아이디와 비밀번호를 입력하세요');
+    return;
+  }
+
+  const res = await fetch('/login', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ username, password })
+  });
+
+  const data = await res.json(); // 🔥 중요
+
+  if (res.ok) {
+    const auth = document.getElementById('auth-screen');
+
+    // 🔥 fade-out
+    auth.classList.add('fade-out');
+
+    setTimeout(() => {
+      auth.style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+    }, 500);
+
+    // 🔥 핵심 1: 닉네임 저장
+    window.currentUser = data.nickname;
+
+    // 🔥 핵심 2: 닉네임 표시
+    document.getElementById('username-display').innerText = data.nickname;
+
+  } else {
+    const card = document.querySelector('.auth-card');
+    card.classList.add('shake');
+    setTimeout(() => card.classList.remove('shake'), 300);
+
+    alert(data.error || '로그인 실패');
+  }
+}
+
+async function register() {
+  const username = document.getElementById('reg-username').value.trim();
+  const password = document.getElementById('reg-password').value.trim();
+  const nickname = document.getElementById('reg-nickname').value.trim();
+
+  if (!username || !password || !nickname) {
+    alert('아이디, 비밀번호, 닉네임을 모두 입력하세요');
+    return;
+  }
+
+  try {
+    const res = await fetch('/register', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ username, password, nickname })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      alert('회원가입 성공!');
+
+      // 🔥 로그인 화면으로 이동
+      showLogin();
+
+      // 🔥 입력 초기화
+      document.getElementById('reg-username').value = '';
+      document.getElementById('reg-password').value = '';
+      document.getElementById('reg-nickname').value = '';
+
+    } else {
+      alert(data.error || '회원가입 실패');
+    }
+
+  } catch (err) {
+    console.error(err);
+    alert('서버 연결 오류');
+  }
+}
+
+async function checkLogin() {
+  try {
+    const res = await fetch('/me');
+
+    // 🔥 서버 없거나 에러면 그냥 로그인 화면 유지
+    if (!res.ok) return;
+
+    const data = await res.json();
+
+    if (data.user) {
+      document.getElementById('auth-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+
+      // 🔥 username 표시 (없어도 에러 안 나게)
+      const nameEl = document.getElementById('username-display');
+      if (nameEl) nameEl.innerText = data.user;
+    }
+
+  } catch (err) {
+    console.log('로그인 체크 실패:', err);
+  }
+}
+function showRegister() {
+  document.getElementById('login-view').style.display = 'none';
+  document.getElementById('register-view').style.display = 'block';
+}
+
+function showLogin() {
+  document.getElementById('login-view').style.display = 'block';
+  document.getElementById('register-view').style.display = 'none';
+}
+// 페이지 로드 시 자동 실행
+window.onload = checkLogin;
   </script>
 </body>
 </html>

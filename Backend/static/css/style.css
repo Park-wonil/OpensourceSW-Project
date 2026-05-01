@@ -2165,3 +2165,215 @@ body:not(.light-mode) .comment-item {
 body:not(.light-mode) .comment-item::before {
   border-bottom-color: #2f3349;
 }
+/* =========================================
+   🔥 다크모드 텍스트 가독성 FIX
+   ========================================= */
+
+/* 기본 텍스트 강제 */
+body:not(.light-mode) {
+  color: var(--text-main);
+}
+
+/* 상세통계 / 목표 / 커뮤니티 */
+body:not(.light-mode) .stats-title,
+body:not(.light-mode) .stats-highlight,
+body:not(.light-mode) .goal-subject,
+body:not(.light-mode) .goal-time,
+body:not(.light-mode) .section-title,
+body:not(.light-mode) .chart-title,
+body:not(.light-mode) .summary-title,
+body:not(.light-mode) .summary-value,
+body:not(.light-mode) .post-item-title,
+body:not(.light-mode) .post-content {
+  color: var(--text-main) !important;
+}
+
+/* 서브 텍스트 */
+body:not(.light-mode) .detail-row,
+body:not(.light-mode) .post-item-meta,
+body:not(.light-mode) .comment-date {
+  color: var(--text-sub) !important;
+}
+
+/* 혹시 남아있는 하드코딩 색 덮어쓰기 */
+body:not(.light-mode) * {
+  border-color: rgba(255,255,255,0.1);
+}
+/* =========================================
+   🍎 Apple-style Auth UI
+   ========================================= */
+
+.auth-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #1d1d1f, #2c2c2e);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.auth-card {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(20px);
+  padding: 40px;
+  border-radius: 24px;
+  width: 320px;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+}
+
+.auth-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: white;
+  margin-bottom: 10px;
+}
+
+.auth-subtitle {
+  font-size: 14px;
+  color: #aaa;
+  margin-bottom: 30px;
+}
+
+.auth-input {
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+  border: none;
+  background: rgba(255,255,255,0.1);
+  color: white;
+  font-size: 14px;
+}
+
+.auth-input::placeholder {
+  color: #aaa;
+}
+
+.auth-input:focus {
+  outline: none;
+  background: rgba(255,255,255,0.15);
+}
+
+.auth-btn {
+  width: 100%;
+  padding: 14px;
+  margin-top: 10px;
+  border-radius: 12px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.auth-btn.primary {
+  background: #ffffff;
+  color: #111;
+}
+
+.auth-btn.primary:hover {
+  background: #ddd;
+}
+
+.auth-btn.secondary {
+  background: transparent;
+  color: #aaa;
+}
+
+.auth-btn.secondary:hover {
+  color: white;
+}
+.auth-container {
+  animation: fadeInBg 0.6s ease forwards;
+}
+
+.auth-card {
+  transform: translateY(20px) scale(0.95);
+  opacity: 0;
+  animation: cardPop 0.6s ease forwards;
+}
+
+@keyframes fadeInBg {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes cardPop {
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+/* 버튼 클릭 효과 */
+.auth-btn:active {
+  transform: scale(0.96);
+}
+
+/* 로그인 실패 shake */
+.auth-card.shake {
+  animation: shake 0.3s;
+}
+
+@keyframes shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  50% { transform: translateX(6px); }
+  75% { transform: translateX(-6px); }
+  100% { transform: translateX(0); }
+}
+
+/* =========================================
+   🔥 로그인 fade-out 애니메이션
+   ========================================= */
+
+.fade-out {
+  animation: fadeOut 0.5s ease forwards;
+}
+
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+    transform: scale(1.05);
+  }
+}
+
+/* =========================================
+   🔥 사용자 이름 UI
+   ========================================= */
+
+#user-bar {
+  background: rgba(255,255,255,0.1);
+  padding: 8px 16px;
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+}
+/* 🔥 랭킹 이름 강제 진하게 */
+.ranking-row .ranking-name {
+  color: #111827 !important;   /* 진한 색 */
+  opacity: 1 !important;
+}
+
+/* 🔥 다크모드 */
+body:not(.light-mode) .ranking-row .ranking-name {
+  color: #ffffff !important;
+}
+/* 🔥 랭킹 카드 배경 강제 수정 */
+body:not(.light-mode) .ranking-row {
+  background: #2f3349 !important;  /* 진한 배경 */
+}
+
+/* 🔥 텍스트 강제 */
+body:not(.light-mode) .ranking-name {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+
+/* 🔥 혹시 남아있는 투명 제거 */
+.ranking-name {
+  -webkit-text-fill-color: initial !important;
+}

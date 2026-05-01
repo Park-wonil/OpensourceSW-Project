@@ -417,24 +417,27 @@ def get_ranking():
     try:
         conn = get_conn()
         c = conn.cursor()
+
         c.execute("""
-        SELECT username, total_minutes
+        SELECT username, nickname, total_minutes
         FROM users
         ORDER BY total_minutes DESC
         LIMIT 10
         """)
+
         rows = c.fetchall()
         conn.close()
         
         return [
             {
                 "rank": i + 1,
-                "username": username,
+                "username": nickname if nickname else username,
                 "minutes": minutes,
                 "hours": round(minutes / 60, 1)
             }
-            for i, (username, minutes) in enumerate(rows)
+            for i, (username, nickname, minutes) in enumerate(rows)
         ]
+
     except Exception as e:
         print("랭킹 조회 오류:", e)
         return []
@@ -624,4 +627,61 @@ def delete_post(post_id):
         return True
     except Exception as e:
         print("게시글 삭제 오류:", e)
+        return False
+def create_user(username, password, nickname):
+    conn = get_conn()
+    c = conn.cursor()
+
+    try:
+        # 🔥 users 테이블에 nickname까지 저장
+        c.execute("""
+        INSERT INTO users (username, nickname, total_minutes, last_updated)
+        VALUES (?, ?, 0, ?)
+        """, (username, nickname, time.time()))
+
+        # auth 테이블 생성
+        c.execute("""
+        CREATE TABLE IF NOT EXISTS auth (
+            username TEXT PRIMARY KEY,
+            password TEXT
+        )
+        """)
+
+        # 중복 체크
+        c.execute("SELECT username FROM auth WHERE username = ?", (username,))
+        if c.fetchone():
+            conn.close()
+            return False
+
+        # 비밀번호 저장
+        c.execute("""
+        INSERT INTO auth (username, password)
+        VALUES (?, ?)
+        """, (username, password))
+
+        conn.commit()
+        conn.close()
+        return True
+
+    except Exception as e:
+        print("회원가입 오류:", e)
+        conn.close()
+        return False
+    
+def verify_user(username, password):
+    conn = get_conn()
+    c = conn.cursor()
+
+    try:
+        c.execute("""
+        SELECT password FROM auth WHERE username = ?
+        """, (username,))
+        row = c.fetchone()
+        conn.close()
+
+        if row and row[0] == password:
+            return True
+        return False
+    except:
+        conn.close()
         return False
