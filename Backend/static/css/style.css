@@ -371,7 +371,12 @@ body {
   box-shadow: 0 15px 35px rgba(0,0,0,0.4);
 }
 
-.left-panel { flex: 1.5; }
+.left-panel { 
+  flex: 1.5; 
+  display: flex; 
+  flex-direction: column;
+  gap: 0;
+}
 .right-panel { flex: 1; display: flex; flex-direction: column; gap: 20px; }
 
 .extra-section {
@@ -413,9 +418,11 @@ body {
   align-items: center;
   overflow: hidden;
   border: 1px solid #333;
+  position: relative; /* 내 캠 영역 독립 */
+  flex-shrink: 0;     /* 친구 캠 추가돼도 내 캠 크기 유지 */
 }
 
-#video { width: 100%; height: 100%; object-fit: cover; }
+img#video { width: 100%; height: 100%; object-fit: cover; }
 #cam-placeholder { color: var(--text-sub); font-size: 15px; }
 
 /* 상태 뱃지 */
@@ -2376,4 +2383,197 @@ body:not(.light-mode) .ranking-name {
 /* 🔥 혹시 남아있는 투명 제거 */
 .ranking-name {
   -webkit-text-fill-color: initial !important;
+}
+/* =========================================
+   스터디룸 - 친구 캠
+   ========================================= */
+
+.btn-invite {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, var(--accent-green), #5dd1ab);
+  color: #111;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-invite:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(110, 231, 192, 0.4);
+}
+
+.btn-leave-study {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  background: rgba(240, 153, 123, 0.2);
+  color: var(--accent-red);
+  border: 1.5px solid var(--accent-red);
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-leave-study:hover {
+  background: var(--accent-red);
+  color: white;
+  transform: translateY(-2px);
+}
+
+.friend-cam-box {
+  width: 100%;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #000;
+  border: 1.5px solid rgba(110, 231, 192, 0.3);
+  flex-shrink: 0; /* 내 캠과 동일한 크기 유지 */
+}
+
+.friend-cam-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.friend-cam-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent-green);
+}
+
+.btn-disconnect {
+  padding: 5px 12px;
+  background: rgba(240, 153, 123, 0.15);
+  color: var(--accent-red);
+  border: 1px solid var(--accent-red);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-disconnect:hover {
+  background: var(--accent-red);
+  color: white;
+}
+
+.friend-video-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4/3;
+  background: #111;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 친구 캠 video 태그 - 내 캠 스타일과 완전 분리 */
+.friend-video-container video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.friend-loading {
+  position: absolute;
+  color: var(--text-sub);
+  font-size: 14px;
+}
+
+/* 라이트모드 */
+body.light-mode .friend-cam-box {
+  border-color: rgba(110, 231, 192, 0.4);
+  background: #f0f0f0;
+}
+
+body.light-mode .friend-cam-header {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+/* 초대 팝업 슬라이드 인 */
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* 로그아웃 버튼 */
+.logout-btn {
+  padding: 8px 20px;
+  border: 1.5px solid var(--accent-red);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--accent-red);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.logout-btn:hover {
+  background: var(--accent-red);
+  color: white;
+}
+
+/* =========================================
+   목표 섹션 - 과목 칩
+   ========================================= */
+.subject-chip {
+  padding: 8px 18px;
+  border-radius: 20px;
+  border: 2px solid rgba(110, 231, 192, 0.3);
+  background: rgba(110, 231, 192, 0.07);
+  color: var(--text-main);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.subject-chip:hover {
+  border-color: var(--accent-green);
+  background: rgba(110, 231, 192, 0.15);
+  transform: translateY(-2px);
+}
+
+.subject-chip.active {
+  background: var(--accent-green);
+  color: #111;
+  border-color: var(--accent-green);
+  box-shadow: 0 4px 12px rgba(110, 231, 192, 0.4);
+}
+
+.goal-subject-picker {
+  background: var(--stats-bg);
+  padding: 18px;
+  border-radius: 14px;
+  margin-bottom: 20px;
+}
+
+body.light-mode .subject-chip {
+  border-color: rgba(110, 231, 192, 0.4);
+  background: rgba(110, 231, 192, 0.1);
+  color: #1a1a1a;
+}
+
+body.light-mode .subject-chip.active {
+  color: #111;
+}
+
+/* 목표 카드 수정 인풋 라이트모드 */
+body.light-mode input[id^="edit-target-"] {
+  background: #fff !important;
+  color: #1a1a1a !important;
+  border-color: #ddd !important;
 }

@@ -39,22 +39,96 @@ def init_db():
     c.execute("""
     CREATE TABLE IF NOT EXISTS goals (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        subject TEXT UNIQUE,
+        subject TEXT,
         target_minutes INTEGER,
-        created_at REAL
+        created_at REAL,
+        username TEXT DEFAULT '',
+        UNIQUE(subject, username)
     )
     """)
+    # goals 테이블 UNIQUE 마이그레이션 (subject 단독 → subject+username)
+    c.execute("PRAGMA table_info(goals)")
+    g_schema = c.fetchall()
+    g_has_username = any(col[1] == "username" for col in g_schema)
+    if not g_has_username:
+        try:
+            c.execute("ALTER TABLE goals RENAME TO goals_old")
+            c.execute("""
+            CREATE TABLE goals (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                subject TEXT,
+                target_minutes INTEGER,
+                created_at REAL,
+                username TEXT DEFAULT '',
+                UNIQUE(subject, username)
+            )
+            """)
+            c.execute("INSERT INTO goals SELECT *, '' FROM goals_old")
+            c.execute("DROP TABLE goals_old")
+            print("goals 테이블 마이그레이션 완료")
+        except Exception as e:
+            print("goals 마이그레이션 실패:", e)
     
     # 랭킹 테이블 (사용자별)
     c.execute("""
     CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE,
+        nickname TEXT,
         total_minutes INTEGER DEFAULT 0,
         last_updated REAL
     )
     """)
+    # 기존 DB에 nickname 컬럼이 없으면 추가 (마이그레이션)
+    c.execute("PRAGMA table_info(users)")
+    user_columns = [col[1] for col in c.fetchall()]
+    if "nickname" not in user_columns:
+        try:
+            c.execute("ALTER TABLE users ADD COLUMN nickname TEXT")
+            print("users 테이블 nickname 컬럼 추가 완료")
+        except Exception as e:
+            print("nickname 컬럼 추가 실패:", e)
     
+    # auth 테이블 (로그인 인증)
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS auth (
+        username TEXT PRIMARY KEY,
+        password TEXT
+    )
+    """)
+
+    # 저장된 과목 테이블 (대시보드에서 등록한 과목, 공부기록 없어도 유지)
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS saved_subjects (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        subject TEXT,
+        username TEXT DEFAULT '',
+        created_at REAL,
+        UNIQUE(subject, username)
+    )
+    """)
+
+    # focus_log에 username 컬럼 추가 (유저별 분리)
+    c.execute("PRAGMA table_info(focus_log)")
+    fl_cols = [col[1] for col in c.fetchall()]
+    if "username" not in fl_cols:
+        try:
+            c.execute("ALTER TABLE focus_log ADD COLUMN username TEXT DEFAULT ''")
+            print("focus_log username 컬럼 추가 완료")
+        except Exception as e:
+            print("focus_log username 추가 실패:", e)
+
+    # goals에 username 컬럼 추가 (유저별 분리)
+    c.execute("PRAGMA table_info(goals)")
+    g_cols = [col[1] for col in c.fetchall()]
+    if "username" not in g_cols:
+        try:
+            c.execute("ALTER TABLE goals ADD COLUMN username TEXT DEFAULT ''")
+            # UNIQUE 제약 변경: subject+username 조합으로
+            print("goals username 컬럼 추가 완료")
+        except Exception as e:
+            print("goals username 추가 실패:", e)
+
     conn.commit()
     conn.close()
 
@@ -67,21 +141,22 @@ def save_data(data):
         conn = get_conn()
         c = conn.cursor()
         c.execute("""
-        INSERT INTO focus_log (timestamp, state, absence_count, ear, subject)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO focus_log (timestamp, state, absence_count, ear, subject, username)
+        VALUES (?, ?, ?, ?, ?, ?)
         """, (
             time.time(),
             data.get("state", "unknown"),
             data.get("absence_count", 0),
             data.get("ear", 0.0),
-            data.get("subject", "")
+            data.get("subject", ""),
+            data.get("username", "")
         ))
         conn.commit()
         conn.close()
     except Exception as e:
         print("DB 저장 오류:", e)
 
-def get_score(start_time=None):
+def get_score(start_time=None, username=""):
     try:
         conn = get_conn()
         c = conn.cursor()
@@ -89,15 +164,16 @@ def get_score(start_time=None):
             c.execute("""
             SELECT state, absence_count, timestamp, ear
             FROM focus_log
-            WHERE timestamp >= ?
+            WHERE timestamp >= ? AND username = ?
             ORDER BY id ASC
-            """, (start_time,))
+            """, (start_time, username))
         else:
             c.execute("""
             SELECT state, absence_count, timestamp, ear
             FROM focus_log
+            WHERE username = ?
             ORDER BY id ASC
-            """)
+            """, (username,))
         rows = c.fetchall()
         conn.close()
         
@@ -133,7 +209,7 @@ def get_score(start_time=None):
         print("점수 계산 오류:", e)
         return {"score": 0}
 
-def get_stats():
+def get_stats(username=""):
     try:
         conn = get_conn()
         c = conn.cursor()
@@ -141,9 +217,9 @@ def get_stats():
         c.execute("""
         SELECT state, timestamp, subject
         FROM focus_log
-        WHERE timestamp >= ?
+        WHERE timestamp >= ? AND username = ?
         ORDER BY id ASC
-        """, (today_start,))
+        """, (today_start, username))
         rows = c.fetchall()
         conn.close()
         if not rows:
@@ -189,22 +265,62 @@ def get_stats():
         print("통계 계산 오류:", e)
         return {"total_focus_time": "00:00:00", "avg_score": 0, "subject_stats": []}
 
-def get_all_subjects():
-    """DB에 저장된 모든 과목 목록 반환 (최근 사용순)"""
+def save_subject(subject, username=""):
+    """대시보드에서 과목 저장 - saved_subjects에 등록"""
     try:
         conn = get_conn()
         c = conn.cursor()
         c.execute("""
-        SELECT DISTINCT subject, MAX(timestamp) as last_used
-        FROM focus_log
-        WHERE subject IS NOT NULL AND subject != ''
-        GROUP BY subject
-        ORDER BY last_used DESC
-        LIMIT 20
-        """)
-        rows = c.fetchall()
+        INSERT OR IGNORE INTO saved_subjects (subject, username, created_at)
+        VALUES (?, ?, ?)
+        """, (subject.strip(), username, time.time()))
+        conn.commit()
         conn.close()
-        return [row[0].strip() for row in rows if row[0] and row[0].strip()]
+        return True
+    except Exception as e:
+        print("과목 저장 오류:", e)
+        return False
+
+def get_all_subjects(username=""):
+    """과목 목록 반환 - focus_log(공부기록) + goals(목표등록) 합산, 유저별"""
+    try:
+        conn = get_conn()
+        c = conn.cursor()
+
+        subjects = set()
+
+        # 1. focus_log에서 실제 공부한 과목 (유저별)
+        c.execute("""
+        SELECT DISTINCT subject FROM focus_log
+        WHERE subject IS NOT NULL AND subject != ''
+        AND username = ?
+        """, (username,))
+        for row in c.fetchall():
+            if row[0] and row[0].strip():
+                subjects.add(row[0].strip())
+
+        # 2. goals에 등록된 과목 (유저별)
+        c.execute("""
+        SELECT DISTINCT subject FROM goals
+        WHERE subject IS NOT NULL AND subject != ''
+        AND username = ?
+        """, (username,))
+        for row in c.fetchall():
+            if row[0] and row[0].strip():
+                subjects.add(row[0].strip())
+
+        # 3. saved_subjects (대시보드 저장 과목)
+        c.execute("""
+        SELECT DISTINCT subject FROM saved_subjects
+        WHERE subject IS NOT NULL AND subject != ''
+        AND username = ?
+        """, (username,))
+        for row in c.fetchall():
+            if row[0] and row[0].strip():
+                subjects.add(row[0].strip())
+
+        conn.close()
+        return sorted(list(subjects))
     except Exception as e:
         print("과목 목록 조회 오류:", e)
         return []
@@ -216,11 +332,14 @@ def _fmt_seconds(s):
         return f"{h}시간 {m}분"
     return f"{m}분"
 
-def reset_data():
+def reset_data(username=""):
     try:
         conn = get_conn()
         c = conn.cursor()
-        c.execute("DELETE FROM focus_log")
+        if username:
+            c.execute("DELETE FROM focus_log WHERE username = ?", (username,))
+        else:
+            c.execute("DELETE FROM focus_log")
         conn.commit()
         conn.close()
         print("데이터 초기화 완료")
@@ -233,15 +352,24 @@ def reset_data():
 # 목표 관련 함수
 # ========================================
 
-def set_goal(subject, target_minutes):
-    """과목별 목표 시간 설정 (분 단위)"""
+def set_goal(subject, target_minutes, username=""):
+    """과목별 목표 시간 설정 (분 단위, 유저별)"""
     try:
         conn = get_conn()
         c = conn.cursor()
-        c.execute("""
-        INSERT OR REPLACE INTO goals (subject, target_minutes, created_at)
-        VALUES (?, ?, ?)
-        """, (subject, target_minutes, time.time()))
+        # 기존 목표 있으면 업데이트, 없으면 삽입
+        c.execute("SELECT id FROM goals WHERE subject = ? AND username = ?", (subject, username))
+        row = c.fetchone()
+        if row:
+            c.execute("""
+            UPDATE goals SET target_minutes = ?, created_at = ?
+            WHERE subject = ? AND username = ?
+            """, (target_minutes, time.time(), subject, username))
+        else:
+            c.execute("""
+            INSERT INTO goals (subject, target_minutes, created_at, username)
+            VALUES (?, ?, ?, ?)
+            """, (subject, target_minutes, time.time(), username))
         conn.commit()
         conn.close()
         return True
@@ -249,19 +377,20 @@ def set_goal(subject, target_minutes):
         print("목표 설정 오류:", e)
         return False
 
-def get_goals():
-    """오늘 목표 달성률 조회"""
+def get_goals(username=""):
+    """오늘 목표 달성률 조회 (유저별)"""
     try:
         conn = get_conn()
         c = conn.cursor()
         
-        # 오늘 통계
+        # 오늘 통계 (유저별)
         today_start = time.mktime(time.localtime()[:3] + (0, 0, 0, 0, 0, -1))
         c.execute("""
         SELECT subject, state
         FROM focus_log
         WHERE timestamp >= ? AND subject != ''
-        """, (today_start,))
+        AND username = ?
+        """, (today_start, username))
         rows = c.fetchall()
         
         # 과목별 실제 시간 (초)
@@ -271,8 +400,8 @@ def get_goals():
                 subject = subject.strip()
                 actual_times[subject] = actual_times.get(subject, 0) + 1
         
-        # 목표와 비교
-        c.execute("SELECT subject, target_minutes FROM goals")
+        # 목표와 비교 (유저별)
+        c.execute("SELECT subject, target_minutes FROM goals WHERE username = ?", (username,))
         goals = c.fetchall()
         conn.close()
         
@@ -292,12 +421,15 @@ def get_goals():
         print("목표 조회 오류:", e)
         return []
 
-def delete_goal(subject):
-    """목표 삭제"""
+def delete_goal(subject, username=""):
+    """목표 삭제 (유저별)"""
     try:
         conn = get_conn()
         c = conn.cursor()
-        c.execute("DELETE FROM goals WHERE subject = ?", (subject,))
+        if username:
+            c.execute("DELETE FROM goals WHERE subject = ? AND username = ?", (subject, username))
+        else:
+            c.execute("DELETE FROM goals WHERE subject = ?", (subject,))
         conn.commit()
         conn.close()
         return True
@@ -310,8 +442,8 @@ def delete_goal(subject):
 # 주간/월간 통계
 # ========================================
 
-def get_weekly_stats():
-    """최근 7일 통계"""
+def get_weekly_stats(username=""):
+    """최근 7일 통계 (유저별)"""
     try:
         conn = get_conn()
         c = conn.cursor()
@@ -324,7 +456,8 @@ def get_weekly_stats():
             c.execute("""
             SELECT state FROM focus_log
             WHERE timestamp >= ? AND timestamp < ? AND state IN ('focused', 'sleepy')
-            """, (day_start, day_end))
+            AND username = ?
+            """, (day_start, day_end, username))
             
             count = len(c.fetchall())
             minutes = count // 60
@@ -345,8 +478,8 @@ def get_weekly_stats():
         print("주간 통계 오류:", e)
         return []
 
-def get_monthly_stats():
-    """이번 달 통계"""
+def get_monthly_stats(username=""):
+    """이번 달 통계 (유저별)"""
     try:
         conn = get_conn()
         c = conn.cursor()
@@ -358,7 +491,8 @@ def get_monthly_stats():
         c.execute("""
         SELECT subject, state FROM focus_log
         WHERE timestamp >= ? AND subject != '' AND state IN ('focused', 'sleepy')
-        """, (month_start,))
+        AND username = ?
+        """, (month_start, username))
         
         rows = c.fetchall()
         conn.close()
@@ -393,18 +527,27 @@ def get_monthly_stats():
 # 랭킹 시스템
 # ========================================
 
-def update_my_ranking(username, minutes):
-    """내 랭킹 업데이트"""
+def update_my_ranking(username, minutes, nickname=None):
+    """내 랭킹 업데이트 - 오늘 집중 시간으로 갱신 (누적 중복 방지)"""
     try:
         conn = get_conn()
         c = conn.cursor()
+
+        # nickname이 없는 기존 유저면 DB에서 조회
+        if not nickname:
+            c.execute("SELECT nickname FROM users WHERE username = ?", (username,))
+            row = c.fetchone()
+            nickname = row[0] if row else username
+
+        # nickname도 함께 업데이트 (null 방지)
         c.execute("""
-        INSERT INTO users (username, total_minutes, last_updated)
-        VALUES (?, ?, ?)
+        INSERT INTO users (username, nickname, total_minutes, last_updated)
+        VALUES (?, ?, ?, ?)
         ON CONFLICT(username) DO UPDATE SET
-            total_minutes = total_minutes + ?,
+            nickname = COALESCE(nickname, ?),
+            total_minutes = MAX(total_minutes, ?),
             last_updated = ?
-        """, (username, minutes, time.time(), minutes, time.time()))
+        """, (username, nickname, minutes, time.time(), nickname, minutes, time.time()))
         conn.commit()
         conn.close()
         return True
@@ -629,29 +772,22 @@ def delete_post(post_id):
         print("게시글 삭제 오류:", e)
         return False
 def create_user(username, password, nickname):
+    """회원가입 - 중복 체크 후 users/auth 테이블에 저장"""
     conn = get_conn()
     c = conn.cursor()
 
     try:
-        # 🔥 users 테이블에 nickname까지 저장
-        c.execute("""
-        INSERT INTO users (username, nickname, total_minutes, last_updated)
-        VALUES (?, ?, 0, ?)
-        """, (username, nickname, time.time()))
-
-        # auth 테이블 생성
-        c.execute("""
-        CREATE TABLE IF NOT EXISTS auth (
-            username TEXT PRIMARY KEY,
-            password TEXT
-        )
-        """)
-
-        # 중복 체크
+        # 중복 체크 (auth 기준)
         c.execute("SELECT username FROM auth WHERE username = ?", (username,))
         if c.fetchone():
             conn.close()
             return False
+
+        # users 테이블에 nickname까지 저장
+        c.execute("""
+        INSERT INTO users (username, nickname, total_minutes, last_updated)
+        VALUES (?, ?, 0, ?)
+        """, (username, nickname, time.time()))
 
         # 비밀번호 저장
         c.execute("""
