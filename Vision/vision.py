@@ -5,6 +5,7 @@ import mediapipe as mp
 import numpy as np
 from collections import deque
 from Backend.database import save_data
+from Vision.neck import NeckPostureDetector, draw_neck_overlay
 
 # --- 상수 및 설정 ---
 ABSENCE_THRESHOLD_S = 2.0
@@ -90,9 +91,10 @@ class AbsenceDetector:
         return 0.0
 
 detector = AbsenceDetector()
+neck_detector = NeckPostureDetector()  # 거북목 감지기
 
 def _capture_loop():
-    global cap, is_running, latest_frame, latest_data, detector
+    global cap, is_running, latest_frame, latest_data, detector, neck_detector
     last_save_time = 0
 
     while is_running:
@@ -109,6 +111,9 @@ def _capture_loop():
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         results = face_mesh.process(rgb)
 
+        # 거북목 감지 (같은 rgb 프레임 재사용 - 추가 변환 없음)
+        neck_data = neck_detector.update(rgb)
+
         face_present = bool(results.multi_face_landmarks)
         detector.update(face_present)
 
@@ -119,7 +124,8 @@ def _capture_loop():
             "total_absence_s": round(detector.total_absence_s, 1),
             "current_absence_s": round(detector.get_current_absence_duration(), 1),
             "ear": 0.0,
-            "state": "absent" if detector.is_absent else "searching..."
+            "state": "absent" if detector.is_absent else "searching...",
+            **neck_data   # 거북목 필드 병합
         }
 
         status_text = "No Face"
@@ -147,6 +153,7 @@ def _capture_loop():
 
         border_color = (0, 0, 220) if detector.is_absent else (0, 200, 80)
         cv2.rectangle(frame, (0, 0), (w - 1, h - 1), border_color, 3)
+        draw_neck_overlay(frame, neck_data)   # 거북목 상태 오버레이
         cv2.rectangle(frame, (0, h - 40), (w, h), (30, 30, 30), -1)
 
         cv2.putText(frame, f"State: {status_text}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, status_color, 2)

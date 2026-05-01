@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, render_template, Response, request, session
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from Vision.vision import start_camera, stop_camera, get_focus_data, generate_frames, set_current_subject, set_current_username
+from Vision.neck import STRETCHING_GUIDE
 from Backend.database import (
     get_score, get_stats, reset_data, get_all_subjects,
     set_goal, get_goals, delete_goal,
@@ -130,6 +131,11 @@ def stop():
 @app.route('/detect')
 def detect():
     return jsonify(get_focus_data())
+
+@app.route('/stretching')
+def stretching():
+    """거북목 스트레칭 가이드 반환"""
+    return jsonify({"guides": STRETCHING_GUIDE})
 
 @app.route('/video')
 def video():
