@@ -102,13 +102,3 @@ git pull origin dev
 PR시 조심할점 
 compare: 본인 feature
 base: dev
-
-각 코드별 주석 필수
-
-*****************변수 통일 ****************
-
-함수.변수 설명
-Docs 폴더의 naming_rules.md에 추가하고 계속 최신화하기
-main브랜치에서 절대 작업 X
-무조건 features파일에서 작업후 dev로 PR하고 최종본을 main브랜치에 올리는것임
-git branch 를 터미널에 작성하면 현재 브랜치가나옴 계속확인하기
