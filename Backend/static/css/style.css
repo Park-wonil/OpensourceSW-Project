@@ -284,14 +284,50 @@ body:not(.light-mode) select {
    1. 테마 변수 및 기본 설정
    ========================================= */
 :root {
-  --bg-color: #1a1a1a;          /* 전체 배경 (더 깊은 다크) */
-  --panel-bg: #252525;         /* 패널 배경 */
-  --stats-bg: rgba(255, 255, 255, 0.05); /* 박스 배경 */
+  --bg-color: #1a1a1a;
+  --panel-bg: #252525;
+  --stats-bg: rgba(255, 255, 255, 0.05);
   --text-main: #ffffff;
   --text-sub: #b0b0b0;
-  --accent-green: #6ee7c0;     /* 집중 */
-  --accent-orange: #fac775;    /* 졸음 */
-  --accent-red: #f0997b;       /* 이탈 */
+  --accent-green: #6ee7c0;
+  --accent-orange: #fac775;
+  --accent-red: #f0997b;
+  /* 테마 강조색 (기본=그린) */
+  --theme-primary: #6ee7c0;
+  --theme-secondary: #5dd1ab;
+  --theme-glow: rgba(110, 231, 192, 0.3);
+}
+
+/* ── 블루 테마 ── */
+body.theme-blue {
+  --accent-green: #60b4ff;
+  --theme-primary: #60b4ff;
+  --theme-secondary: #3a9eff;
+  --theme-glow: rgba(96, 180, 255, 0.3);
+}
+
+/* ── 퍼플 테마 ── */
+body.theme-purple {
+  --accent-green: #b088f9;
+  --theme-primary: #b088f9;
+  --theme-secondary: #9b6ef7;
+  --theme-glow: rgba(176, 136, 249, 0.3);
+}
+
+/* ── 오렌지 테마 ── */
+body.theme-orange {
+  --accent-green: #ffaa5c;
+  --theme-primary: #ffaa5c;
+  --theme-secondary: #ff9030;
+  --theme-glow: rgba(255, 170, 92, 0.3);
+}
+
+/* ── 핑크 테마 ── */
+body.theme-pink {
+  --accent-green: #ff80b5;
+  --theme-primary: #ff80b5;
+  --theme-secondary: #ff5fa0;
+  --theme-glow: rgba(255, 128, 181, 0.3);
 }
 
 * {
@@ -2657,4 +2693,106 @@ body.light-mode .goals-container input[type="number"] {
 /* 라이트모드 과목 칩 */
 body.light-mode .subject-chip {
   color: #1a1a1a;
+}
+
+/* =========================================
+   🎨 테마 선택 버튼
+   ========================================= */
+.theme-btn {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 2px solid transparent;
+  background: var(--stats-bg);
+  color: var(--text-main);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.theme-btn:hover {
+  border-color: var(--c, #6ee7c0);
+  transform: translateY(-2px);
+}
+
+.theme-btn.active {
+  border-color: var(--c, #6ee7c0);
+  background: color-mix(in srgb, var(--c, #6ee7c0) 20%, transparent);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--c, #6ee7c0) 40%, transparent);
+}
+
+body.light-mode .theme-btn {
+  background: rgba(0,0,0,0.05);
+  color: #1a1a1a;
+}
+
+/* =========================================
+   💬 채팅 섹션
+   ========================================= */
+#chat-messages::-webkit-scrollbar { width: 4px; }
+#chat-messages::-webkit-scrollbar-track { background: transparent; }
+#chat-messages::-webkit-scrollbar-thumb {
+  background: var(--accent-green);
+  border-radius: 4px;
+}
+
+#chat-input:focus {
+  outline: none;
+  border-color: var(--accent-green) !important;
+  box-shadow: 0 0 0 3px var(--theme-glow, rgba(110,231,192,0.2));
+}
+
+body.light-mode #chat-messages {
+  background: #f5f5f5;
+}
+
+body.light-mode #chat-input {
+  background: #fff !important;
+  color: #1a1a1a !important;
+  border-color: #ddd !important;
+}
+
+/* 테마별 스코어바 */
+#score-bar { background: var(--theme-primary, var(--accent-green)); }
+
+/* 테마별 네비 탭 활성 */
+.nav-tab.active {
+  background: var(--theme-primary, var(--accent-green)) !important;
+}
+
+/* =========================================
+   🏠 스터디룸 내부
+   ========================================= */
+#room-inside {
+  background: var(--panel-bg);
+}
+
+#room-cam-area::-webkit-scrollbar,
+#room-chat-messages::-webkit-scrollbar { width: 3px; }
+#room-cam-area::-webkit-scrollbar-thumb,
+#room-chat-messages::-webkit-scrollbar-thumb {
+  background: var(--accent-green);
+  border-radius: 3px;
+}
+
+#room-chat-input:focus {
+  outline: none;
+  border-color: var(--accent-green) !important;
+  box-shadow: 0 0 0 3px var(--theme-glow, rgba(110,231,192,0.2));
+}
+
+body.light-mode #room-chat-input {
+  background: #fff !important;
+  color: #1a1a1a !important;
+  border-color: #ddd !important;
+}
+
+body.light-mode #room-name-input {
+  background: #fff !important;
+  color: #1a1a1a !important;
+  border-color: #ddd !important;
+}
+
+body.light-mode #room-inside {
+  background: #f9f9f9;
 }
