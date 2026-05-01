@@ -399,7 +399,7 @@ def on_ice(data):
     emit("webrtc_ice", {"sid": request.sid, "candidate": data["candidate"]}, to=data["target"])
 
 # =========================
-# 🔥 중요: 반드시 맨 아래
+#  중요: 반드시 맨 아래
 # =========================
 if __name__ == "__main__":
     socketio.run(app, host="0.0.0.0", port=5001, debug=True, use_reloader=False, allow_unsafe_werkzeug=True)
