@@ -159,7 +159,7 @@ def _capture_loop():
             latest_frame = buffer.tobytes()
 
         now = time.time()
-        if now - last_save_time >= 1:
+        if now - last_save_time >= 3:
             with lock:
                 current_data["subject"] = current_subject
                 latest_data = current_data
