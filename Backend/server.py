@@ -120,6 +120,9 @@ def logout():
 @app.route('/start')
 def start():
     global start_time
+    # 세션 없으면 카메라 켜지 않음 (다른 사용자가 원격으로 켜는 문제 방지)
+    if not session.get('user'):
+        return jsonify({"error": "unauthorized"}), 401
     if start_time is None:
         start_time = time.time()
     set_current_username(get_current_username())
@@ -128,6 +131,8 @@ def start():
 
 @app.route('/stop')
 def stop():
+    if not session.get('user'):
+        return jsonify({"error": "unauthorized"}), 401
     stop_camera()
     return jsonify({"msg": "camera off"})
 

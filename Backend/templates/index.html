@@ -334,8 +334,228 @@
       .auth-form-wrap { width: 100%; max-width: 420px; padding: 20px; }
     }
 
-    /* ── 앱 전체 통합 스타일 ── */
+    /* ══════════════════════════════════
+       앱 전체 — 로그인 화면과 동일 디자인
+       ══════════════════════════════════ */
 
+    /* 배경 */
+    body { background: #08090d !important; }
+    body.light-mode { background: #f0f2f5 !important; }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background:
+        radial-gradient(ellipse 80% 60% at 5% 10%, rgba(110,231,192,0.18) 0%, transparent 50%),
+        radial-gradient(ellipse 60% 80% at 95% 90%, rgba(96,180,255,0.14) 0%, transparent 50%),
+        radial-gradient(ellipse 50% 50% at 50% 50%, rgba(176,136,249,0.07) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 30% at 80% 10%, rgba(250,199,117,0.06) 0%, transparent 50%);
+      pointer-events: none;
+      animation: bgPulse 12s ease-in-out infinite alternate;
+    }
+
+    @keyframes bgPulse {
+      0%   { transform: scale(1); opacity: 0.8; }
+      50%  { transform: scale(1.03); opacity: 1; }
+      100% { transform: scale(0.98); opacity: 0.85; }
+    }
+
+    body.light-mode::after {
+      background:
+        radial-gradient(ellipse 90% 70% at 0% 0%, rgba(80,200,150,0.5) 0%, transparent 50%),
+        radial-gradient(ellipse 70% 90% at 100% 100%, rgba(60,150,255,0.45) 0%, transparent 50%),
+        radial-gradient(ellipse 60% 60% at 100% 0%, rgba(150,100,240,0.35) 0%, transparent 50%),
+        radial-gradient(ellipse 50% 50% at 0% 100%, rgba(240,180,80,0.3) 0%, transparent 50%);
+    }
+
+    /* 라이트모드 바디 배경 */
+    body.light-mode {
+      background: linear-gradient(135deg, #d0f5e8 0%, #dceeff 50%, #ede0ff 100%) !important;
+    }
+
+    /* 네비게이션 */
+    .nav-bar {
+      background: rgba(14,15,21,0.6) !important;
+      backdrop-filter: blur(32px) !important;
+      -webkit-backdrop-filter: blur(32px) !important;
+      border: 1px solid rgba(255,255,255,0.1) !important;
+      border-radius: 32px !important;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06) !important;
+    }
+
+    body.light-mode .nav-bar {
+      background: rgba(255,255,255,0.75) !important;
+      border-color: rgba(0,0,0,0.07) !important;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08) !important;
+    }
+
+    .nav-tab {
+      color: rgba(255,255,255,0.4) !important;
+      font-family: 'DM Sans', sans-serif !important;
+      border-radius: 22px !important;
+      font-size: 13px !important;
+    }
+
+    .nav-tab:hover { background: rgba(255,255,255,0.08) !important; color: rgba(255,255,255,0.85) !important; }
+    .nav-tab.active { background: var(--theme-primary, #6ee7c0) !important; color: #0a1a12 !important; box-shadow: 0 4px 16px var(--theme-glow, rgba(110,231,192,0.35)) !important; }
+
+    body.light-mode .nav-tab { color: #555877 !important; }
+    body.light-mode .nav-tab:hover { background: rgba(0,0,0,0.05) !important; color: #1a1a2e !important; }
+    body.light-mode .nav-tab.active { color: #0a1a12 !important; }
+
+    /* 패널 — 글래스모피즘 강하게 */
+    .panel, .container, .panel.extra-section,
+    #section-main .panel, .left-panel .panel, .right-panel .panel {
+      background: rgba(14,15,21,0.45) !important;
+      backdrop-filter: blur(28px) !important;
+      -webkit-backdrop-filter: blur(28px) !important;
+      border: 1px solid rgba(255,255,255,0.1) !important;
+      border-radius: 24px !important;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06) !important;
+    }
+
+    body.light-mode .panel,
+    body.light-mode .container,
+    body.light-mode .panel.extra-section,
+    body.light-mode #section-main .panel,
+    body.light-mode .left-panel .panel,
+    body.light-mode .right-panel .panel,
+    body.light-mode .left-panel,
+    body.light-mode .right-panel {
+      background: rgba(255,255,255,0.92) !important;
+      backdrop-filter: blur(28px) !important;
+      -webkit-backdrop-filter: blur(28px) !important;
+      border-color: rgba(0,0,0,0.06) !important;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.07) !important;
+      color: #1a1a2e !important;
+    }
+
+    /* 섹션 제목 */
+    .section-title {
+      font-family: 'Space Grotesk', sans-serif !important;
+      font-weight: 800 !important;
+      letter-spacing: -0.5px !important;
+      color: #f0f0f0 !important;
+    }
+    body.light-mode .section-title { color: #1a1a2e !important; }
+
+    /* 집중 점수 */
+    .stats-value {
+      font-family: 'Space Grotesk', sans-serif !important;
+      color: var(--theme-primary, #6ee7c0) !important;
+      -webkit-text-fill-color: var(--theme-primary, #6ee7c0) !important;
+      font-size: 52px !important;
+      font-weight: 800 !important;
+    }
+
+    /* 타이머 */
+    #timer-display {
+      font-family: 'Space Grotesk', sans-serif !important;
+      font-size: 60px !important;
+      font-weight: 800 !important;
+      background: linear-gradient(135deg, var(--theme-primary,#6ee7c0), #60b4ff) !important;
+      -webkit-background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+      background-clip: text !important;
+    }
+
+    /* 입력창 */
+    input:not(.auth-input), textarea:not(.auth-input), select:not(.auth-input) {
+      background: rgba(255,255,255,0.07) !important;
+      border: 1.5px solid rgba(255,255,255,0.1) !important;
+      color: #f0f0f0 !important;
+      border-radius: 12px !important;
+    }
+    input:not(.auth-input)::placeholder { color: rgba(255,255,255,0.25) !important; }
+    input:not(.auth-input):focus, textarea:not(.auth-input):focus, select:not(.auth-input):focus {
+      border-color: var(--theme-primary, #6ee7c0) !important;
+      background: rgba(110,231,192,0.08) !important;
+      box-shadow: 0 0 0 3px var(--theme-glow, rgba(110,231,192,0.2)) !important;
+    }
+    body.light-mode input:not(.auth-input),
+    body.light-mode textarea:not(.auth-input),
+    body.light-mode select:not(.auth-input) {
+      background: rgba(255,255,255,0.9) !important;
+      border-color: rgba(0,0,0,0.12) !important;
+      color: #1a1a2e !important;
+    }
+    body.light-mode input:not(.auth-input)::placeholder { color: rgba(0,0,0,0.3) !important; }
+
+    /* 커뮤니티 탭 */
+    .community-tab {
+      background: rgba(255,255,255,0.08) !important;
+      color: rgba(255,255,255,0.8) !important;
+      border: 1.5px solid rgba(255,255,255,0.18) !important;
+      border-radius: 20px !important;
+      font-weight: 700 !important;
+      font-size: 14px !important;
+      font-family: 'DM Sans', sans-serif !important;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.3) !important;
+    }
+    .community-tab:hover {
+      background: rgba(255,255,255,0.14) !important;
+      border-color: var(--theme-primary,#6ee7c0) !important;
+      color: #fff !important;
+      box-shadow: 0 4px 16px var(--theme-glow,rgba(110,231,192,0.2)) !important;
+    }
+    .community-tab.active {
+      background: var(--theme-primary,#6ee7c0) !important;
+      border-color: var(--theme-primary,#6ee7c0) !important;
+      color: #0a1a12 !important;
+      text-shadow: none !important;
+      box-shadow: 0 4px 20px var(--theme-glow,rgba(110,231,192,0.4)) !important;
+    }
+    body.light-mode .community-tab {
+      background: rgba(0,0,0,0.09) !important;
+      color: #1a1a2e !important;
+      border-color: rgba(0,0,0,0.25) !important;
+      text-shadow: none !important;
+      font-weight: 800 !important;
+    }
+    body.light-mode .community-tab:hover {
+      background: rgba(0,0,0,0.14) !important;
+      color: #000 !important;
+      border-color: var(--theme-primary,#6ee7c0) !important;
+      box-shadow: 0 4px 12px var(--theme-glow,rgba(110,231,192,0.3)) !important;
+    }
+    body.light-mode .community-tab.active {
+      color: #0a1a12 !important;
+      font-weight: 800 !important;
+    }
+
+    /* 게시글/목표/랭킹 카드 */
+    .post-item, .goal-item, .summary-card, .stats-item, .month-subject-item {
+      background: rgba(255,255,255,0.05) !important;
+      border: 1px solid rgba(255,255,255,0.09) !important;
+      border-radius: 16px !important;
+    }
+    .post-item:hover { border-color: var(--theme-primary,#6ee7c0) !important; background: rgba(110,231,192,0.06) !important; }
+    .goal-item:hover { border-color: var(--theme-primary,#6ee7c0) !important; background: rgba(110,231,192,0.06) !important; }
+
+    body.light-mode .post-item, body.light-mode .goal-item,
+    body.light-mode .summary-card, body.light-mode .stats-item,
+    body.light-mode .month-subject-item {
+      background: rgba(255,255,255,0.85) !important;
+      border-color: rgba(0,0,0,0.07) !important;
+    }
+
+    /* 랭킹 */
+    .ranking-row:hover { background: rgba(255,255,255,0.06) !important; border-radius: 12px !important; }
+    .ranking-name { color: #f0f0f0 !important; }
+    .ranking-time { color: var(--theme-primary,#6ee7c0) !important; font-family: 'Space Grotesk',sans-serif !important; font-weight: 800 !important; }
+    body.light-mode .ranking-name { color: #1a1a2e !important; }
+
+    /* 분석 데이터 */
+    .detail-row { border-bottom-color: rgba(255,255,255,0.06) !important; color: #f0f0f0 !important; }
+    body.light-mode .detail-row { color: #1a1a2e !important; border-bottom-color: rgba(0,0,0,0.07) !important; }
+
+    /* 섹션 전환 */
+    .panel.extra-section.active { animation: appFadeIn 0.4s cubic-bezier(0.16,1,0.3,1) forwards !important; }
+    @keyframes appFadeIn { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+
+    /* username */
     #username-display {
       margin-left: auto; font-size: 13px; font-weight: 700;
       color: var(--theme-primary); padding: 7px 14px;
@@ -494,9 +714,11 @@
 
     </div>
   </div>
-  <div id="app" style="display:none;">
+  <div id="app" style="display:none; position:relative;">
+  <!-- 앱 배경 파티클 -->
+  <canvas id="app-canvas" style="position:fixed; inset:0; z-index:0; pointer-events:none; opacity:0.7;"></canvas>
 
-  <div class="app-container">
+  <div class="app-container" style="position:relative; z-index:1;">
     <!-- 네비게이션 -->
     <nav class="nav-bar">
       <button class="nav-tab active" onclick="showSection('main', this)">대시보드</button>
@@ -736,13 +958,13 @@
   </div>
 
   <!-- 뷰 2: 방 내부 (채팅 + 캠) -->
-  <div id="room-inside" style="display:none; flex-direction:column; height:640px;">
+  <div id="room-inside" style="display:none; flex-direction:column; height:85vh; min-height:600px;">
 
     <!-- 방 헤더 -->
     <div style="display:flex; align-items:center; justify-content:space-between;
       padding:16px 20px; border-bottom:1px solid rgba(255,255,255,0.07); flex-shrink:0;">
       <div>
-        <div id="room-title" style="font-size:16px; font-weight:800; color:var(--text-main);"></div>
+        <div id="room-title" style="font-size:18px; font-weight:800; color:var(--text-main); letter-spacing:-0.5px;"></div>
         <div id="room-member-count" style="font-size:12px; color:var(--text-sub); margin-top:2px;"></div>
       </div>
       <button onclick="leaveRoom()"
@@ -755,16 +977,16 @@
     <div style="display:flex; flex:1; overflow:hidden; gap:0;">
 
       <!-- 왼쪽: 캠 영역 -->
-      <div id="room-cam-area" style="width:45%; display:flex; flex-direction:column;
-        gap:10px; padding:14px; overflow-y:auto; border-right:1px solid rgba(255,255,255,0.07);">
-        <div style="font-size:12px; color:var(--text-sub); font-weight:700;">📹 스터디 캠</div>
+      <div id="room-cam-area" style="width:48%; display:flex; flex-direction:column;
+        gap:12px; padding:16px; overflow-y:auto; border-right:1px solid rgba(255,255,255,0.07);">
+        <div style="font-size:13px; color:var(--text-sub); font-weight:700; letter-spacing:0.5px;">📹 스터디 캠</div>
 
         <!-- 내 캠 -->
         <div style="border-radius:14px; overflow:hidden; background:#000;
           border:2px solid var(--accent-green); flex-shrink:0;">
-          <div style="padding:6px 12px; font-size:11px; font-weight:700;
+          <div style="padding:8px 14px; font-size:13px; font-weight:700;
             color:var(--accent-green); background:rgba(0,0,0,0.4);">
-            나 (<span id="room-my-nickname"></span>)
+            🎥 나 (<span id="room-my-nickname"></span>)
           </div>
           <div style="position:relative; aspect-ratio:4/3;">
             <video id="room-local-video" autoplay playsinline muted
@@ -775,8 +997,8 @@
           </div>
           <div style="padding:8px 12px; display:flex; gap:8px; background:rgba(0,0,0,0.3);">
             <button onclick="toggleRoomCam()" id="room-cam-btn"
-              style="flex:1; padding:6px; background:var(--accent-green); color:#111;
-              border:none; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">
+              style="flex:1; padding:10px; background:var(--accent-green); color:#111;
+              border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer;">
               📷 캠 켜기
             </button>
           </div>
@@ -788,7 +1010,7 @@
 
       <!-- 오른쪽: 채팅 -->
       <div style="flex:1; display:flex; flex-direction:column; padding:14px; gap:10px;">
-        <div style="font-size:12px; color:var(--text-sub); font-weight:700; flex-shrink:0;">
+        <div style="font-size:13px; color:var(--text-sub); font-weight:700; flex-shrink:0; letter-spacing:0.5px;">
           💬 채팅
         </div>
         <div id="room-chat-messages" style="flex:1; overflow-y:auto; display:flex;
@@ -796,14 +1018,14 @@
           border-radius:12px; min-height:0;">
         </div>
         <div style="display:flex; gap:8px; flex-shrink:0;">
-          <input type="text" id="room-chat-input" placeholder="메시지..." maxlength="200"
+          <input type="text" id="room-chat-input" placeholder="메시지를 입력하세요..." maxlength="200"
             onkeydown="if(event.key==='Enter') sendRoomChat()"
-            style="flex:1; padding:10px 14px; border-radius:10px;
-            border:1px solid rgba(255,255,255,0.1); background:var(--stats-bg);
-            color:var(--text-main); font-size:13px;">
+            style="flex:1; padding:13px 18px; border-radius:12px;
+            border:1.5px solid rgba(255,255,255,0.1); background:var(--stats-bg);
+            color:var(--text-main); font-size:14px;">
           <button onclick="sendRoomChat()"
-            style="padding:10px 18px; background:var(--accent-green); color:#111;
-            border:none; border-radius:10px; font-weight:700; cursor:pointer; flex-shrink:0;">
+            style="padding:13px 24px; background:var(--accent-green); color:#111;
+            border:none; border-radius:12px; font-weight:700; cursor:pointer; font-size:14px; flex-shrink:0;">
             전송
           </button>
         </div>
@@ -1975,6 +2197,7 @@ async function checkLogin() {
     if (data.user) {
       document.getElementById('auth-screen').style.display = 'none';
       document.getElementById('app').style.display = 'block';
+      startAppCanvas();
 
       // 🔥 username 표시 (없어도 에러 안 나게)
       const nameEl = document.getElementById('username-display');
@@ -2010,7 +2233,11 @@ window.onload = checkLogin;
     let localStream = null;       // 브라우저 캠 스트림
 
     const RTC_CONFIG = {
-      iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+      iceServers: [
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun1.l.google.com:19302" },
+      ],
+      iceCandidatePoolSize: 10,
     };
 
     // --- 토스트 알림 ---
@@ -2197,9 +2424,21 @@ window.onload = checkLogin;
         }
       };
 
-      // failed/closed만 정리 (disconnected는 일시적일 수 있음)
       pc.onconnectionstatechange = () => {
         console.log(`[Dash WebRTC ${sid.slice(0,6)}] ${pc.connectionState}`);
+        if (pc.connectionState === 'disconnected') {
+          setTimeout(() => {
+            if (!peerConnections[sid]) return;
+            const state = peerConnections[sid].connectionState;
+            if (state === 'disconnected' || state === 'failed') {
+              const el = document.getElementById("friend-cam-" + sid);
+              if (el) el.remove();
+              peerConnections[sid].close();
+              delete peerConnections[sid];
+              delete dashIceQueue[sid];
+            }
+          }, 5000);
+        }
         if (["failed","closed"].includes(pc.connectionState)) {
           const el = document.getElementById("friend-cam-" + sid);
           if (el) el.remove();
@@ -2384,7 +2623,13 @@ window.onload = checkLogin;
     let roomCamOn       = false;
     const roomPeers     = {};   // {sid: RTCPeerConnection}
 
-    const RTC_CFG = { iceServers:[{urls:"stun:stun.l.google.com:19302"}] };
+    const RTC_CFG = {
+      iceServers: [
+        {urls: "stun:stun.l.google.com:19302"},
+        {urls: "stun:stun1.l.google.com:19302"},
+      ],
+      iceCandidatePoolSize: 10,
+    };
 
     // ── 로비 ──
     function initChat() {
@@ -2587,8 +2832,8 @@ window.onload = checkLogin;
       box.id = 'peer-cam-'+sid;
       box.style.cssText = 'border-radius:14px;overflow:hidden;background:#000;border:1.5px solid rgba(255,255,255,0.1);flex-shrink:0;';
       box.innerHTML = `
-        <div style="padding:6px 12px;font-size:11px;font-weight:700;color:var(--text-sub);background:rgba(0,0,0,0.4);">
-          ${nickname}
+        <div style="padding:8px 14px;font-size:13px;font-weight:700;color:var(--text-sub);background:rgba(0,0,0,0.4);">
+          🎥 ${nickname}
         </div>
         <div style="position:relative;aspect-ratio:4/3;">
           <video id="peer-video-${sid}" autoplay playsinline muted
@@ -2635,7 +2880,15 @@ window.onload = checkLogin;
 
       pc.onconnectionstatechange = () => {
         console.log(`[WebRTC ${sid.slice(0,6)}] 상태: ${pc.connectionState}`);
-        // disconnected는 일시적일 수 있으므로 failed/closed만 정리
+        if (pc.connectionState === 'disconnected') {
+          // 5초 기다린 후에도 disconnected면 정리
+          setTimeout(() => {
+            if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
+              removePeerCamBox(sid);
+              if (roomPeers[sid]) { roomPeers[sid].close(); delete roomPeers[sid]; }
+            }
+          }, 5000);
+        }
         if (['failed','closed'].includes(pc.connectionState)) {
           removePeerCamBox(sid);
           pc.close();
@@ -2795,6 +3048,133 @@ window.onload = checkLogin;
         `).join('');
         document.getElementById('stretching-popup').style.display = 'block';
       });
+    }
+
+    // =============================================
+    // 앱 내부 배경 파티클 (로그인 화면과 동일 테마)
+    // =============================================
+    function startAppCanvas() {
+      const canvas = document.getElementById('app-canvas');
+      if (!canvas || canvas._running) return;
+      canvas._running = true;
+      const ctx = canvas.getContext('2d');
+
+      function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+      resize(); window.addEventListener('resize', resize);
+
+      // 파티클 — 다크/라이트 모두 화려하게
+      const pts = Array.from({length: 120}, () => ({
+        x:  Math.random() * window.innerWidth,
+        y:  Math.random() * window.innerHeight,
+        r:  Math.random() * 2.5 + 0.6,
+        vx: (Math.random() - 0.5) * 0.5,
+        vy: (Math.random() - 0.5) * 0.5,
+        a:  Math.random() * 0.7 + 0.2,
+        pulse: Math.random() * Math.PI * 2,
+      }));
+
+      // 별똥별 효과
+      const shoots = [];
+      function spawnShoot() {
+        if (shoots.length < 3) {
+          shoots.push({
+            x: Math.random() * window.innerWidth,
+            y: Math.random() * window.innerHeight * 0.5,
+            vx: (Math.random() * 3 + 2),
+            vy: (Math.random() * 2 + 1),
+            life: 1.0,
+            len: Math.random() * 80 + 40,
+          });
+        }
+      }
+      setInterval(spawnShoot, 3000);
+
+      function getThemeRGB() {
+        const light = isLight();
+        const style = getComputedStyle(document.body);
+        const primary = style.getPropertyValue('--theme-primary').trim();
+        // 라이트모드에서는 더 진한(어두운) 색으로
+        if (primary.includes('96,180')) return light ? [20,120,220] : [96,180,255];
+        if (primary.includes('176,136')) return light ? [120,60,220] : [176,136,249];
+        if (primary.includes('255,170') || primary.includes('255,aa')) return light ? [200,120,0] : [255,170,92];
+        if (primary.includes('255,128') || primary.includes('ff80')) return light ? [220,40,120] : [255,128,181];
+        return light ? [20,160,100] : [110,231,192]; // 기본 그린
+      }
+
+      const isLight = () => document.body.classList.contains('light-mode');
+
+      function draw() {
+        if (!document.getElementById('app') || document.getElementById('app').style.display==='none') {
+          canvas._running = false; return;
+        }
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const [r,g,b] = getThemeRGB();
+        const baseAlpha = isLight() ? 1.0 : 1.0;
+        const lineAlpha = isLight() ? 0.7 : 0.5;
+        const t = Date.now() * 0.001;
+
+        // 파티클
+        pts.forEach(p => {
+          p.x += p.vx; p.y += p.vy;
+          p.pulse += 0.03;
+          if(p.x < 0) p.x = canvas.width;
+          if(p.x > canvas.width) p.x = 0;
+          if(p.y < 0) p.y = canvas.height;
+          if(p.y > canvas.height) p.y = 0;
+
+          const pulse = Math.sin(p.pulse) * 0.3 + 0.7;
+          const alpha = p.a * pulse * baseAlpha;
+          const radius = p.r * pulse;
+
+          // 글로우 효과
+          ctx.shadowBlur = isLight() ? 20 : 12;
+          ctx.shadowColor = `rgba(${r},${g},${b},0.8)`;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+          // 라이트모드에서 더 진하게
+          const finalAlpha = isLight() ? Math.min(alpha * 2.0, 1.0) : alpha;
+          ctx.fillStyle = `rgba(${r},${g},${b},${finalAlpha})`;
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        });
+
+        // 연결선
+        for (let i = 0; i < pts.length; i++) {
+          for (let j = i+1; j < pts.length; j++) {
+            const dx = pts[i].x - pts[j].x;
+            const dy = pts[i].y - pts[j].y;
+            const d  = Math.sqrt(dx*dx + dy*dy);
+            if (d < 150) {
+              const a = isLight() ? lineAlpha * 1.8 * (1 - d/150) : lineAlpha * (1 - d/150);
+              ctx.beginPath();
+              ctx.moveTo(pts[i].x, pts[i].y);
+              ctx.lineTo(pts[j].x, pts[j].y);
+              ctx.strokeStyle = `rgba(${r},${g},${b},${a})`;
+              ctx.lineWidth = 0.7;
+              ctx.stroke();
+            }
+          }
+        }
+
+        // 별똥별
+        for (let i = shoots.length-1; i >= 0; i--) {
+          const s = shoots[i];
+          s.x += s.vx * 4; s.y += s.vy * 2; s.life -= 0.018;
+          if (s.life <= 0) { shoots.splice(i,1); continue; }
+          const grad = ctx.createLinearGradient(s.x-s.len, s.y-s.len*0.5, s.x, s.y);
+          grad.addColorStop(0, `rgba(${r},${g},${b},0)`);
+          grad.addColorStop(1, `rgba(${r},${g},${b},${s.life * (isLight()?0.85:0.8)})`);
+          ctx.beginPath();
+          ctx.moveTo(s.x - s.len, s.y - s.len*0.5);
+          ctx.lineTo(s.x, s.y);
+          ctx.strokeStyle = grad;
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        }
+
+        requestAnimationFrame(draw);
+      }
+      draw();
     }
 
     // --- 로그인 완료 시 소켓 등록 연동 ---
