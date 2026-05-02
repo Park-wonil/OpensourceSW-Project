@@ -147,6 +147,12 @@ def stretching():
 
 @app.route('/video')
 def video():
+    # 로컬 접속에서만 Flask 카메라 스트리밍 허용
+    # ngrok/외부 접속 시 빈 응답 (각자 브라우저 캠 사용)
+    host = request.host.split(':')[0]
+    is_local = host in ('127.0.0.1', 'localhost', '0.0.0.0') or host.startswith('192.168.') or host.startswith('10.')
+    if not is_local:
+        return Response(b'', mimetype='text/plain')
     return Response(generate_frames(),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
@@ -453,6 +459,7 @@ def _broadcast_room_list():
             "host":     r["host_nickname"],
             "count":    len(r["members"]),
             "members":  [m["nickname"] for m in r["members"]],
+            "locked":   bool(r.get("password")),  # 비밀번호 여부
         }
         for rid, r in study_rooms.items()
     ]
@@ -460,8 +467,9 @@ def _broadcast_room_list():
 
 @socketio.on("create_room")
 def on_create_room(data):
-    """방 만들기"""
-    name = str(data.get("name", "")).strip()[:30] or "스터디룸"
+    """방 만들기 - 비밀번호 옵션 지원"""
+    name     = str(data.get("name", "")).strip()[:30] or "스터디룸"
+    password = str(data.get("password", "")).strip()[:20]
     nickname = study_room_users.get(request.sid, "익명")
     room_id  = _uuid.uuid4().hex[:8]
 
@@ -471,11 +479,12 @@ def on_create_room(data):
         "host_nickname": nickname,
         "members":       [{"sid": request.sid, "nickname": nickname}],
         "room_socket":   room_id,
+        "password":      password,  # 빈 문자열이면 공개방
     }
     join_room(room_id)
     emit("room_created", {"room_id": room_id, "name": name})
     _broadcast_room_list()
-    print(f"[방 생성] {name} ({room_id}) by {nickname}")
+    print(f"[방 생성] {name} ({'🔒' if password else '🔓'}) ({room_id}) by {nickname}")
 
 @socketio.on("join_room_req")
 def on_join_room(data):
@@ -493,6 +502,13 @@ def on_join_room(data):
         emit("room_joined", {"room_id": room_id, "name": room["name"],
                              "members": room["members"]})
         return
+
+    # 비밀번호 검증
+    if room.get("password"):
+        input_pw = str(data.get("password", "")).strip()
+        if input_pw != room["password"]:
+            emit("room_error", {"msg": "비밀번호가 틀렸습니다.", "type": "password"})
+            return
 
     room["members"].append({"sid": request.sid, "nickname": nickname})
     join_room(room_id)
@@ -566,6 +582,21 @@ def on_room_chat(data):
         "nickname": nickname,
         "msg":      msg,
         "time":     __import__("time").strftime("%H:%M"),
+        "sid":      request.sid,
+    }, to=room_id)
+
+# 이모지 반응
+@socketio.on("room_emoji")
+def on_room_emoji(data):
+    """방 내 이모지 반응 브로드캐스트"""
+    room_id  = data.get("room_id", "")
+    emoji    = data.get("emoji", "👍")
+    nickname = study_room_users.get(request.sid, "익명")
+    if room_id not in study_rooms:
+        return
+    emit("room_emoji", {
+        "nickname": nickname,
+        "emoji":    emoji,
         "sid":      request.sid,
     }, to=room_id)
 

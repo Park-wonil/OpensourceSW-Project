@@ -1865,31 +1865,18 @@ body.light-mode .comment-item {
   box-shadow: 0 4px 12px rgba(110, 231, 192, 0.25);
 }
 
-/* 글쓰기 버튼 - 플로팅 */
+/* 글쓰기 버튼 - 헤더 인라인 */
 .btn-write {
-  position: fixed;
-  right: 40px;
-  bottom: 40px;
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--primary) 0%, #4facfe 100%);
-  color: white;
-  font-size: 28px;
+  padding: 10px 20px;
+  background: var(--theme-primary, #6ee7c0);
+  color: #111;
   border: none;
-  box-shadow: 0 8px 24px rgba(110, 231, 192, 0.4);
+  border-radius: 12px;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  font-size: 14px;
 }
-
-.btn-write:hover {
-  transform: scale(1.1) rotate(90deg);
-  box-shadow: 0 12px 32px rgba(110, 231, 192, 0.5);
-}
+.btn-write:hover { transform: translateY(-2px); }
 
 /* 글쓰기 폼 - 모달 */
 .write-form {
@@ -2938,3 +2925,199 @@ body.light-mode .comment-content { color: #1a1a2e !important; }
 
 /* 버튼 공통 */
 button { font-family: 'DM Sans', sans-serif !important; }
+
+
+/* =============================================
+   📱 모바일 반응형 (핸드폰 크롬 지원)
+   ============================================= */
+@media (max-width: 768px) {
+
+  html {
+    overflow-x: hidden !important;
+  }
+
+  body {
+    padding: 8px !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    /* overflow-x 설정 안 함 → nav-bar 터치 스크롤 허용 */
+  }
+
+  /* 앱 컨테이너 */
+  .app-container {
+    width: 100% !important;
+    max-width: 100vw !important;
+    padding: 0 !important;
+  }
+
+  /* 네비게이션 가로 스크롤 */
+  .nav-bar {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    gap: 4px !important;
+    padding: 8px 10px !important;
+    border-radius: 16px !important;
+    margin-bottom: 12px !important;
+  }
+  .nav-bar::-webkit-scrollbar { display: none !important; }
+
+  .nav-tab {
+    padding: 8px 14px !important;
+    font-size: 12px !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    border-radius: 14px !important;
+    min-height: 40px !important;
+  }
+
+  /* 대시보드 세로 (active일 때만) */
+  #section-main.active {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  .left-panel, .right-panel { width: 100% !important; gap: 12px !important; }
+
+  /* 패널 */
+  .panel, .container { padding: 16px !important; border-radius: 18px !important; }
+
+  /* 숫자 크기 */
+  .stats-value { font-size: 42px !important; }
+  #timer-display { font-size: 52px !important; }
+  .section-title { font-size: 18px !important; margin-bottom: 14px !important; }
+  .summary-value { font-size: 22px !important; }
+
+  /* 통계 그리드 2열 */
+  .stats-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
+
+  /* 랭킹 */
+  .ranking-header, .ranking-row {
+    grid-template-columns: 44px 1fr 64px !important;
+    padding: 10px 12px !important;
+    font-size: 13px !important;
+  }
+
+  /* 커뮤니티 탭 */
+  .community-tab {
+    font-size: 12px !important;
+    padding: 8px 14px !important;
+    flex: 1 !important;
+    text-align: center !important;
+    min-height: 40px !important;
+  }
+
+  /* 게시글 */
+  .post-item { padding: 12px 14px !important; }
+  .post-item-title { font-size: 14px !important; }
+
+  /* 스터디룸 */
+  #room-inside {
+    height: 100dvh !important;
+    height: 100vh !important;
+    min-height: unset !important;
+  }
+
+  #room-inside > div:last-child { flex-direction: column !important; }
+
+  #room-cam-area {
+    width: 100% !important;
+    max-height: 40vh !important;
+    border-right: none !important;
+    border-bottom: 1px solid rgba(255,255,255,0.07) !important;
+    padding: 10px !important;
+  }
+
+  /* 방 만들기 폼 세로 정렬 */
+  #room-lobby > div:first-of-type > div:first-child {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+
+  #room-name-input, #room-pw-input {
+    width: 100% !important;
+    min-width: unset !important;
+  }
+
+  /* 전체 섹션 너비 */
+  .panel, .container, .panel.extra-section {
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 방 목록 카드 너비 */
+  #room-list-container > div {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+
+  /* 입장 버튼 전체 너비 */
+  #room-list-container button {
+    width: 100% !important;
+    margin-left: 0 !important;
+  }
+
+  /* iOS 입력창 zoom 방지 */
+  input, textarea, select { font-size: 16px !important; }
+
+  /* 터치 영역 */
+  button { min-height: 40px !important; }
+
+  /* username */
+  #username-display { font-size: 11px !important; padding: 5px 10px !important; }
+
+  /* 과목 칩 */
+  .subject-chip { padding: 7px 14px !important; font-size: 12px !important; }
+
+  /* 이모지 버튼 */
+  .emoji-react-btn { padding: 6px 8px !important; font-size: 16px !important; }
+
+  /* 팝업 */
+  #neck-alert-popup { width: 90vw !important; min-width: unset !important; }
+  #stretching-popup { width: 92vw !important; max-width: unset !important; padding: 20px !important; }
+
+  /* 주간 요약 세로 */
+  .weekly-summary { flex-direction: column !important; gap: 8px !important; }
+
+  /* 설정 */
+  .detail-row { padding: 10px 0 !important; font-size: 14px !important; }
+  .theme-btn { padding: 6px 12px !important; font-size: 12px !important; }
+
+  /* 로그인 */
+  .auth-form-wrap { width: 100% !important; max-width: 100% !important; padding: 12px !important; }
+  .auth-card { padding: 28px 20px !important; border-radius: 20px !important; }
+}
+
+/* 매우 작은 화면 (iPhone SE) */
+@media (max-width: 390px) {
+  .nav-tab { padding: 7px 11px !important; font-size: 11px !important; }
+  .stats-value { font-size: 36px !important; }
+  #timer-display { font-size: 44px !important; }
+  .auth-card { padding: 24px 16px !important; }
+  .summary-value { font-size: 20px !important; }
+}
+
+/* 모바일 네비바 상단 고정 */
+@media (max-width: 768px) {
+  .nav-bar {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 999 !important;
+    margin-bottom: 12px !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+  }
+  .nav-bar::-webkit-scrollbar { display: none !important; }
+
+  /* 섹션 전환 시 깔끔하게 */
+  .panel.extra-section { display: none; }
+  .panel.extra-section.active { display: block !important; }
+  /* section-main도 active일 때만 표시 */
+  #section-main { display: none !important; }
+  #section-main.active { display: flex !important; flex-direction: column !important; }
+}

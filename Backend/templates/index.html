@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Focus AI</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
@@ -553,6 +553,36 @@
 
     /* 섹션 전환 */
     .panel.extra-section.active { animation: appFadeIn 0.4s cubic-bezier(0.16,1,0.3,1) forwards !important; }
+    @keyframes emojiFloat {
+      0%   { opacity: 1; transform: translateY(0) scale(1); }
+      80%  { opacity: 0.8; transform: translateY(-60px) scale(1.3); }
+      100% { opacity: 0; transform: translateY(-80px) scale(0.8); }
+    }
+
+    /* 이모지 반응 버튼 */
+    .emoji-react-btn {
+      padding: 8px 12px;
+      font-size: 18px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.15s;
+      line-height: 1;
+    }
+    .emoji-react-btn:hover {
+      background: rgba(255,255,255,0.14);
+      transform: scale(1.2) translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    .emoji-react-btn:active { transform: scale(0.95); }
+
+    /* 비밀번호 팝업 라이트모드 */
+    body.light-mode #room-pw-popup > div {
+      background: #fff;
+      border-color: rgba(0,0,0,0.1);
+    }
+
     @keyframes appFadeIn { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
 
     /* username */
@@ -594,6 +624,14 @@
     body.light-mode .ranking-row:hover { background: rgba(0,0,0,0.03); }
     body.light-mode .goal-progress-bar { background: rgba(0,0,0,0.08); }
     body.light-mode #online-users-box { background: rgba(255,255,255,0.85); border-color: rgba(0,0,0,0.08); }
+
+    /* 목록으로 버튼 라이트모드 */
+    body.light-mode #post-detail .btn-back,
+    body.light-mode #post-detail button:first-child {
+      background: rgba(0,0,0,0.06) !important;
+      color: #1a1a2e !important;
+      border-color: rgba(0,0,0,0.15) !important;
+    }
     body.light-mode .stats-box { background: linear-gradient(135deg, rgba(110,231,192,0.12), rgba(96,180,255,0.08)); }
 
     /* 플로팅 아이콘 */
@@ -720,7 +758,7 @@
 
   <div class="app-container" style="position:relative; z-index:1;">
     <!-- 네비게이션 -->
-    <nav class="nav-bar">
+    <nav class="nav-bar" id="main-nav-bar" style="overflow-x:auto; -webkit-overflow-scrolling:touch; flex-wrap:nowrap; scrollbar-width:none;">
       <button class="nav-tab active" onclick="showSection('main', this)">대시보드</button>
       <button class="nav-tab" onclick="showSection('goals', this)">목표</button>
       <button class="nav-tab" onclick="showSection('stats', this)">상세 통계</button>
@@ -750,7 +788,10 @@
         <!-- 내 캠 -->
         <div class="video-container" id="my-video-container">
           <div id="cam-placeholder">카메라가 꺼져 있습니다.</div>
-          <img id="video" src="" alt="Live Feed" style="display:none;"> 
+          <img id="video" src="" alt="Live Feed" style="display:none;">
+          <!-- 외부접속(ngrok) 시 브라우저 캠 표시용 -->
+          <video id="browser-cam-video" autoplay playsinline muted
+            style="display:none; width:100%; height:100%; object-fit:cover; position:absolute; inset:0;"></video>
         </div>
 
         <!-- 온라인 유저 목록 -->
@@ -937,16 +978,27 @@
   <!-- 뷰 1: 방 목록 -->
   <div id="room-lobby" style="padding:24px;">
     <h2 class="section-title">💬 스터디룸</h2>
-    <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
-      <input type="text" id="room-name-input" placeholder="방 이름 입력..." maxlength="30"
-        style="flex:1; min-width:160px; padding:11px 16px; border-radius:12px;
-        border:1px solid rgba(255,255,255,0.1); background:var(--stats-bg);
-        color:var(--text-main); font-size:14px;">
-      <button onclick="createRoom()" style="padding:11px 22px; background:var(--accent-green);
-        color:#111; border:none; border-radius:12px; font-weight:700; cursor:pointer; flex-shrink:0;">
-        + 방 만들기
-      </button>
+
+    <!-- 방 만들기 폼 -->
+    <div style="background:var(--panel); border:1px solid var(--border); border-radius:18px;
+      padding:18px; margin-bottom:20px;">
+      <div style="font-size:13px; font-weight:700; color:var(--text-sub);
+        margin-bottom:12px; letter-spacing:0.5px;">🏠 새 방 만들기</div>
+      <div style="display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap;">
+        <input type="text" id="room-name-input" placeholder="방 제목 입력..." maxlength="30"
+          style="flex:2; min-width:160px;">
+        <input type="password" id="room-pw-input" placeholder="🔒 비밀번호 (선택)" maxlength="20"
+          style="flex:1; min-width:130px;">
+        <button onclick="createRoom()" style="padding:11px 22px; background:var(--accent-green);
+          color:#111; border:none; border-radius:12px; font-weight:700; cursor:pointer; flex-shrink:0;">
+          + 개설
+        </button>
+      </div>
+      <div style="font-size:12px; color:var(--text-dim);">
+        비밀번호를 설정하면 🔒 비공개 방이 됩니다.
+      </div>
     </div>
+
     <div style="font-size:13px; color:var(--text-sub); margin-bottom:12px;">
       🟢 <span id="lobby-online-count">0</span>명 온라인
     </div>
@@ -954,6 +1006,31 @@
       <div style="text-align:center; padding:30px; color:var(--text-sub); font-size:14px;">
         아직 열린 방이 없습니다. 첫 번째 방을 만들어보세요! 🎉
       </div>
+    </div>
+  </div>
+
+  <!-- 비밀번호 입력 팝업 -->
+  <div id="room-pw-popup" style="display:none; position:fixed; inset:0; z-index:10000;
+    background:rgba(0,0,0,0.6); backdrop-filter:blur(8px);
+    display:none; align-items:center; justify-content:center;">
+    <div style="background:#14151d; border:1px solid rgba(255,255,255,0.12);
+      border-radius:24px; padding:32px; width:320px; box-shadow:0 16px 48px rgba(0,0,0,0.5);">
+      <div style="font-size:18px; font-weight:800; color:#f0f0f0; margin-bottom:8px;">🔒 비공개 방</div>
+      <div style="font-size:13px; color:rgba(255,255,255,0.5); margin-bottom:20px;">
+        비밀번호를 입력하세요.
+      </div>
+      <input type="password" id="join-pw-input" placeholder="비밀번호 입력..."
+        onkeydown="if(event.key==='Enter') submitJoinPw()"
+        style="width:100%; padding:13px 16px; border-radius:12px; font-size:14px; margin-bottom:14px;">
+      <div style="display:flex; gap:10px;">
+        <button onclick="submitJoinPw()" style="flex:1; padding:12px; background:var(--accent-green);
+          color:#111; border:none; border-radius:12px; font-weight:700; cursor:pointer;">입장</button>
+        <button onclick="closeJoinPw()" style="flex:1; padding:12px;
+          background:rgba(255,255,255,0.08); color:rgba(255,255,255,0.6);
+          border:1px solid rgba(255,255,255,0.1); border-radius:12px; font-weight:700; cursor:pointer;">취소</button>
+      </div>
+      <div id="join-pw-error" style="display:none; margin-top:10px; font-size:13px;
+        color:var(--accent-red); text-align:center;"></div>
     </div>
   </div>
 
@@ -1029,6 +1106,19 @@
             전송
           </button>
         </div>
+        <!-- 이모지 반응 -->
+        <div style="display:flex; gap:6px; flex-shrink:0;">
+          <button onclick="sendRoomEmoji('👍')" class="emoji-react-btn">👍</button>
+          <button onclick="sendRoomEmoji('💪')" class="emoji-react-btn">💪</button>
+          <button onclick="sendRoomEmoji('☕')" class="emoji-react-btn">☕</button>
+          <button onclick="sendRoomEmoji('🔥')" class="emoji-react-btn">🔥</button>
+          <button onclick="sendRoomEmoji('😴')" class="emoji-react-btn">😴</button>
+          <button onclick="sendRoomEmoji('🎉')" class="emoji-react-btn">🎉</button>
+        </div>
+        <!-- 이모지 플로팅 -->
+        <div id="room-emoji-float" style="position:absolute; bottom:100px; right:16px;
+          pointer-events:none; z-index:100; display:flex; flex-direction:column; gap:4px;
+          align-items:flex-end;"></div>
       </div>
     </div>
   </div>
@@ -1036,16 +1126,21 @@
 
 <!-- 커뮤니티 섹션 - 개선된 버전 -->
 <div id="section-community" class="panel extra-section">
-  <h2 class="section-title">💬 커뮤니티</h2>
-  
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+    <h2 class="section-title" style="margin-bottom:0;">💬 커뮤니티</h2>
+    <button onclick="showWriteForm()"
+      style="padding:10px 20px; background:var(--theme-primary); color:#111;
+      border:none; border-radius:12px; font-weight:700; cursor:pointer; font-size:14px;
+      display:flex; align-items:center; gap:6px; flex-shrink:0;">
+      ✏️ 글쓰기
+    </button>
+  </div>
+
   <!-- 카테고리 탭 -->
   <div class="community-tabs">
     <button class="community-tab active" onclick="switchCategory('tutor', event)">📚 과외 구인</button>
     <button class="community-tab" onclick="switchCategory('free', event)">💬 자유게시판</button>
   </div>
-  
-  <!-- 플로팅 글쓰기 버튼 -->
-  <button class="btn-write" onclick="showWriteForm()">✏️</button>
   
   <!-- 글쓰기 폼 (모달) -->
   <div id="write-form" class="write-form" style="display: none;">
@@ -1066,9 +1161,22 @@
   
   <!-- 게시글 상세 -->
   <div id="post-detail" class="post-detail" style="display: none;">
-    <button class="btn-back" onclick="backToList()">← 목록으로</button>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <button onclick="backToList()"
+        style="padding:10px 18px; background:rgba(255,255,255,0.1); color:var(--text-main);
+        border:1.5px solid rgba(255,255,255,0.2); border-radius:12px; font-weight:700;
+        cursor:pointer; font-size:14px;">
+        ← 목록으로
+      </button>
+      <button id="delete-post-btn" onclick="deleteCurrentPost()" style="display:none;
+        padding:10px 18px; background:rgba(240,153,123,0.15); color:var(--accent-red);
+        border:1.5px solid var(--accent-red); border-radius:12px; font-weight:700;
+        cursor:pointer; font-size:14px;">
+        🗑️ 삭제
+      </button>
+    </div>
     <div class="post-detail-content">
-      <h3 id="detail-title"></h3>
+      <h3 id="detail-title" style="font-size:20px; font-weight:800; color:var(--text-main); margin-bottom:12px;"></h3>
       <div class="post-meta">
         <span id="detail-author"></span>
         <span id="detail-date"></span>
@@ -1213,6 +1321,9 @@
       
       document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
       btn.classList.add('active');
+
+      // 모바일에서 탭 전환 시 최상단으로 스크롤
+      window.scrollTo({ top: 0, behavior: 'smooth' });
 
       if (id === 'stats') {
         fetch('/stats').then(res => res.json()).then(data => {
@@ -1422,22 +1533,67 @@
       showToast('📷 얼굴 분석이 재시작됩니다.');
     }
 
-    function startCamera() {
-      fetch('/start').then(() => {
-        const videoTag = document.getElementById("video");
-        videoTag.style.display = "block";
-        videoTag.src = "/video?t=" + Date.now();
+    // 외부 접속(ngrok 등) 여부 감지
+    const isExternalAccess = !['localhost','127.0.0.1'].includes(location.hostname)
+      && !location.hostname.match(/^192\.168\.|^10\.|^172\.(1[6-9]|2[0-9]|3[01])\./);
+
+    // 브라우저 캠 스트림 (외부접속용)
+    let browserCamStream = null;
+
+    async function startCamera() {
+      if (isExternalAccess) {
+        // 외부접속: 브라우저 getUserMedia로 본인 캠 표시
+        await startBrowserCam();
+      } else {
+        // 로컬: Flask 서버 카메라 스트리밍
+        await startFlaskCam();
+      }
+    }
+
+    async function startFlaskCam() {
+      await fetch('/start', {credentials:'include'});
+      const videoTag = document.getElementById("video");
+      videoTag.style.display = "block";
+      videoTag.src = "/video?t=" + Date.now();
+      document.getElementById("cam-placeholder").style.display = "none";
+      const statusTag = document.getElementById("cam-status");
+      statusTag.innerText = "LIVE";
+      statusTag.style.color = "var(--accent-green)";
+      if (monitoring) clearInterval(monitoring);
+      monitoring = setInterval(checkAll, 1000);
+    }
+
+    async function startBrowserCam() {
+      try {
+        browserCamStream = await navigator.mediaDevices.getUserMedia({
+          video: { width:640, height:480, facingMode:'user' },
+          audio: false
+        });
+        const bcv = document.getElementById('browser-cam-video');
+        bcv.srcObject = browserCamStream;
+        bcv.style.display = 'block';
+        bcv.play().catch(()=>{});
         document.getElementById("cam-placeholder").style.display = "none";
         const statusTag = document.getElementById("cam-status");
         statusTag.innerText = "LIVE";
         statusTag.style.color = "var(--accent-green)";
-        if (monitoring) clearInterval(monitoring);
-        monitoring = setInterval(checkAll, 1000);
-      });
+        // 외부접속은 분석 불가 안내
+        showToastMsg('📷 카메라 ON (외부접속: 얼굴 분석 미지원)');
+      } catch(e) {
+        showToastMsg('❌ 카메라 권한이 필요합니다.');
+      }
     }
 
     function stopCamera() {
-      fetch('/stop').then(() => {
+      if (isExternalAccess) {
+        stopBrowserCam();
+      } else {
+        stopFlaskCam();
+      }
+    }
+
+    function stopFlaskCam() {
+      fetch('/stop', {credentials:'include'}).then(() => {
         const videoTag = document.getElementById("video");
         videoTag.src = "";
         videoTag.style.display = "none";
@@ -1449,8 +1605,24 @@
       });
     }
 
+    function stopBrowserCam() {
+      if (browserCamStream) {
+        browserCamStream.getTracks().forEach(t => t.stop());
+        browserCamStream = null;
+      }
+      const bcv = document.getElementById('browser-cam-video');
+      if (bcv) { bcv.srcObject = null; bcv.style.display = 'none'; }
+      document.getElementById("cam-placeholder").style.display = "flex";
+      const statusTag = document.getElementById("cam-status");
+      statusTag.innerText = "OFF";
+      statusTag.style.color = "var(--text-sub)";
+      if (monitoring) clearInterval(monitoring);
+    }
+
     function checkAll() {
-      fetch('/detect').then(res => res.json()).then(data => {
+      // 외부접속은 서버 분석 불가
+      if (isExternalAccess) return;
+      fetch('/detect', {credentials:'include'}).then(res => res.json()).then(data => {
         if (data.absence_count !== undefined) {
           lastAbsenceCount = data.absence_count;
           lastTotalAbsenceS = data.total_absence_s;
@@ -1937,6 +2109,7 @@ function submitPost() {
   
   fetch('/community/posts', {
     method: 'POST',
+    credentials: 'include',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({
       category: currentCategory,
@@ -1945,15 +2118,19 @@ function submitPost() {
       content: content
     })
   })
-  .then(res => res.json())
+  .then(res => {
+    if (!res.ok) throw new Error(res.status);
+    return res.json();
+  })
   .then(data => {
-    alert('✅ 글이 작성되었습니다!');
+    if (data.error) throw new Error(data.error);
     cancelWrite();
     loadPosts();
+    showToastMsg('✅ 글이 작성되었습니다!');
   })
   .catch(err => {
     console.error('작성 실패:', err);
-    alert('작성 실패. 다시 시도해주세요.');
+    showToastMsg('⚠️ 작성 실패. 다시 시도해주세요.');
   });
 }
 
@@ -1964,7 +2141,7 @@ function viewPost(postId) {
     .then(res => res.json())
     .then(post => {
       document.getElementById('posts-list').style.display = 'none';
-      document.querySelector('.btn-write').style.display = 'none';
+      // 글쓰기 버튼은 헤더에 고정
       document.getElementById('post-detail').style.display = 'block';
       
       document.getElementById('detail-title').textContent = post.title;
@@ -1972,6 +2149,11 @@ function viewPost(postId) {
       document.getElementById('detail-date').textContent = '🕐 ' + post.created_at;
       document.getElementById('detail-views').textContent = '👁️ ' + post.views;
       document.getElementById('detail-content').textContent = post.content;
+
+      // 본인 글이거나 닉네임 일치하면 삭제 버튼 표시
+      const deleteBtn = document.getElementById('delete-post-btn');
+      const isMyPost = post.author === window.currentUser || post.author === '익명';
+      if (deleteBtn) deleteBtn.style.display = isMyPost ? 'block' : 'none';
       
       const commentsList = document.getElementById('comments-list');
       if (post.comments && post.comments.length > 0) {
@@ -1996,9 +2178,25 @@ function viewPost(postId) {
     });
 }
 
+function deleteCurrentPost() {
+  if (!currentPostId) return;
+  if (!confirm('이 게시글을 삭제하시겠습니까?')) return;
+  fetch(`/community/posts/${currentPostId}`, {
+    method: 'DELETE',
+    credentials: 'include'
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.error) { showToastMsg('⚠️ 삭제 실패'); return; }
+    showToastMsg('🗑️ 게시글이 삭제되었습니다.');
+    backToList();
+  })
+  .catch(() => showToastMsg('⚠️ 삭제 실패'));
+}
+
 function backToList() {
   document.getElementById('posts-list').style.display = 'flex';
-  document.querySelector('.btn-write').style.display = 'flex';
+  // 글쓰기 버튼은 헤더에 고정
   document.getElementById('post-detail').style.display = 'none';
   loadPosts();
 }
@@ -2379,7 +2577,23 @@ window.onload = checkLogin;
       }
     }
 
-    // --- ICE 큐 (대시보드 WebRTC용) ---
+    // ── 이모지 반응 ──
+    function sendRoomEmoji(emoji) {
+      if (!currentRoomId) return;
+      socket.emit('room_emoji', { room_id: currentRoomId, emoji });
+    }
+
+    socket.on('room_emoji', function(d) {
+      const float = document.getElementById('room-emoji-float');
+      if (!float) return;
+      const el = document.createElement('div');
+      el.style.cssText = 'font-size:28px;animation:emojiFloat 2.5s ease-out forwards;text-align:center;margin-bottom:4px;';
+      el.innerHTML = '<span style="font-size:11px;color:var(--text-sub);display:block;">' + d.nickname + '</span>' + d.emoji;
+      float.appendChild(el);
+      setTimeout(function(){ el.remove(); }, 2500);
+    });
+
+        // --- ICE 큐 (대시보드 WebRTC용) ---
     const dashIceQueue = {};
 
     async function flushDashIceQueue(sid) {
@@ -2645,18 +2859,25 @@ window.onload = checkLogin;
       }
       box.innerHTML = rooms.map(r => `
         <div style="display:flex; justify-content:space-between; align-items:center;
-          padding:14px 18px; background:var(--stats-bg); border-radius:14px;
-          border:1.5px solid rgba(255,255,255,0.06);">
-          <div>
-            <div style="font-weight:700; font-size:15px; color:var(--text-main);">🏠 ${r.name}</div>
-            <div style="font-size:12px; color:var(--text-sub); margin-top:3px;">
-              호스트: ${r.host} &nbsp;·&nbsp; 👥 ${r.count}명 참여 중
+          padding:16px 20px; background:var(--panel); border-radius:16px;
+          border:1.5px solid ${r.locked ? 'rgba(240,153,123,0.3)' : 'rgba(255,255,255,0.06)'};
+          transition:all 0.2s;">
+          <div style="flex:1; min-width:0;">
+            <div style="font-weight:700; font-size:15px; color:var(--text-main); display:flex; align-items:center; gap:8px;">
+              ${r.locked ? '🔒' : '🏠'} ${r.name}
+              ${r.locked ? '<span style="font-size:11px; padding:2px 8px; background:rgba(240,153,123,0.15); color:var(--accent-red); border-radius:10px; font-weight:600;">비공개</span>' : '<span style="font-size:11px; padding:2px 8px; background:rgba(110,231,192,0.12); color:var(--accent-green); border-radius:10px; font-weight:600;">공개</span>'}
+            </div>
+            <div style="font-size:12px; color:var(--text-sub); margin-top:5px; display:flex; gap:12px; align-items:center;">
+              <span>👑 ${r.host}</span>
+              <span>👥 ${r.count}명 참여 중</span>
             </div>
           </div>
-          <button onclick="joinRoom('${r.id}','${r.name.replace(/'/g,"\'")}')"
-            style="padding:9px 20px; background:var(--accent-green); color:#111;
-            border:none; border-radius:10px; font-weight:700; cursor:pointer; font-size:13px;">
-            입장
+          <button onclick="joinRoom('${r.id}', ${r.locked})"
+            style="padding:10px 22px; background:${r.locked ? 'rgba(240,153,123,0.15)' : 'var(--accent-green)'};
+            color:${r.locked ? 'var(--accent-red)' : '#111'};
+            border:${r.locked ? '1.5px solid var(--accent-red)' : 'none'};
+            border-radius:12px; font-weight:700; cursor:pointer; font-size:13px; flex-shrink:0; margin-left:12px;">
+            ${r.locked ? '🔒 입장' : '입장'}
           </button>
         </div>
       `).join('');
@@ -2665,13 +2886,38 @@ window.onload = checkLogin;
     function createRoom() {
       if (!window.currentUser) { showToastMsg('⚠️ 로그인 후 이용하세요.'); return; }
       const name = document.getElementById('room-name-input').value.trim() || window.currentUser + '의 스터디룸';
-      socket.emit('create_room', { name });
+      const pw   = document.getElementById('room-pw-input')?.value.trim() || '';
+      socket.emit('create_room', { name, password: pw });
       document.getElementById('room-name-input').value = '';
+      if (document.getElementById('room-pw-input')) document.getElementById('room-pw-input').value = '';
     }
 
-    function joinRoom(roomId, roomName) {
+    let _pendingJoinRoomId = null;
+
+    function joinRoom(roomId, locked) {
       if (!window.currentUser) { showToastMsg('⚠️ 로그인 후 이용하세요.'); return; }
-      socket.emit('join_room_req', { room_id: roomId });
+      if (locked) {
+        // 비밀번호 팝업 표시
+        _pendingJoinRoomId = roomId;
+        const popup = document.getElementById('room-pw-popup');
+        popup.style.display = 'flex';
+        document.getElementById('join-pw-input').value = '';
+        document.getElementById('join-pw-error').style.display = 'none';
+        setTimeout(() => document.getElementById('join-pw-input').focus(), 100);
+      } else {
+        socket.emit('join_room_req', { room_id: roomId });
+      }
+    }
+
+    function submitJoinPw() {
+      const pw = document.getElementById('join-pw-input').value.trim();
+      if (!pw) return;
+      socket.emit('join_room_req', { room_id: _pendingJoinRoomId, password: pw });
+    }
+
+    function closeJoinPw() {
+      document.getElementById('room-pw-popup').style.display = 'none';
+      _pendingJoinRoomId = null;
     }
 
     function leaveRoom() {
@@ -2717,20 +2963,34 @@ window.onload = checkLogin;
     function appendRoomMsg(nickname, msg, time, isMe) {
       const box = document.getElementById('room-chat-messages');
       if (!box) return;
-      const div = document.createElement('div');
-      div.style.cssText = `display:flex;flex-direction:column;align-items:${isMe?'flex-end':'flex-start'};gap:2px;`;
-      div.innerHTML = `
-        <span style="font-size:10px;color:var(--text-sub);margin:0 4px;">
-          ${isMe?'':`<b style="color:var(--accent-green);">${nickname}</b> · `}${time}
-        </span>
-        <div style="max-width:85%;padding:8px 12px;
-          border-radius:${isMe?'16px 16px 3px 16px':'16px 16px 16px 3px'};
-          background:${isMe?'var(--accent-green)':'var(--stats-bg)'};
-          color:${isMe?'#111':'var(--text-main)'};
-          font-size:13px;line-height:1.5;word-break:break-word;">
-          ${msg.replace(/</g,'&lt;').replace(/>/g,'&gt;')}
-        </div>`;
-      box.appendChild(div);
+
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'display:flex;flex-direction:column;align-items:' + (isMe?'flex-end':'flex-start') + ';gap:2px;';
+
+      // 메타 (닉네임 + 시간)
+      const meta = document.createElement('span');
+      meta.style.cssText = 'font-size:10px;color:var(--text-sub);margin:0 4px;';
+      if (!isMe) {
+        const bold = document.createElement('b');
+        bold.style.color = 'var(--accent-green)';
+        bold.textContent = nickname;
+        meta.appendChild(bold);
+        meta.appendChild(document.createTextNode(' · ' + time));
+      } else {
+        meta.textContent = time;
+      }
+      wrap.appendChild(meta);
+
+      // 메시지 버블
+      const bubble = document.createElement('div');
+      bubble.style.cssText = 'max-width:85%;padding:10px 14px;font-size:13px;line-height:1.5;word-break:break-word;' +
+        'border-radius:' + (isMe?'16px 16px 3px 16px':'16px 16px 16px 3px') + ';' +
+        'background:' + (isMe?'var(--accent-green)':'var(--stats-bg)') + ';' +
+        'color:' + (isMe?'#111':'var(--text-main)') + ';';
+      bubble.textContent = msg;  // textContent 사용 → XSS 방지 + 반복 버그 없음
+      wrap.appendChild(bubble);
+
+      box.appendChild(wrap);
       box.scrollTop = box.scrollHeight;
     }
 
@@ -2920,10 +3180,19 @@ window.onload = checkLogin;
 
     // ── Socket.IO 방 이벤트 ──
     socket.on('room_list',  d => renderRoomList(d.rooms));
-    socket.on('room_error', d => showToastMsg('⚠️ '+d.msg));
+    socket.on('room_error', d => {
+      if (d.type === 'password') {
+        // 비밀번호 팝업에 오류 표시
+        const errEl = document.getElementById('join-pw-error');
+        if (errEl) { errEl.style.display='block'; errEl.innerText='❌ '+d.msg; }
+      } else {
+        showToastMsg('⚠️ '+d.msg);
+      }
+    });
     socket.on('room_created', d => showToastMsg(`✅ "${d.name}" 방이 생성됐습니다!`));
 
     socket.on('room_joined', d => {
+      closeJoinPw();  // 비밀번호 팝업 닫기
       showRoomInside(d.room_id, d.name, d.members);
       // 기존 멤버 _onlineUsers 등록 (offer는 캠 켤 때 보냄)
       d.members.forEach(m => {
@@ -3053,6 +3322,26 @@ window.onload = checkLogin;
     // =============================================
     // 앱 내부 배경 파티클 (로그인 화면과 동일 테마)
     // =============================================
+    // 모바일 nav-bar 가로 스크롤 강제 적용
+    (function fixNavScroll() {
+      const nav = document.getElementById('main-nav-bar');
+      if (!nav) return;
+      nav.style.overflowX = 'auto';
+      nav.style.webkitOverflowScrolling = 'touch';
+      nav.style.flexWrap = 'nowrap';
+      nav.style.scrollbarWidth = 'none';
+      // 터치 이벤트로 가로 스크롤
+      let startX = 0, scrollLeft = 0;
+      nav.addEventListener('touchstart', e => {
+        startX = e.touches[0].pageX;
+        scrollLeft = nav.scrollLeft;
+      }, { passive: true });
+      nav.addEventListener('touchmove', e => {
+        const x = e.touches[0].pageX;
+        nav.scrollLeft = scrollLeft - (x - startX);
+      }, { passive: true });
+    })();
+
     function startAppCanvas() {
       const canvas = document.getElementById('app-canvas');
       if (!canvas || canvas._running) return;
