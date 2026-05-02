@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
     body.light-mode {
       --bg-color: #f5f5f5;
@@ -15,36 +16,484 @@
       --text-main: #1a1a1a;
       --text-sub: #666666;
     }
+
+    /* ══════════════════════════════════════════
+       로그인 화면 전체 재설계
+       ══════════════════════════════════════════ */
+
+    .auth-container {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      overflow: hidden;
+      font-family: 'DM Sans', sans-serif;
+      background: #08090d;
+    }
+
+    /* 배경 그라디언트 메시 */
+    .auth-bg {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+    }
+
+    .auth-bg-mesh {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 30%, rgba(110,231,192,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 80% at 80% 70%, rgba(96,180,255,0.10) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 50% at 50% 50%, rgba(176,136,249,0.06) 0%, transparent 70%);
+      animation: meshMove 12s ease-in-out infinite alternate;
+    }
+
+    @keyframes meshMove {
+      0%   { transform: scale(1) rotate(0deg); }
+      100% { transform: scale(1.08) rotate(2deg); }
+    }
+
+    /* 파티클 캔버스 */
+    #auth-canvas {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      opacity: 0.6;
+    }
+
+    /* 왼쪽 - 브랜드 영역 */
+    .auth-brand {
+      position: relative;
+      z-index: 2;
+      flex: 1;
+      max-width: 520px;
+      padding: 60px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .auth-brand-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: rgba(110,231,192,0.12);
+      border: 1px solid rgba(110,231,192,0.3);
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #6ee7c0;
+      letter-spacing: 0.5px;
+      margin-bottom: 32px;
+      width: fit-content;
+    }
+
+    .auth-brand-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 64px;
+      font-weight: 800;
+      line-height: 1.0;
+      color: #fff;
+      margin-bottom: 20px;
+      letter-spacing: -2px;
+    }
+
+    .auth-brand-title span {
+      background: linear-gradient(135deg, #6ee7c0, #60b4ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .auth-brand-desc {
+      font-size: 17px;
+      color: rgba(255,255,255,0.5);
+      line-height: 1.7;
+      margin-bottom: 48px;
+      max-width: 360px;
+      font-weight: 300;
+    }
+
+    /* 통계 카드들 */
+    .auth-stats {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .auth-stat-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 18px 22px;
+      min-width: 130px;
+      transition: all 0.3s;
+    }
+
+    .auth-stat-card:hover {
+      background: rgba(110,231,192,0.08);
+      border-color: rgba(110,231,192,0.2);
+      transform: translateY(-3px);
+    }
+
+    .auth-stat-num {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 28px;
+      font-weight: 800;
+      color: #6ee7c0;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .auth-stat-label {
+      font-size: 12px;
+      color: rgba(255,255,255,0.4);
+      font-weight: 500;
+    }
+
+    /* 오른쪽 - 폼 영역 */
+    .auth-form-wrap {
+      position: relative;
+      z-index: 2;
+      width: 400px;
+      flex-shrink: 0;
+      padding: 40px;
+    }
+
+    .auth-card {
+      background: rgba(255,255,255,0.04);
+      backdrop-filter: blur(40px);
+      -webkit-backdrop-filter: blur(40px);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 28px;
+      padding: 40px 36px;
+      box-shadow:
+        0 32px 80px rgba(0,0,0,0.5),
+        inset 0 1px 0 rgba(255,255,255,0.07);
+    }
+
+    .auth-card-header {
+      margin-bottom: 32px;
+    }
+
+    .auth-card-eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: #6ee7c0;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .auth-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 26px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.5px;
+    }
+
+    .auth-subtitle {
+      font-size: 13px;
+      color: rgba(255,255,255,0.4);
+      margin-top: 6px;
+    }
+
+    .auth-field {
+      margin-bottom: 14px;
+    }
+
+    .auth-field label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.4);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .auth-input {
+      width: 100%;
+      padding: 14px 18px;
+      border-radius: 14px;
+      border: 1.5px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.05);
+      color: #fff;
+      font-size: 14px;
+      font-family: 'DM Sans', sans-serif;
+      transition: all 0.2s;
+      box-sizing: border-box;
+    }
+
+    .auth-input::placeholder { color: rgba(255,255,255,0.25); }
+
+    .auth-input:focus {
+      outline: none;
+      border-color: rgba(110,231,192,0.5);
+      background: rgba(110,231,192,0.06);
+      box-shadow: 0 0 0 3px rgba(110,231,192,0.1);
+    }
+
+    .auth-btn {
+      width: 100%;
+      padding: 15px;
+      border-radius: 14px;
+      border: none;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: all 0.25s;
+      margin-top: 6px;
+    }
+
+    .auth-btn.primary {
+      background: linear-gradient(135deg, #6ee7c0, #5dd1ab);
+      color: #0a2018;
+      box-shadow: 0 8px 24px rgba(110,231,192,0.25);
+    }
+
+    .auth-btn.primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(110,231,192,0.4);
+    }
+
+    .auth-btn.primary:active { transform: translateY(0); }
+
+    .auth-btn.secondary {
+      background: transparent;
+      color: rgba(255,255,255,0.4);
+      border: 1.5px solid rgba(255,255,255,0.08);
+      margin-top: 10px;
+    }
+
+    .auth-btn.secondary:hover {
+      background: rgba(255,255,255,0.05);
+      color: rgba(255,255,255,0.7);
+    }
+
+    .auth-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 20px 0 14px;
+    }
+
+    .auth-divider::before,
+    .auth-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(255,255,255,0.07);
+    }
+
+    .auth-divider span {
+      font-size: 11px;
+      color: rgba(255,255,255,0.25);
+      font-weight: 600;
+    }
+
+    /* 애니메이션 */
+    .auth-card {
+      animation: cardFloat 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      opacity: 0;
+      transform: translateY(24px);
+    }
+
+    @keyframes cardFloat {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .auth-brand {
+      animation: brandSlide 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+
+    @keyframes brandSlide {
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .auth-card.shake {
+      animation: shake 0.35s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+    }
+
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20%,60% { transform: translateX(-8px); }
+      40%,80% { transform: translateX(8px); }
+    }
+
+    /* 반응형 */
+    @media (max-width: 900px) {
+      .auth-brand { display: none; }
+      .auth-form-wrap { width: 100%; max-width: 420px; padding: 20px; }
+    }
+
+    /* ── 앱 전체 통합 스타일 ── */
+
+    #username-display {
+      margin-left: auto; font-size: 13px; font-weight: 700;
+      color: var(--theme-primary); padding: 7px 14px;
+      background: rgba(110,231,192,0.1); border-radius: 20px;
+      border: 1px solid rgba(110,231,192,0.2);
+    }
+
+    #toast {
+      font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+      background: rgba(20,21,29,0.95); border: 1px solid rgba(255,255,255,0.12);
+      backdrop-filter: blur(16px);
+    }
+    body.light-mode #toast { background: rgba(255,255,255,0.97); color: #1a1a2e; border-color: rgba(0,0,0,0.1); }
+
+    #neck-alert-popup, #stretching-popup, #invite-popup {
+      font-family: 'DM Sans', sans-serif;
+      background: rgba(14,15,21,0.96); backdrop-filter: blur(24px);
+    }
+    #stretching-list > div { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 14px 16px; }
+    body.light-mode #invite-popup, body.light-mode #neck-alert-popup, body.light-mode #stretching-popup {
+      background: rgba(255,255,255,0.97); color: #1a1a2e;
+    }
+
+    .panel.extra-section.active { animation: appFadeIn 0.35s cubic-bezier(0.16,1,0.3,1) forwards; }
+    @keyframes appFadeIn { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+
+    body.light-mode .panel, body.light-mode .container { background: rgba(255,255,255,0.9); border-color: rgba(0,0,0,0.07); }
+    body.light-mode .nav-tab { color: var(--text-sub); }
+    body.light-mode .nav-tab:hover { background: rgba(0,0,0,0.05); }
+    body.light-mode .nav-tab.active { color: #0a1a12; }
+    body.light-mode .post-item, body.light-mode .post-detail-content,
+    body.light-mode .comment-item, body.light-mode .goal-item,
+    body.light-mode .summary-card, body.light-mode .stats-item,
+    body.light-mode .month-subject-item { background: rgba(255,255,255,0.9); }
+    body.light-mode .subject-chip { background: rgba(255,255,255,0.9); color: #1a1a2e; }
+    body.light-mode .ranking-row:hover { background: rgba(0,0,0,0.03); }
+    body.light-mode .goal-progress-bar { background: rgba(0,0,0,0.08); }
+    body.light-mode #online-users-box { background: rgba(255,255,255,0.85); border-color: rgba(0,0,0,0.08); }
+    body.light-mode .stats-box { background: linear-gradient(135deg, rgba(110,231,192,0.12), rgba(96,180,255,0.08)); }
+
+    /* 플로팅 아이콘 */
+    .auth-float-icon {
+      position: absolute;
+      z-index: 1;
+      opacity: 0;
+      animation: floatUp linear infinite;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    @keyframes floatUp {
+      0%   { transform: translateY(0) rotate(0deg); opacity: 0; }
+      10%  { opacity: 0.6; }
+      90%  { opacity: 0.2; }
+      100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+    }
   </style>
 </head>
  <body>
   <div id="auth-screen" class="auth-container">
 
-  <!-- 🔥 로그인 화면 -->
-  <div id="login-view" class="auth-card">
-    <h1 class="auth-title">Focus AI</h1>
-    <p class="auth-subtitle">집중을 기록하고 관리하세요</p>
+    <!-- 배경 레이어 -->
+    <div class="auth-bg">
+      <div class="auth-bg-mesh"></div>
+      <canvas id="auth-canvas"></canvas>
+    </div>
 
-    <input id="login-username" type="text" placeholder="아이디" class="auth-input">
-    <input id="login-password" type="password" placeholder="비밀번호" class="auth-input">
+    <!-- 플로팅 이모지 -->
+    <div id="auth-floats"></div>
 
-    <button class="auth-btn primary" onclick="login()">로그인</button>
-    <button class="auth-btn secondary" onclick="showRegister()">회원가입</button>
+    <!-- 왼쪽: 브랜드 -->
+    <div class="auth-brand">
+      <div class="auth-brand-badge">
+        <span>✦</span> AI 집중 분석 플랫폼
+      </div>
+      <h1 class="auth-brand-title">
+        Focus<br><span>AI</span>
+      </h1>
+      <p class="auth-brand-desc">
+        얼굴 인식으로 집중도를 실시간 분석하고,<br>
+        친구들과 함께 스터디하세요.
+      </p>
+      <div class="auth-stats">
+        <div class="auth-stat-card">
+          <div class="auth-stat-num" id="auth-stat-users">0</div>
+          <div class="auth-stat-label">누적 유저</div>
+        </div>
+        <div class="auth-stat-card">
+          <div class="auth-stat-num">📹</div>
+          <div class="auth-stat-label">실시간 캠스터디</div>
+        </div>
+        <div class="auth-stat-card">
+          <div class="auth-stat-num">🧠</div>
+          <div class="auth-stat-label">AI 집중 분석</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 오른쪽: 폼 -->
+    <div class="auth-form-wrap">
+
+      <!-- 로그인 -->
+      <div id="login-view" class="auth-card">
+        <div class="auth-card-header">
+          <div class="auth-card-eyebrow">Welcome back</div>
+          <h2 class="auth-title">로그인</h2>
+          <p class="auth-subtitle">집중 기록을 이어가세요</p>
+        </div>
+
+        <div class="auth-field">
+          <label>아이디</label>
+          <input id="login-username" type="text" placeholder="아이디를 입력하세요" class="auth-input"
+            onkeydown="if(event.key==='Enter') document.getElementById('login-password').focus()">
+        </div>
+        <div class="auth-field">
+          <label>비밀번호</label>
+          <input id="login-password" type="password" placeholder="비밀번호를 입력하세요" class="auth-input"
+            onkeydown="if(event.key==='Enter') login()">
+        </div>
+
+        <button class="auth-btn primary" onclick="login()">로그인 →</button>
+
+        <div class="auth-divider"><span>처음 오셨나요?</span></div>
+
+        <button class="auth-btn secondary" onclick="showRegister()">새 계정 만들기</button>
+      </div>
+
+      <!-- 회원가입 -->
+      <div id="register-view" class="auth-card" style="display:none;">
+        <div class="auth-card-header">
+          <div class="auth-card-eyebrow">Get started</div>
+          <h2 class="auth-title">회원가입</h2>
+          <p class="auth-subtitle">지금 바로 집중 공부를 시작하세요</p>
+        </div>
+
+        <div class="auth-field">
+          <label>아이디</label>
+          <input id="reg-username" type="text" placeholder="사용할 아이디" class="auth-input">
+        </div>
+        <div class="auth-field">
+          <label>비밀번호</label>
+          <input id="reg-password" type="password" placeholder="비밀번호" class="auth-input">
+        </div>
+        <div class="auth-field">
+          <label>닉네임</label>
+          <input id="reg-nickname" type="text" placeholder="랭킹에 표시될 이름" class="auth-input"
+            onkeydown="if(event.key==='Enter') register()">
+        </div>
+
+        <button class="auth-btn primary" onclick="register()">가입하기 →</button>
+
+        <div class="auth-divider"><span>이미 계정이 있으신가요?</span></div>
+
+        <button class="auth-btn secondary" onclick="showLogin()">← 로그인으로</button>
+      </div>
+
+    </div>
   </div>
-
-  <!-- 🔥 회원가입 화면 -->
-  <div id="register-view" class="auth-card" style="display:none;">
-    <h1 class="auth-title">회원가입</h1>
-
-    <input id="reg-username" type="text" placeholder="아이디" class="auth-input">
-    <input id="reg-password" type="password" placeholder="비밀번호" class="auth-input">
-    <input id="reg-nickname" type="text" placeholder="닉네임" class="auth-input">
-
-    <button class="auth-btn primary" onclick="register()">가입하기</button>
-    <button class="auth-btn secondary" onclick="showLogin()">뒤로가기</button>
-  </div>
-
-</div>
   <div id="app" style="display:none;">
 
   <div class="app-container">
@@ -699,6 +1148,58 @@
     }
 
     // 카메라
+    // =============================================
+    // 카메라 전환 공통 함수
+    // =============================================
+
+    // Flask 카메라 중단 후 브라우저 캠 획득
+    async function acquireBrowserCam() {
+      // Flask 카메라가 켜져 있으면 먼저 끄기
+      const camStatus = document.getElementById('cam-status');
+      if (camStatus && camStatus.innerText === 'LIVE') {
+        await fetch('/stop');
+        const videoTag = document.getElementById('video');
+        if (videoTag) { videoTag.src = ''; videoTag.style.display = 'none'; }
+        const ph = document.getElementById('cam-placeholder');
+        if (ph) ph.style.display = 'flex';
+        camStatus.innerText = 'OFF';
+        camStatus.style.color = 'var(--text-sub)';
+        if (monitoring) { clearInterval(monitoring); monitoring = null; }
+        // 카메라 릴리즈 대기
+        await new Promise(r => setTimeout(r, 800));
+      }
+      // 브라우저 캠 획득
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { width:640, height:480, facingMode:'user' },
+          audio: false
+        });
+        return stream;
+      } catch(e) {
+        showToast('❌ 카메라 권한이 필요합니다.');
+        return null;
+      }
+    }
+
+    // 브라우저 캠 종료 후 Flask 카메라 복원
+    async function restoreFlaskCam() {
+      await new Promise(r => setTimeout(r, 300));
+      // Flask 카메라 자동 재시작
+      await fetch('/start');
+      const videoTag = document.getElementById('video');
+      if (videoTag) {
+        videoTag.style.display = 'block';
+        videoTag.src = '/video?t=' + Date.now();
+      }
+      const ph = document.getElementById('cam-placeholder');
+      if (ph) ph.style.display = 'none';
+      const camStatus = document.getElementById('cam-status');
+      if (camStatus) { camStatus.innerText = 'LIVE'; camStatus.style.color = 'var(--accent-green)'; }
+      if (monitoring) clearInterval(monitoring);
+      monitoring = setInterval(checkAll, 1000);
+      showToast('📷 얼굴 분석이 재시작됩니다.');
+    }
+
     function startCamera() {
       fetch('/start').then(() => {
         const videoTag = document.getElementById("video");
@@ -1403,6 +1904,65 @@ async function register() {
   }
 }
 
+// =============================================
+// 로그인 화면 - 파티클 + 플로팅 효과
+// =============================================
+(function initAuthScreen() {
+  const canvas = document.getElementById('auth-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+  resize(); window.addEventListener('resize', resize);
+
+  const pts = Array.from({length: 80}, () => ({
+    x: Math.random()*window.innerWidth, y: Math.random()*window.innerHeight,
+    r: Math.random()*1.5+0.5, vx: (Math.random()-0.5)*0.4, vy: (Math.random()-0.5)*0.4,
+    a: Math.random()*0.5+0.1,
+  }));
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    pts.forEach(p => {
+      p.x+=p.vx; p.y+=p.vy;
+      if(p.x<0)p.x=canvas.width; if(p.x>canvas.width)p.x=0;
+      if(p.y<0)p.y=canvas.height; if(p.y>canvas.height)p.y=0;
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle='rgba(110,231,192,'+p.a+')'; ctx.fill();
+    });
+    for(let i=0;i<pts.length;i++) for(let j=i+1;j<pts.length;j++) {
+      const dx=pts[i].x-pts[j].x, dy=pts[i].y-pts[j].y, d=Math.sqrt(dx*dx+dy*dy);
+      if(d<110){
+        ctx.beginPath(); ctx.moveTo(pts[i].x,pts[i].y); ctx.lineTo(pts[j].x,pts[j].y);
+        ctx.strokeStyle='rgba(110,231,192,'+(0.12*(1-d/110))+')'; ctx.lineWidth=0.5; ctx.stroke();
+      }
+    }
+    if(document.getElementById('auth-screen')) requestAnimationFrame(draw);
+  }
+  draw();
+
+  const emojis=['📚','🧠','⏱','✏','💡','📖','🎯','⭐','🔥','💪'];
+  const fc=document.getElementById('auth-floats');
+  function spawnFloat() {
+    if(!fc) return;
+    const el=document.createElement('div'); el.className='auth-float-icon';
+    el.innerText=emojis[Math.floor(Math.random()*emojis.length)];
+    const sz=Math.random()*20+16, dur=Math.random()*12+10;
+    el.style.cssText='left:'+(Math.random()*100)+'vw;bottom:-60px;font-size:'+sz+'px;animation-duration:'+dur+'s;';
+    fc.appendChild(el); setTimeout(()=>el.remove(), dur*1000);
+  }
+  setInterval(spawnFloat, 1800); spawnFloat(); spawnFloat(); spawnFloat();
+
+  fetch('/ranking').then(r=>r.json()).then(data=>{
+    const count=data.ranking?data.ranking.length:0;
+    const el=document.getElementById('auth-stat-users');
+    if(!el||!count) return;
+    let cur=0; const step=Math.max(1,Math.ceil(count/30));
+    const t=setInterval(()=>{ cur=Math.min(cur+step,count); el.innerText=cur+'명'; if(cur>=count)clearInterval(t); },40);
+  }).catch(()=>{});
+})();
+
+
 async function checkLogin() {
   try {
     const res = await fetch('/me');
@@ -1536,14 +2096,10 @@ window.onload = checkLogin;
       if (!pendingInvite) return;
       document.getElementById("invite-popup").style.display = "none";
 
-      // 카메라 권한 확보
+      // Flask 카메라 끄고 브라우저 캠 확보
       if (!localStream) {
-        try {
-          localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-        } catch(e) {
-          showToast("❌ 카메라 권한이 필요합니다");
-          return;
-        }
+        localStream = await acquireBrowserCam();
+        if (!localStream) { pendingInvite = null; return; }
       }
 
       socket.emit("accept_invite", { from_sid: pendingInvite.from_sid });
@@ -1579,7 +2135,7 @@ window.onload = checkLogin;
     }
 
     // --- 캠 끊기 ---
-    function endCam(sid) {
+    async function endCam(sid) {
       if (peerConnections[sid]) {
         peerConnections[sid].close();
         delete peerConnections[sid];
@@ -1588,11 +2144,24 @@ window.onload = checkLogin;
       if (el) el.remove();
       socket.emit("end_cam", { target_sid: sid });
 
-      // 로컬 스트림도 다른 연결 없으면 종료
+      // 모든 연결 끊기면 브라우저 캠 종료 + Flask 카메라 복원
       if (Object.keys(peerConnections).length === 0 && localStream) {
         localStream.getTracks().forEach(t => t.stop());
         localStream = null;
+        await restoreFlaskCam();
       }
+    }
+
+    // --- ICE 큐 (대시보드 WebRTC용) ---
+    const dashIceQueue = {};
+
+    async function flushDashIceQueue(sid) {
+      const pc = peerConnections[sid];
+      if (!pc || !dashIceQueue[sid]) return;
+      for (const c of dashIceQueue[sid]) {
+        try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch(e){}
+      }
+      delete dashIceQueue[sid];
     }
 
     // --- WebRTC 연결 생성 ---
@@ -1609,11 +2178,15 @@ window.onload = checkLogin;
 
       // 원격 스트림 수신
       pc.ontrack = (e) => {
+        if (!document.getElementById("friend-cam-" + sid)) {
+          createFriendCamBox(sid, nickname);
+        }
         const video = document.getElementById("friend-video-" + sid);
         const loading = document.getElementById("friend-loading-" + sid);
         if (video) {
           video.srcObject = e.streams[0];
-          video.onloadedmetadata = () => { if(loading) loading.style.display = "none"; };
+          video.play().catch(()=>{});
+          if (loading) loading.style.display = "none";
         }
       };
 
@@ -1624,11 +2197,14 @@ window.onload = checkLogin;
         }
       };
 
+      // failed/closed만 정리 (disconnected는 일시적일 수 있음)
       pc.onconnectionstatechange = () => {
-        if (["disconnected","failed","closed"].includes(pc.connectionState)) {
+        console.log(`[Dash WebRTC ${sid.slice(0,6)}] ${pc.connectionState}`);
+        if (["failed","closed"].includes(pc.connectionState)) {
           const el = document.getElementById("friend-cam-" + sid);
           if (el) el.remove();
           delete peerConnections[sid];
+          delete dashIceQueue[sid];
         }
       };
 
@@ -1673,18 +2249,14 @@ window.onload = checkLogin;
       showInvitePopup(data.from_sid, data.from_nickname);
     });
 
-    // 초대 수락됨 (A 입장) → A가 offer 생성
+    // 초대 수락됨 (A 입장) → Flask 끄고 브라우저 캠으로 WebRTC 시작
     socket.on("invite_accepted", async (data) => {
       showToast(`✅ ${data.from_nickname}님이 수락했습니다!`);
 
-      // A도 카메라 확보
+      // Flask 끄고 브라우저 캠 확보
       if (!localStream) {
-        try {
-          localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-        } catch(e) {
-          showToast("❌ 카메라 권한이 필요합니다");
-          return;
-        }
+        localStream = await acquireBrowserCam();
+        if (!localStream) return;
       }
 
       // A가 initiator로 WebRTC 시작
@@ -1702,7 +2274,7 @@ window.onload = checkLogin;
     });
 
     // 상대가 캠 끊음
-    socket.on("cam_ended", (data) => {
+    socket.on("cam_ended", async (data) => {
       const sid = data.from_sid;
       if (peerConnections[sid]) {
         peerConnections[sid].close();
@@ -1711,28 +2283,57 @@ window.onload = checkLogin;
       const el = document.getElementById("friend-cam-" + sid);
       if (el) el.remove();
       showToast("📴 상대방이 캠을 종료했습니다");
+
+      // 남은 연결 없으면 Flask 카메라 복원
+      if (Object.keys(peerConnections).length === 0 && localStream) {
+        localStream.getTracks().forEach(t => t.stop());
+        localStream = null;
+        await restoreFlaskCam();
+      }
     });
 
     // WebRTC 시그널링
     socket.on("webrtc_offer", async (data) => {
-      // B 입장: offer 받고 answer 생성
-      const nickname = document.getElementById("online-" + data.sid)?.querySelector("span")?.innerText?.replace("🟢 ","") || "스터디원";
-      const pc = await createPeerConnection(data.sid, nickname, false);
-      await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-      socket.emit("webrtc_answer", { target: data.sid, sdp: answer });
+      const nickname = window._onlineUsers?.[data.sid] ||
+        document.getElementById("online-" + data.sid)?.querySelector("span")?.innerText?.replace("🟢 ","") || "스터디원";
+
+      // B도 Flask 끄고 브라우저 캠 확보
+      if (!localStream) {
+        localStream = await acquireBrowserCam();
+        if (!localStream) return;
+      }
+
+      let pc = peerConnections[data.sid];
+      if (!pc) pc = await createPeerConnection(data.sid, nickname, false);
+
+      try {
+        await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+        await flushDashIceQueue(data.sid);
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        socket.emit("webrtc_answer", { target: data.sid, sdp: answer });
+      } catch(e) { console.error('[webrtc_offer 오류]', e); }
     });
 
     socket.on("webrtc_answer", async (data) => {
       const pc = peerConnections[data.sid];
-      if (pc) await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+      if (!pc) return;
+      try {
+        if (pc.signalingState === 'have-local-offer') {
+          await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+          await flushDashIceQueue(data.sid);
+        }
+      } catch(e) { console.warn('[webrtc_answer 오류]', e); }
     });
 
     socket.on("webrtc_ice", async (data) => {
+      if (!data.candidate) return;
       const pc = peerConnections[data.sid];
-      if (pc && data.candidate) {
-        try { await pc.addIceCandidate(new RTCIceCandidate(data.candidate)); } catch(e) {}
+      if (pc && pc.remoteDescription && pc.remoteDescription.type) {
+        try { await pc.addIceCandidate(new RTCIceCandidate(data.candidate)); } catch(e){}
+      } else {
+        if (!dashIceQueue[data.sid]) dashIceQueue[data.sid] = [];
+        dashIceQueue[data.sid].push(data.candidate);
       }
     });
 

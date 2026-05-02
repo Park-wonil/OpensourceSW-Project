@@ -1,20 +1,35 @@
 :root {
-  --primary: #6ee7c0;
-  --primary-light: #b4f5e0;
-  --secondary: #fac775;
-  --danger: #ff6b9d;
-  --bg-main: #f8f9fa;
-  --bg-card: #ffffff;
-  --text-dark: #2d3436;
-  --text-gray: #636e72;
-  --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
-  --shadow-md: 0 4px 16px rgba(0,0,0,0.12);
-  --shadow-lg: 0 8px 32px rgba(0,0,0,0.16);
+  --bg:          #08090d;
+  --bg-2:        #0e0f15;
+  --bg-3:        #14151d;
+  --panel:       rgba(255,255,255,0.04);
+  --panel-hover: rgba(255,255,255,0.07);
+  --border:      rgba(255,255,255,0.08);
+  --border-2:    rgba(255,255,255,0.12);
+  --text-main:   #f0f0f0;
+  --text-sub:    rgba(255,255,255,0.45);
+  --text-dim:    rgba(255,255,255,0.25);
+  --accent-green:  #6ee7c0;
+  --accent-orange: #fac775;
+  --accent-red:    #f0997b;
+  --accent-blue:   #60b4ff;
+  --theme-primary:   #6ee7c0;
+  --theme-secondary: #5dd1ab;
+  --theme-glow:      rgba(110,231,192,0.25);
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --shadow-sm: 0 4px 16px rgba(0,0,0,0.3);
+  --shadow-md: 0 8px 32px rgba(0,0,0,0.4);
+  --bg-color:  var(--bg);
+  --panel-bg:  var(--bg-3);
+  --stats-bg:  var(--panel);
 }
 
 body {
-  background: var(--bg-main);
-  font-family: 'Pretendard', -apple-system, sans-serif;
+  background: var(--bg);
+  font-family: 'DM Sans', 'Pretendard', -apple-system, sans-serif;
 }
 
 /* 네비게이션 - 둥글둥글 */
@@ -284,18 +299,17 @@ body:not(.light-mode) select {
    1. 테마 변수 및 기본 설정
    ========================================= */
 :root {
-  --bg-color: #1a1a1a;
-  --panel-bg: #252525;
-  --stats-bg: rgba(255, 255, 255, 0.05);
-  --text-main: #ffffff;
-  --text-sub: #b0b0b0;
+  --bg-color: #08090d;
+  --panel-bg: #14151d;
+  --stats-bg: rgba(255,255,255,0.04);
+  --text-main: #f0f0f0;
+  --text-sub: rgba(255,255,255,0.45);
   --accent-green: #6ee7c0;
   --accent-orange: #fac775;
   --accent-red: #f0997b;
-  /* 테마 강조색 (기본=그린) */
   --theme-primary: #6ee7c0;
   --theme-secondary: #5dd1ab;
-  --theme-glow: rgba(110, 231, 192, 0.3);
+  --theme-glow: rgba(110,231,192,0.25);
 }
 
 /* ── 블루 테마 ── */
@@ -2246,129 +2260,7 @@ body:not(.light-mode) * {
    🍎 Apple-style Auth UI
    ========================================= */
 
-.auth-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #1d1d1f, #2c2c2e);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-}
-
-.auth-card {
-  background: rgba(255,255,255,0.05);
-  backdrop-filter: blur(20px);
-  padding: 40px;
-  border-radius: 24px;
-  width: 320px;
-  text-align: center;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.4);
-}
-
-.auth-title {
-  font-size: 28px;
-  font-weight: 800;
-  color: white;
-  margin-bottom: 10px;
-}
-
-.auth-subtitle {
-  font-size: 14px;
-  color: #aaa;
-  margin-bottom: 30px;
-}
-
-.auth-input {
-  width: 100%;
-  padding: 14px;
-  margin-bottom: 12px;
-  border-radius: 12px;
-  border: none;
-  background: rgba(255,255,255,0.1);
-  color: white;
-  font-size: 14px;
-}
-
-.auth-input::placeholder {
-  color: #aaa;
-}
-
-.auth-input:focus {
-  outline: none;
-  background: rgba(255,255,255,0.15);
-}
-
-.auth-btn {
-  width: 100%;
-  padding: 14px;
-  margin-top: 10px;
-  border-radius: 12px;
-  border: none;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.auth-btn.primary {
-  background: #ffffff;
-  color: #111;
-}
-
-.auth-btn.primary:hover {
-  background: #ddd;
-}
-
-.auth-btn.secondary {
-  background: transparent;
-  color: #aaa;
-}
-
-.auth-btn.secondary:hover {
-  color: white;
-}
-.auth-container {
-  animation: fadeInBg 0.6s ease forwards;
-}
-
-.auth-card {
-  transform: translateY(20px) scale(0.95);
-  opacity: 0;
-  animation: cardPop 0.6s ease forwards;
-}
-
-@keyframes fadeInBg {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes cardPop {
-  to {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
-}
-
-/* 버튼 클릭 효과 */
-.auth-btn:active {
-  transform: scale(0.96);
-}
-
-/* 로그인 실패 shake */
-.auth-card.shake {
-  animation: shake 0.3s;
-}
-
-@keyframes shake {
-  0% { transform: translateX(0); }
-  25% { transform: translateX(-6px); }
-  50% { transform: translateX(6px); }
-  75% { transform: translateX(-6px); }
-  100% { transform: translateX(0); }
-}
+/* auth 스타일은 index.html <style> 태그에서 관리 */
 
 /* =========================================
    🔥 로그인 fade-out 애니메이션
@@ -2795,4 +2687,22 @@ body.light-mode #room-name-input {
 
 body.light-mode #room-inside {
   background: #f9f9f9;
+}
+
+/* 배경 글로우 */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse 70% 50% at 15% 20%, rgba(110,231,192,0.07) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 70% at 85% 80%, rgba(96,180,255,0.05) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+body.light-mode::before {
+  background:
+    radial-gradient(ellipse 70% 50% at 15% 20%, rgba(110,231,192,0.1) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 70% at 85% 80%, rgba(96,180,255,0.08) 0%, transparent 60%);
 }
