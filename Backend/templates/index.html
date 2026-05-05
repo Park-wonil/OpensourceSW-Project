@@ -767,7 +767,7 @@
       <button class="nav-tab" onclick="showSection('chat', this)">💬 채팅</button>
       <button class="nav-tab" onclick="showSection('community', this)">커뮤니티</button>
       <button class="nav-tab" onclick="showSection('settings', this)">설정</button>
-      <span id="username-display" style="margin-left:auto; font-size:13px; font-weight:700; color:var(--accent-green); padding:8px 14px;"></span>
+      <span id="username-display"></span>
     </nav>
 
     <!-- 대시보드 -->
@@ -1998,7 +1998,7 @@
           const rankClass = r.rank === 1 ? 'top1' : r.rank === 2 ? 'top2' : r.rank === 3 ? 'top3' : '';
           const nameClass = isMe ? 'me' : '';
           return `
-            <div class="ranking-row">
+            <div class="ranking-row ${rankClass}">
               <span class="ranking-rank ${rankClass}">${r.rank}</span>
               <span class="ranking-name ${nameClass}">${displayName}${isMe ? ' (나)' : ''}</span>
               <span class="ranking-time">${r.minutes}분</span>
