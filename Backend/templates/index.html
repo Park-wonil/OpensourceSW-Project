@@ -973,7 +973,7 @@
       </div>
     </div>
 <!-- 스터디룸 허브 (채팅 + 캠) -->
-<div id="section-chat" class="panel extra-section" style="padding:0; overflow:hidden;">
+<div id="section-chat" class="panel extra-section" style="padding:0; overflow:hidden; height:calc(100vh - 100px);">
 
   <!-- 뷰 1: 방 목록 -->
   <div id="room-lobby" style="padding:24px;">
@@ -1035,7 +1035,7 @@
   </div>
 
   <!-- 뷰 2: 방 내부 (채팅 + 캠) -->
-  <div id="room-inside" style="display:none; flex-direction:column; height:85vh; min-height:600px;">
+  <div id="room-inside" style="display:none; flex-direction:column; height:calc(100vh - 120px); min-height:600px;">
 
     <!-- 방 헤더 -->
     <div style="display:flex; align-items:center; justify-content:space-between;
@@ -1054,7 +1054,7 @@
     <div style="display:flex; flex:1; overflow:hidden; gap:0;">
 
       <!-- 왼쪽: 캠 영역 - 그리드 레이아웃 -->
-      <div id="room-cam-area" style="width:48%; display:flex; flex-direction:column;
+      <div id="room-cam-area" style="width:62%; display:flex; flex-direction:column;
         gap:8px; padding:12px; border-right:1px solid rgba(255,255,255,0.07); overflow:hidden;">
 
         <div style="display:flex; justify-content:space-between; align-items:center; flex-shrink:0;">
@@ -1070,13 +1070,13 @@
         <div id="room-cam-grid" style="flex:1; display:grid;
           grid-template-columns: 1fr 1fr;
           grid-template-rows: 1fr 1fr;
-          gap:6px; min-height:0;">
+          gap:4px; min-height:0; overflow:hidden;">
 
           <!-- 내 캠 (항상 첫 번째 셀) -->
           <div id="my-cam-cell" style="position:relative; border-radius:12px;
-            overflow:hidden; background:#111; border:2px solid var(--accent-green);">
+            overflow:hidden; background:#111; border:2px solid var(--accent-green); min-height:0;">
             <video id="room-local-video" autoplay playsinline muted
-              style="width:100%; height:100%; object-fit:cover; display:block;"></video>
+              style="width:100%; height:100%; object-fit:cover; display:block; position:absolute; inset:0;"></video>
             <div id="room-cam-placeholder" style="position:absolute; inset:0; display:flex;
               align-items:center; justify-content:center; color:var(--text-sub); font-size:12px;
               background:#111; flex-direction:column; gap:6px;">
@@ -1096,17 +1096,17 @@
           <!-- 빈 셀들 (인원 적을 때 채우기) -->
           <div id="empty-cell-2" style="border-radius:12px; background:rgba(255,255,255,0.02);
             border:1px dashed rgba(255,255,255,0.08); display:flex; align-items:center;
-            justify-content:center; color:rgba(255,255,255,0.15); font-size:12px;">
+            justify-content:center; color:rgba(255,255,255,0.12); font-size:12px; min-height:0;">
             대기 중...
           </div>
           <div id="empty-cell-3" style="border-radius:12px; background:rgba(255,255,255,0.02);
             border:1px dashed rgba(255,255,255,0.08); display:flex; align-items:center;
-            justify-content:center; color:rgba(255,255,255,0.15); font-size:12px;">
+            justify-content:center; color:rgba(255,255,255,0.12); font-size:12px; min-height:0;">
             대기 중...
           </div>
           <div id="empty-cell-4" style="border-radius:12px; background:rgba(255,255,255,0.02);
             border:1px dashed rgba(255,255,255,0.08); display:flex; align-items:center;
-            justify-content:center; color:rgba(255,255,255,0.15); font-size:12px;">
+            justify-content:center; color:rgba(255,255,255,0.12); font-size:12px; min-height:0;">
             대기 중...
           </div>
         </div>
@@ -1351,6 +1351,13 @@
 
       // 모바일에서 탭 전환 시 최상단으로 스크롤
       window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      // 채팅 탭: body 전체 꽉 채우기
+      if (id === 'chat') {
+        document.body.classList.add('chat-mode');
+      } else {
+        document.body.classList.remove('chat-mode');
+      }
 
       if (id === 'stats') {
         fetch('/stats').then(res => res.json()).then(data => {
@@ -3169,47 +3176,40 @@ window.onload = checkLogin;
     function updateCamGrid() {
       const grid = document.getElementById('room-cam-grid');
       if (!grid) return;
-      const total = document.querySelectorAll('[id^="peer-cam-"]').length + 1; // +1: 내 캠
+      const peers = document.querySelectorAll('[id^="peer-cam-"]');
+      const total = peers.length + 1; // +1: 내 캠
+      const myCell = document.getElementById('my-cam-cell');
 
-      // 인원수에 따라 그리드 레이아웃 변경
+      // 빈 셀 전부 숨기기
+      ['empty-cell-2','empty-cell-3','empty-cell-4'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+      });
+
       if (total === 1) {
-        // 나 혼자: 2x2 그리드 유지 (빈 셀 표시)
-        grid.style.gridTemplateColumns = '1fr 1fr';
-        grid.style.gridTemplateRows = '1fr 1fr';
-        // 내 캠 2x2 전체
-        const myCell = document.getElementById('my-cam-cell');
-        if (myCell) { myCell.style.gridColumn = '1 / -1'; myCell.style.gridRow = '1 / -1'; }
-        ['empty-cell-2','empty-cell-3','empty-cell-4'].forEach(id => {
-          const el = document.getElementById(id);
-          if (el) el.style.display = 'none';
-        });
+        // 나 혼자: 전체 차지
+        grid.style.gridTemplateColumns = '1fr';
+        grid.style.gridTemplateRows = '1fr';
+        if (myCell) { myCell.style.gridColumn = ''; myCell.style.gridRow = ''; }
       } else if (total === 2) {
-        // 2명: 좌우 1열씩
+        // 2명: 좌우
         grid.style.gridTemplateColumns = '1fr 1fr';
         grid.style.gridTemplateRows = '1fr';
-        const myCell = document.getElementById('my-cam-cell');
         if (myCell) { myCell.style.gridColumn = ''; myCell.style.gridRow = ''; }
-        ['empty-cell-2','empty-cell-3','empty-cell-4'].forEach(id => {
-          const el = document.getElementById(id); if (el) el.style.display = 'none';
-        });
       } else if (total === 3) {
-        // 3명: 위 2개 + 아래 1개 가운데
+        // 3명: 위 2 + 아래 1 가운데
         grid.style.gridTemplateColumns = '1fr 1fr';
         grid.style.gridTemplateRows = '1fr 1fr';
-        const myCell = document.getElementById('my-cam-cell');
         if (myCell) { myCell.style.gridColumn = ''; myCell.style.gridRow = ''; }
-        ['empty-cell-2','empty-cell-3','empty-cell-4'].forEach(id => {
-          const el = document.getElementById(id); if (el) el.style.display = 'none';
-        });
+        // 3번째 피어 가운데 배치
+        if (peers[1]) peers[1].style.gridColumn = '1 / -1';
+        if (peers[0]) peers[0].style.gridColumn = '';
       } else {
-        // 4명: 2x2 그리드
+        // 4명: 2x2
         grid.style.gridTemplateColumns = '1fr 1fr';
         grid.style.gridTemplateRows = '1fr 1fr';
-        const myCell = document.getElementById('my-cam-cell');
         if (myCell) { myCell.style.gridColumn = ''; myCell.style.gridRow = ''; }
-        ['empty-cell-2','empty-cell-3','empty-cell-4'].forEach(id => {
-          const el = document.getElementById(id); if (el) el.style.display = 'none';
-        });
+        peers.forEach(p => p.style.gridColumn = '');
       }
     }
 
