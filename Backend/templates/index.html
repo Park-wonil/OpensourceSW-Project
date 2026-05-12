@@ -4018,6 +4018,33 @@
       const newPos = start + symbol.length;
       input.setSelectionRange(newPos, newPos);
       input.focus();
+      markAiBuddyTyping();
+    }
+
+    let aiBuddyTypingTimer = null;
+    function markAiBuddyTyping() {
+      const stage = document.getElementById('ai-study-buddy-stage');
+      if (!stage) return;
+      stage.classList.add('is-typing');
+      clearTimeout(aiBuddyTypingTimer);
+      aiBuddyTypingTimer = setTimeout(() => {
+        stage.classList.remove('is-typing');
+      }, 900);
+    }
+
+    function initAiBuddyTyping() {
+      const input = document.getElementById('ai-chat-input');
+      if (!input) return;
+      ['input', 'keydown'].forEach(evt => {
+        input.addEventListener(evt, () => {
+          if (document.activeElement === input && input.value.trim()) markAiBuddyTyping();
+        });
+      });
+      input.addEventListener('blur', () => {
+        const stage = document.getElementById('ai-study-buddy-stage');
+        if (stage) stage.classList.remove('is-typing');
+        clearTimeout(aiBuddyTypingTimer);
+      });
     }
 
     async function sendAiMessage() {
@@ -4116,6 +4143,7 @@
     // 페이지 로드 시 API 키 상태 확인
     window.addEventListener('DOMContentLoaded', () => {
       setTimeout(updateAiKeyStatus, 500);
+      initAiBuddyTyping();
     });
 
     // 랭킹 업데이트 함수 (1분마다 자동 실행 + 랭킹 탭 진입 시 수동 호출)
@@ -5945,8 +5973,13 @@ function updateStatusBadge(type) {
       const eyes = _bichonEyesSVG(pos, cust.expression||'happy');
       const hat  = _scaledHatSVG(pos, cust.hat||'none');
       const acc  = _scaledAccSVG(pos, cust.accessory||'none');
+      const outfitRaw = AV_OUTFIT_SVG[cust.outfit||'none']||'';
+      const otx = (cx - 70*s).toFixed(2), oty = (cy - 45*s).toFixed(2);
+      const outfit = outfitRaw ? '<g transform="translate('+otx+','+oty+') scale('+s+')">'+outfitRaw+'</g>' : '';
 
-      return '<g id="'+p+'-bichon-body">'+body+
+      return '<g id="'+p+'-bichon-body">'+body+'</g>'+
+             '<g id="'+p+'-bichon-outfit">'+outfit+'</g>'+
+             '<g id="'+p+'-bichon-head">'+
              '<circle cx="'+earLX+'" cy="'+earY+'" r="'+earR+'" fill="url(#'+gid+')"/>'+
              '<circle cx="'+earRX+'" cy="'+earY+'" r="'+earR+'" fill="url(#'+gid+')"/>'+
              '<circle cx="'+cx+'" cy="'+hoY+'" r="'+hoR+'" fill="url(#'+gid+')"/>'+
@@ -6165,6 +6198,12 @@ function updateStatusBadge(type) {
           const eg = document.getElementById(p+'-bichon-eyes'); if (eg) eg.innerHTML = _bichonEyesSVG(pos, cust.expression||'happy');
           const hg = document.getElementById(p+'-bichon-hat');  if (hg) hg.innerHTML = _scaledHatSVG(pos, cust.hat||'none');
           const ag = document.getElementById(p+'-bichon-acc');  if (ag) ag.innerHTML = _scaledAccSVG(pos, cust.accessory||'none');
+          const og = document.getElementById(p+'-bichon-outfit');
+          if (og) {
+            const s2 = pos.r/27, otx2 = (pos.cx-70*s2).toFixed(2), oty2 = (pos.cy-45*s2).toFixed(2);
+            const or = AV_OUTFIT_SVG[cust.outfit||'none']||'';
+            og.innerHTML = or ? '<g transform="translate('+otx2+','+oty2+') scale('+s2+')">'+or+'</g>' : '';
+          }
         }
       });
     }
@@ -6182,12 +6221,17 @@ function updateStatusBadge(type) {
       if (charId==='cat') { _applyCatColors(state); _applyCatExpression(state); _applyCatHat(state); _applyCatAcc(state); _applyCatOutfit(state); }
       else if (charId==='bichon') { _applyBichonMain(state); _applyBichonTabs(state); }
       _toggleMain(charId);
+      renderStudyBuddy(state);
     }
     function renderPreview(state) {
       const c = document.getElementById('av-preview-container'); if (!c) return;
       c.innerHTML = _buildPreview(state);
     }
-    return { applyAll, renderPreview };
+    function renderStudyBuddy(state) {
+      const c = document.getElementById('ai-study-buddy-avatar'); if (!c) return;
+      c.innerHTML = _buildPreview(state);
+    }
+    return { applyAll, renderPreview, renderStudyBuddy };
   })();
 
   /* ─── AvatarCustomizer ─── */
