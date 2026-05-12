@@ -430,19 +430,89 @@ body {
   margin-bottom: 20px;
 }
 
-.cam-controls button {
-  background: #3a3a3a;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 10px;
-  font-weight: 600;
-  cursor: pointer;
-  margin-left: 8px;
-  transition: 0.2s;
+/* =========================================
+   카메라 컨트롤 버튼 디자인 
+   ========================================= */
+.cam-controls {
+  display: flex;
+  gap: 10px;
 }
 
-.cam-controls button:hover { background: #555; }
+/* 버튼 기본 뼈대 */
+.cam-controls button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-main);
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  margin-left: 0;
+  border-radius: 40px 20px 30px 15px !important;
+  
+  outline: none !important; 
+}
+
+/* 🟢 카메라 ON 상태 */
+.cam-controls button.btn-on {
+  background: rgba(110, 231, 192, 0.15) !important;
+  color: var(--primary) !important;
+  border-color: rgba(110, 231, 192, 0.3) !important;
+  box-shadow: none !important; 
+}
+
+.cam-controls button.btn-on:hover {
+  background: var(--primary) !important;
+  color: #111 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(110, 231, 192, 0.6) !important; 
+}
+
+/* 🔴 카메라 OFF 상태 */
+.cam-controls button.btn-off {
+  background: rgba(255, 107, 157, 0.15) !important;
+  color: var(--danger) !important;
+  border-color: rgba(255, 107, 157, 0.3) !important;
+  box-shadow: none !important; 
+}
+
+.cam-controls button.btn-off:hover {
+  background: var(--danger) !important;
+  color: #fff !important;
+  transform: translateY(-2px);
+  
+  box-shadow: 0 6px 16px rgba(255, 107, 157, 0.6) !important; 
+}
+
+/* 🌗 라이트모드 대응 */
+body.light-mode .cam-controls button.btn-on {
+  background: rgba(110, 231, 192, 0.2) !important;
+  color: #0a5c4a !important;
+  border-color: rgba(110, 231, 192, 0.5) !important;
+}
+
+body.light-mode .cam-controls button.btn-on:hover {
+  background: var(--primary) !important;
+  color: #111 !important;
+  box-shadow: 0 4px 12px rgba(110, 231, 192, 0.4) !important;
+}
+
+body.light-mode .cam-controls button.btn-off {
+  background: rgba(255, 107, 157, 0.2) !important;
+  color: #a31846 !important;
+  border-color: rgba(255, 107, 157, 0.5) !important;
+}
+
+body.light-mode .cam-controls button.btn-off:hover {
+  background: var(--danger) !important;
+  color: #fff !important;
+  box-shadow: 0 4px 12px rgba(255, 107, 157, 0.4) !important;
+}
 
 .video-container {
   width: 100%;
@@ -704,10 +774,7 @@ body.light-mode .state-badge.away {
   background: rgba(240, 153, 123, 0.2);
 }
 
-body.light-mode .cam-controls button {
-  background: #e0e0e0;
-  color: #1a1a1a;
-}
+
 
 body.light-mode .reset-btn:hover {
   background: #d06a50;
@@ -788,10 +855,6 @@ body.light-mode .state-badge.away {
   background: rgba(240, 153, 123, 0.2);
 }
 
-body.light-mode .cam-controls button {
-  background: #e0e0e0;
-  color: #1a1a1a;
-}
 
 body.light-mode .reset-btn:hover {
   background: #d06a50;
@@ -2670,35 +2733,6 @@ body.light-mode #room-inside {
 body {
   background: #08090d !important;
   font-family: 'DM Sans', 'Pretendard', sans-serif !important;
-}
-
-/* 채팅(스터디룸) 탭 - 전체 화면 꽉 채우기 */
-body.chat-mode {
-  padding: 0 !important;
-  margin: 0 !important;
-  overflow: hidden !important;
-}
-
-body.chat-mode .app-container {
-  max-width: 100vw !important;
-  width: 100vw !important;
-  padding: 0 !important;
-  margin: 0 !important;
-}
-
-body.chat-mode .nav-bar {
-  margin: 8px !important;
-  border-radius: 16px !important;
-}
-
-body.chat-mode #section-chat {
-  margin: 0 !important;
-  border-radius: 0 !important;
-  border: none !important;
-}
-
-body.chat-mode #room-inside {
-  height: calc(100vh - 70px) !important;
 }
 
 body.light-mode { background: #f0f2f5 !important; }
