@@ -808,36 +808,45 @@
           </div>
         </div>
 
-        <!-- 🤖 AI 공부 도우미 채팅창 -->
+        <!-- 깜찍이 공부 도우미 채팅창 -->
         <div id="ai-chat-box" style="
           margin-top:16px;
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.1);
+          background:
+            linear-gradient(180deg, rgba(255,128,181,0.10), rgba(110,231,192,0.05)),
+            rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,128,181,0.26);
           border-radius: 18px;
           overflow: hidden;
           display: flex;
           flex-direction: column;
           height: 380px;
+          box-shadow: 0 14px 34px rgba(255,128,181,0.10);
         ">
           <div style="
             display:flex; align-items:center; justify-content:space-between;
             padding:10px 14px;
-            background: rgba(110,231,192,0.08);
+            background: linear-gradient(135deg, rgba(255,128,181,0.18), rgba(110,231,192,0.12));
             border-bottom: 1px solid rgba(255,255,255,0.07);
             flex-shrink:0;
           ">
             <div style="display:flex; align-items:center; gap:8px;">
-              <span style="font-size:15px;">🤖</span>
-              <span style="font-size:13px; font-weight:800; color:var(--text-main);">AI 공부 도우미</span>
+              <span style="
+                width:28px; height:28px; border-radius:10px;
+                display:inline-flex; align-items:center; justify-content:center;
+                background:linear-gradient(135deg,#ff80b5,#ffe08a);
+                box-shadow:0 6px 18px rgba(255,128,181,0.28);
+                font-size:16px;
+              ">✦</span>
+              <span style="font-size:14px; font-weight:900; color:var(--text-main);">깜찍이</span>
               <span id="ai-model-badge" style="
                 font-size:10px; padding:2px 8px;
-                background:rgba(110,231,192,0.15);
-                border:1px solid rgba(110,231,192,0.3);
-                border-radius:10px; color:var(--accent-green); font-weight:700;
-              ">GPT-4o-mini</span>
+                background:rgba(255,128,181,0.16);
+                border:1px solid rgba(255,128,181,0.36);
+                border-radius:10px; color:#ff80b5; font-weight:800;
+              ">공부 메이트</span>
             </div>
             <div style="display:flex; gap:6px; align-items:center;">
-              <span id="ai-key-status" style="font-size:11px; color:var(--text-sub);">설정에서 API 키 입력</span>
+              <span id="ai-key-status" style="font-size:11px; color:var(--text-sub);">깜찍이 대기 중</span>
               <button onclick="clearAiChat()" title="대화 초기화"
                 style="padding:3px 8px; font-size:11px; background:rgba(255,255,255,0.06);
                 border:1px solid rgba(255,255,255,0.1); border-radius:8px;
@@ -850,8 +859,8 @@
             display:flex; flex-direction:column; gap:8px;
           ">
             <div class="ai-welcome-msg" style="text-align:center; font-size:12px; color:var(--text-sub); padding:16px 0;">
-              공부하다 모르는 게 있으면 뭐든 물어보세요 😊<br>
-              <span style="font-size:11px; opacity:0.6;">설정 탭에서 OpenAI API 키를 입력하면 사용할 수 있어요.</span>
+              깜찍이가 오늘 공부를 같이 도와줄게요.<br>
+              <span style="font-size:11px; opacity:0.65;">모르는 개념, 문제 풀이, 암기 팁을 편하게 물어보세요.</span>
             </div>
           </div>
 
@@ -957,12 +966,12 @@
             <!-- 입력창 + 전송 -->
             <div style="display:flex; gap:8px; padding:8px 12px 10px; flex-shrink:0;">
               <input type="text" id="ai-chat-input"
-                placeholder="질문을 입력하세요... (Enter로 전송)"
+                placeholder="깜찍이에게 공부 질문하기... (Enter로 전송)"
                 maxlength="500"
                 onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAiMessage();}"
                 style="flex:1; padding:9px 13px; border-radius:12px; font-size:13px;">
               <button onclick="sendAiMessage()" id="ai-send-btn"
-                style="padding:9px 16px; background:var(--accent-green); color:#111;
+                style="padding:9px 16px; background:linear-gradient(135deg,#ff80b5,#ffe08a); color:#111;
                 border:none; border-radius:12px; font-weight:800; font-size:13px; cursor:pointer; flex-shrink:0;">전송</button>
             </div>
           </div>
@@ -1349,9 +1358,9 @@
         </div>
       </div>
 
-      <!-- 🤖 OpenAI API 키 설정 -->
+      <!-- 깜찍이 OpenAI API 키 설정 -->
       <div class="detail-row" style="flex-direction:column; align-items:flex-start; gap:10px;">
-        <span>🤖 AI 공부 도우미 API 키</span>
+        <span>깜찍이 API 키</span>
         <div style="display:flex; gap:8px; width:100%; flex-wrap:wrap;">
           <input type="password" id="openai-key-input"
             placeholder="sk-... (OpenAI API Key)"
@@ -1365,7 +1374,7 @@
             border:1px solid var(--accent-red); border-radius:10px; font-weight:700; cursor:pointer; flex-shrink:0;">삭제</button>
         </div>
         <div id="api-key-saved-msg" style="display:none; font-size:12px; color:var(--accent-green); font-weight:700;">
-          ✅ API 키가 저장되었습니다. 대시보드 AI 채팅을 사용할 수 있어요!
+          API 키가 저장되었습니다. 깜찍이에게 질문할 수 있어요!
         </div>
         <div style="font-size:11px; color:var(--text-sub); line-height:1.6;">
           ⚠️ API 키는 브라우저 로컬 저장소에만 저장됩니다.<br>
@@ -2508,7 +2517,7 @@
     }
 
     // =============================================
-    // 🤖 AI 공부 도우미 (OpenAI ChatGPT)
+    // 깜찍이 공부 도우미 (OpenAI ChatGPT)
     // =============================================
 
     let aiHistory = []; // 대화 히스토리
@@ -2526,7 +2535,7 @@
         document.getElementById('api-key-saved-msg').style.display = 'none';
       }, 4000);
       updateAiKeyStatus();
-      showToastMsg('✅ API 키 저장 완료! AI 도우미를 사용할 수 있어요.');
+      showToastMsg('API 키 저장 완료! 깜찍이를 사용할 수 있어요.');
     }
 
     function clearApiKey() {
@@ -2542,9 +2551,9 @@
       if (el) {
         if (key) {
           el.textContent = '✅ API 키 연결됨';
-          el.style.color = 'var(--accent-green)';
+          el.style.color = '#ff80b5';
         } else {
-          el.textContent = '설정에서 API 키 입력';
+          el.textContent = '깜찍이 대기 중';
           el.style.color = 'var(--text-sub)';
         }
       }
@@ -2557,8 +2566,8 @@
       aiHistory = [];
       const box = document.getElementById('ai-chat-messages');
       if (box) box.innerHTML = `<div style="text-align:center;font-size:12px;color:var(--text-sub);padding:16px 0;">
-        대화가 초기화되었습니다 🔄<br>
-        <span style="font-size:11px;opacity:0.6;">새 질문을 입력해보세요!</span>
+        깜찍이가 새 대화를 준비했어요.<br>
+        <span style="font-size:11px;opacity:0.6;">새 질문을 입력해보세요.</span>
       </div>`;
     }
 
@@ -2575,16 +2584,16 @@
 
       const label = document.createElement('span');
       label.style.cssText = 'font-size:10px;color:var(--text-sub);margin:0 4px;';
-      label.textContent = isUser ? '나' : '🤖 AI';
+      label.textContent = isUser ? '나' : '깜찍이';
       wrap.appendChild(label);
 
       const bubble = document.createElement('div');
       bubble.style.cssText = [
         'max-width:88%;padding:9px 13px;font-size:13px;line-height:1.55;word-break:break-word;white-space:pre-wrap;',
         'border-radius:' + (isUser ? '16px 16px 3px 16px' : '16px 16px 16px 3px') + ';',
-        'background:' + (isUser ? 'var(--accent-green)' : 'rgba(255,255,255,0.07)') + ';',
+        'background:' + (isUser ? 'var(--accent-green)' : 'linear-gradient(135deg,rgba(255,128,181,0.15),rgba(255,224,138,0.08))') + ';',
         'color:' + (isUser ? '#111' : 'var(--text-main)') + ';',
-        'border:' + (isUser ? 'none' : '1px solid rgba(255,255,255,0.08)') + ';',
+        'border:' + (isUser ? 'none' : '1px solid rgba(255,128,181,0.18)') + ';',
       ].join('');
       bubble.textContent = text;
       wrap.appendChild(bubble);
@@ -2600,11 +2609,11 @@
       el.id = 'ai-typing';
       el.style.cssText = 'display:flex;align-items:center;gap:6px;padding:8px 4px;';
       el.innerHTML = `<div style="display:flex;gap:4px;align-items:center;">
-        <div style="width:7px;height:7px;border-radius:50%;background:var(--accent-green);animation:aiDot 1.2s ease-in-out infinite;"></div>
-        <div style="width:7px;height:7px;border-radius:50%;background:var(--accent-green);animation:aiDot 1.2s ease-in-out infinite 0.2s;"></div>
+        <div style="width:7px;height:7px;border-radius:50%;background:#ff80b5;animation:aiDot 1.2s ease-in-out infinite;"></div>
+        <div style="width:7px;height:7px;border-radius:50%;background:#ffe08a;animation:aiDot 1.2s ease-in-out infinite 0.2s;"></div>
         <div style="width:7px;height:7px;border-radius:50%;background:var(--accent-green);animation:aiDot 1.2s ease-in-out infinite 0.4s;"></div>
       </div>
-      <span style="font-size:11px;color:var(--text-sub);">AI가 생각 중...</span>`;
+      <span style="font-size:11px;color:var(--text-sub);">깜찍이가 답을 정리 중...</span>`;
       if (!document.getElementById('ai-dot-style')) {
         const st = document.createElement('style');
         st.id = 'ai-dot-style';
@@ -2638,7 +2647,7 @@
 
       const apiKey = localStorage.getItem('openai_api_key');
       if (!apiKey) {
-        showToastMsg('⚠️ 설정 탭에서 OpenAI API 키를 먼저 입력해주세요!');
+        showToastMsg('설정 탭에서 API 키를 먼저 입력하면 깜찍이를 사용할 수 있어요.');
         return;
       }
 
@@ -2651,8 +2660,8 @@
       // 현재 과목을 시스템 프롬프트에 반영
       const subject = document.getElementById('cat-subject-name')?.textContent || '';
       const systemMsg = subject
-        ? `당신은 친절한 AI 공부 도우미입니다. 현재 사용자는 "${subject}" 과목을 공부 중입니다. 관련 질문에 특히 자세히 답변해주세요. 답변은 간결하고 이해하기 쉽게 해주세요.`
-        : '당신은 친절한 AI 공부 도우미입니다. 질문에 간결하고 이해하기 쉽게 답변해주세요.';
+        ? `당신의 이름은 "깜찍이"입니다. 사용자의 공부를 돕는 밝고 다정한 AI 튜터입니다. 현재 사용자는 "${subject}" 과목을 공부 중입니다. 답변은 한국어로 하고, 핵심을 먼저 말한 뒤 필요한 경우 단계별 풀이와 암기 팁을 제시하세요. 귀여운 말투는 과하지 않게 사용하고, 정확성과 이해하기 쉬운 설명을 최우선으로 하세요.`
+        : '당신의 이름은 "깜찍이"입니다. 사용자의 공부를 돕는 밝고 다정한 AI 튜터입니다. 답변은 한국어로 하고, 핵심을 먼저 말한 뒤 필요한 경우 단계별 풀이와 암기 팁을 제시하세요. 귀여운 말투는 과하지 않게 사용하고, 정확성과 이해하기 쉬운 설명을 최우선으로 하세요.';
 
       aiHistory.push({ role: 'user', content: text });
 
