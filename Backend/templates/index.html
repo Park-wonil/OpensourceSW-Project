@@ -5593,10 +5593,10 @@ function updateStatusBadge(type) {
       </div>
       <div class="av-char-selector">
         <button class="av-char-tab active" data-av-char="cat" onclick="AvatarSystem.setCharacter('cat')">
-          <span class="av-char-emoji">🐱</span><span>CAT</span>
+          <span class="av-char-emoji">🐱</span><span>고양이</span>
         </button>
         <button class="av-char-tab" data-av-char="bichon" onclick="AvatarSystem.setCharacter('bichon')">
-          <span class="av-char-emoji">🐶</span><span>BICHON</span>
+          <span class="av-char-emoji">🐶</span><span>비숑</span>
         </button>
       </div>
       <div class="av-body">
@@ -6053,8 +6053,8 @@ function updateStatusBadge(type) {
       const bw = document.getElementById('bichon-wrap-outer'); if (bw) bw.style.display = charId==='bichon' ? '' : 'none';
     }
     function _toggleTabs(charId) {
-      document.querySelectorAll('.char-cat-elems').forEach(el => { el.style.display = charId==='cat' ? '' : 'none'; });
-      document.querySelectorAll('.char-bichon-elems').forEach(el => { el.style.display = charId==='bichon' ? '' : 'none'; });
+      document.querySelectorAll('.char-cat-elems').forEach(el => { el.style.display = charId==='cat' ? 'inline' : 'none'; });
+      document.querySelectorAll('.char-bichon-elems').forEach(el => { el.style.display = charId==='bichon' ? 'inline' : 'none'; });
     }
     function applyAll(state) {
       const charId = state.selectedCharacter;
