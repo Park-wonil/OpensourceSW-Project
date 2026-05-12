@@ -5600,12 +5600,64 @@ window.onload = checkLogin;
         const light = isLight();
         const style = getComputedStyle(document.body);
         const primary = style.getPropertyValue('--theme-primary').trim();
-        // 라이트모드에서는 더 진한(어두운) 색으로
-        if (primary.includes('96,180')) return light ? [20,120,220] : [96,180,255];
-        if (primary.includes('176,136')) return light ? [120,60,220] : [176,136,249];
-        if (primary.includes('255,170') || primary.includes('255,aa')) return light ? [200,120,0] : [255,170,92];
-        if (primary.includes('255,128') || primary.includes('ff80')) return light ? [220,40,120] : [255,128,181];
-        return light ? [20,160,100] : [110,231,192]; // 기본 그린
+
+        function hexToRgb(hex) {
+          if (!hex) return null;
+
+          let value = hex.replace('#', '').trim();
+
+          if (value.length === 3) {
+            value = value.split('').map(ch => ch + ch).join('');
+          }
+
+          if (value.length !== 6) return null;
+
+          const r = parseInt(value.slice(0, 2), 16);
+          const g = parseInt(value.slice(2, 4), 16);
+          const b = parseInt(value.slice(4, 6), 16);
+
+          if ([r, g, b].some(Number.isNaN)) return null;
+          return [r, g, b];
+        }
+
+        function rgbStringToRgb(value) {
+          if (!value) return null;
+
+          const match = value.match(/rgba?\(([^)]+)\)/);
+          if (!match) return null;
+
+          const nums = match[1]
+            .split(',')
+            .map(v => parseFloat(v.trim()))
+            .slice(0, 3);
+
+          if (nums.length !== 3 || nums.some(Number.isNaN)) return null;
+          return nums.map(n => Math.round(n));
+        }
+
+        let rgb = rgbStringToRgb(primary) || hexToRgb(primary);
+
+        if (!rgb) {
+          if (document.body.classList.contains('theme-blue')) {
+            rgb = [96, 180, 255];
+          } else if (document.body.classList.contains('theme-purple')) {
+            rgb = [176, 136, 249];
+          } else if (document.body.classList.contains('theme-orange')) {
+            rgb = [255, 170, 92];
+          } else if (document.body.classList.contains('theme-pink')) {
+            rgb = [255, 128, 181];
+          } else if (document.body.classList.contains('theme-red')) {
+            rgb = [239, 68, 68];
+          } else {
+            rgb = [110, 231, 192];
+          }
+        }
+
+        if (light) {
+          return rgb.map(v => Math.max(0, Math.round(v * 0.78)));
+        }
+
+        return rgb;
       }
 
       const isLight = () => document.body.classList.contains('light-mode');
