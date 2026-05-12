@@ -781,6 +781,10 @@
             <span id="cam-status" class="status-label">CAM OFF</span>
             <span id="cam-ear" class="status-label" style="display:none;">| EAR: 0.000</span>
             <div id="neck-badge" style="display:none; margin-left:8px;"></div>
+            <div id="status-badge" class="status-badge status-analyzing">
+  <span class="status-icon" id="badge-icon">🟢</span>
+  <span class="status-text" id="badge-text">AI 분석 중</span>
+</div>
           </div>
           <div class="cam-controls">
             <button class="btn-on" onclick="startCamera()">카메라 ON</button>
@@ -1341,6 +1345,7 @@
           <button class="theme-btn" data-theme="purple"  onclick="setTheme('purple')"  style="--c:#b088f9;" title="퍼플">🟣 퍼플</button>
           <button class="theme-btn" data-theme="orange"  onclick="setTheme('orange')"  style="--c:#ffaa5c;" title="오렌지">🟠 오렌지</button>
           <button class="theme-btn" data-theme="pink"    onclick="setTheme('pink')"    style="--c:#ff80b5;" title="핑크">🩷 핑크</button>
+          <button class="theme-btn" data-theme="red" onclick="setTheme('red')" style="--c:#ef4444;" title="체리 레드">🍒 체리 레드</button>
         </div>
       </div>
 
@@ -2104,6 +2109,14 @@
       const bar = document.getElementById("score-bar");
       txt.innerText = score + "점";
       bar.style.width = Math.min(score, 100) + "%";
+      // --- 뱃지 업데이트 코드 추가 ---//
+      if (score >= 80) {
+    updateStatusBadge('focus');    // 80점 이상: 🔥 초집중
+  } else if (score < 50) {
+    updateStatusBadge('warning');  // 50점 미만: ⚠️ 자세 주의
+  } else {
+    updateStatusBadge('analyzing'); // 그 외: 🟢 분석 중
+  }
       if (score >= 80) { 
         txt.style.color = "var(--accent-green)"; 
         bar.style.background = "var(--accent-green)"; 
@@ -3504,7 +3517,7 @@ window.onload = checkLogin;
     // =============================================
     // 🎨 테마 시스템
     // =============================================
-    const THEMES = ['default','blue','purple','orange','pink'];
+    const THEMES = ['default','blue','purple','orange','pink', 'red'];
 
     function setTheme(theme) {
       // 기존 테마 클래스 제거
@@ -4245,6 +4258,23 @@ window.onload = checkLogin;
       }
       draw();
     }
+    // 상태를 변경하고 싶을 때 이 함수를 호출하면 됩니다.
+function updateStatusBadge(type) {
+    const badge = document.getElementById('status-badge');
+    const icon = document.getElementById('badge-icon');
+    const text = document.getElementById('badge-text');
+    
+    if (type === 'focus') {
+        badge.className = 'status-badge status-focus';
+        icon.innerText = '🔥'; text.innerText = '초집중 모드';
+    } else if (type === 'warning') {
+        badge.className = 'status-badge status-warning';
+        icon.innerText = '⚠️'; text.innerText = '자세 교정 필요';
+    } else {
+        badge.className = 'status-badge status-analyzing';
+        icon.innerText = '🟢'; text.innerText = 'AI 분석 중';
+    }
+}
 
     // --- 로그인 완료 시 소켓 등록 연동 ---
     // login() 함수 안에서 registerSocket() 호출하도록 기존 login 함수에 추가
