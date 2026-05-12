@@ -4,4 +4,4 @@ __pycache__/
 .vscode/
 .venv/
 venv/
-venv311/
+venv311/.claude/
