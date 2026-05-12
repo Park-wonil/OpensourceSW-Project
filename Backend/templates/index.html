@@ -1035,8 +1035,8 @@
         <div class="panel">
           <div class="stats-box">
             <div class="stats-title">현재 실시간 집중 점수</div>
-            <div class="stats-value" id="score-text">100점</div>
-            <div class="score-bar-bg"><div id="score-bar" style="width: 100%;"></div></div>
+            <div class="stats-value" id="score-text">0점</div>
+            <div class="score-bar-bg"><div id="score-bar" style="width: 0%;"></div></div>
           </div>
 
           <div class="stats-box" style="margin-bottom:0;">
@@ -1433,7 +1433,7 @@
       </div>
     </div>
 <!-- 스터디룸 허브 (채팅 + 캠) -->
-<div id="section-chat" class="panel extra-section" style="padding:0; overflow:hidden; height:calc(100vh - 100px);">
+<div id="section-chat" class="panel extra-section" style="padding:0; overflow:hidden; height:calc(100vh - 92px);">
 
   <!-- 뷰 1: 방 목록 -->
   <div id="room-lobby" style="padding:24px;">
@@ -1495,7 +1495,7 @@
   </div>
 
   <!-- 뷰 2: 방 내부 (채팅 + 캠) -->
-  <div id="room-inside" style="display:none; flex-direction:column; height:calc(100vh - 120px); min-height:600px;">
+  <div id="room-inside" style="display:none; flex-direction:column; height:100%; min-height:640px;">
 
     <!-- 방 헤더 -->
     <div style="display:flex; align-items:center; justify-content:space-between;
@@ -1511,11 +1511,11 @@
     </div>
 
     <!-- 메인 콘텐츠 (캠 + 채팅 좌우 분할) -->
-    <div style="display:flex; flex:1; overflow:hidden; gap:0;">
+    <div id="room-workspace" style="display:flex; flex:1; overflow:hidden; gap:0;">
 
       <!-- 왼쪽: 캠 영역 - 그리드 레이아웃 -->
-      <div id="room-cam-area" style="width:62%; display:flex; flex-direction:column;
-        gap:8px; padding:12px; border-right:1px solid rgba(255,255,255,0.07); overflow:hidden;">
+      <div id="room-cam-area" style="width:80%; display:flex; flex-direction:column;
+        gap:10px; padding:16px; border-right:1px solid rgba(255,255,255,0.07); overflow:hidden;">
 
         <div style="display:flex; justify-content:space-between; align-items:center; flex-shrink:0;">
           <div style="font-size:13px; color:var(--text-sub); font-weight:700; letter-spacing:0.5px;">📹 스터디 캠</div>
@@ -1530,7 +1530,7 @@
         <div id="room-cam-grid" style="flex:1; display:grid;
           grid-template-columns: 1fr 1fr;
           grid-template-rows: 1fr 1fr;
-          gap:4px; min-height:0; overflow:hidden;">
+          gap:10px; min-height:0; overflow:hidden;">
 
           <!-- 내 캠 (항상 첫 번째 셀) -->
           <div id="my-cam-cell" style="position:relative; border-radius:12px;
@@ -1573,7 +1573,7 @@
       </div>
 
       <!-- 오른쪽: 채팅 -->
-      <div style="flex:1; display:flex; flex-direction:column; padding:14px; gap:10px;">
+      <div id="room-chat-area" style="flex:1; display:flex; flex-direction:column; padding:16px; gap:10px;">
         <div style="font-size:13px; color:var(--text-sub); font-weight:700; flex-shrink:0; letter-spacing:0.5px;">
           💬 채팅
         </div>
@@ -3852,6 +3852,7 @@ window.onload = checkLogin;
       document.getElementById('room-my-nickname').innerText = window.currentUser || '나';
       updateRoomMemberCount(members);
       appendRoomSystem(`${roomName}에 입장했습니다.`);
+      updateCamGrid();
     }
 
     function updateRoomMemberCount(members) {
@@ -3932,7 +3933,7 @@ window.onload = checkLogin;
 
         // 브라우저 캠 스트림
         roomLocalStream = await navigator.mediaDevices.getUserMedia({
-          video: { width:640, height:480, facingMode:'user' },
+          video: { width:1280, height:720, facingMode:'user' },
           audio: false
         });
         const vid = document.getElementById('room-local-video');
