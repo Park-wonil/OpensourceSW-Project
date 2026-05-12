@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Focus AI</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/avatar-system.css') }}">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -774,6 +773,123 @@
       border-color: rgba(110,231,192,0.5) !important;
       transform: translateY(-1px); box-shadow: 0 4px 16px rgba(110,231,192,0.2);
     }
+
+    /* ── Avatar Customization System ── */
+    #avatar-customizer-overlay {
+      display: flex; align-items: center; justify-content: center;
+      position: fixed; inset: 0; z-index: 9000;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      opacity: 0; pointer-events: none; transition: opacity 0.22s ease;
+    }
+    #avatar-customizer-overlay.av-open { opacity: 1; pointer-events: all; }
+    #avatar-customizer-modal {
+      background: #0f172a; border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px; width: min(820px, 96vw); max-height: 90vh;
+      display: flex; flex-direction: column; overflow: hidden;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+      transform: translateY(16px) scale(0.97); transition: transform 0.22s ease;
+    }
+    #avatar-customizer-overlay.av-open #avatar-customizer-modal { transform: translateY(0) scale(1); }
+    .av-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 22px 14px; border-bottom: 1px solid rgba(255,255,255,0.07); flex-shrink: 0;
+    }
+    .av-title { font-size: 17px; font-weight: 700; color: #f1f5f9; letter-spacing: -0.3px; }
+    .av-close-btn {
+      background: rgba(255,255,255,0.08); border: none; border-radius: 50%;
+      width: 32px; height: 32px; color: #94a3b8; font-size: 15px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; transition: background 0.15s, color 0.15s;
+    }
+    .av-close-btn:hover { background: rgba(255,255,255,0.14); color: #f1f5f9; }
+    .av-char-selector {
+      display: flex; gap: 8px; padding: 14px 22px 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.06); flex-shrink: 0;
+    }
+    .av-char-tab {
+      display: flex; align-items: center; gap: 7px; padding: 7px 16px;
+      border-radius: 20px; border: 1.5px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.04); color: #94a3b8;
+      font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s;
+    }
+    .av-char-tab:hover { background: rgba(255,255,255,0.08); color: #cbd5e1; }
+    .av-char-tab.active { border-color: #4ade80; color: #4ade80; background: rgba(74,222,128,0.1); }
+    .av-char-emoji { font-size: 18px; }
+    .av-body { display: flex; flex: 1; overflow: hidden; min-height: 0; }
+    .av-preview {
+      width: 200px; flex-shrink: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 8px; padding: 20px;
+      border-right: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.02);
+    }
+    #av-preview-container { width: 140px; height: 140px; display: flex; align-items: center; justify-content: center; }
+    .av-preview-label { font-size: 11px; color: #475569; margin: 0; letter-spacing: 0.3px; }
+    .av-options {
+      flex: 1; overflow-y: auto; padding: 16px 20px 20px;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    .av-options::-webkit-scrollbar { width: 5px; }
+    .av-options::-webkit-scrollbar-track { background: transparent; }
+    .av-options::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+    .av-section { display: flex; flex-direction: column; gap: 8px; }
+    .av-section-label { font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.8px; }
+    .av-chips-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .av-chip {
+      width: 36px; height: 36px; border-radius: 50%; border: 2.5px solid transparent;
+      cursor: pointer; transition: transform 0.12s, box-shadow 0.12s, border-color 0.12s; outline: none;
+    }
+    .av-chip:hover { transform: scale(1.12); }
+    .av-chip.selected { border-color: #4ade80; box-shadow: 0 0 0 3px rgba(74,222,128,0.28); }
+    .av-chip-outline { box-shadow: inset 0 0 0 1px rgba(0,0,0,0.15); }
+    .av-chip-outline.selected { box-shadow: 0 0 0 3px rgba(74,222,128,0.28), inset 0 0 0 1px rgba(0,0,0,0.15); }
+    .av-cards-row { display: flex; flex-wrap: wrap; gap: 6px; }
+    .av-card {
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      padding: 8px 10px; border-radius: 10px; border: 1.5px solid rgba(255,255,255,0.07);
+      background: rgba(255,255,255,0.03); cursor: pointer; transition: all 0.13s; min-width: 60px;
+    }
+    .av-card:hover { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.14); }
+    .av-card.selected { background: rgba(74,222,128,0.1); border-color: #4ade80; }
+    .av-card-emoji { font-size: 20px; line-height: 1; }
+    .av-card-label { font-size: 10px; color: #94a3b8; letter-spacing: 0.2px; }
+    .av-card.selected .av-card-label { color: #4ade80; }
+    .av-open-btn {
+      display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px;
+      background: linear-gradient(135deg,#1e293b,#0f172a);
+      border: 1.5px solid rgba(74,222,128,0.35); border-radius: 12px;
+      color: #4ade80; font-size: 14px; font-weight: 600; cursor: pointer;
+      transition: all 0.15s; letter-spacing: -0.2px;
+    }
+    .av-open-btn:hover { background: rgba(74,222,128,0.1); border-color: #4ade80; box-shadow: 0 0 12px rgba(74,222,128,0.2); }
+    .char-bichon-elems { display: none; }
+    body.light-mode #avatar-customizer-modal { background: #ffffff; border-color: rgba(0,0,0,0.08); box-shadow: 0 24px 80px rgba(0,0,0,0.18); }
+    body.light-mode .av-header { border-bottom-color: rgba(0,0,0,0.07); }
+    body.light-mode .av-title { color: #0f172a; }
+    body.light-mode .av-close-btn { background: rgba(0,0,0,0.06); color: #64748b; }
+    body.light-mode .av-close-btn:hover { background: rgba(0,0,0,0.1); color: #0f172a; }
+    body.light-mode .av-char-selector { border-bottom-color: rgba(0,0,0,0.06); }
+    body.light-mode .av-char-tab { border-color: rgba(0,0,0,0.1); background: rgba(0,0,0,0.03); color: #64748b; }
+    body.light-mode .av-char-tab:hover { background: rgba(0,0,0,0.06); color: #334155; }
+    body.light-mode .av-char-tab.active { color: #16a34a; border-color: #16a34a; background: rgba(22,163,74,0.08); }
+    body.light-mode .av-preview { background: rgba(0,0,0,0.02); border-right-color: rgba(0,0,0,0.06); }
+    body.light-mode .av-preview-label { color: #94a3b8; }
+    body.light-mode .av-section-label { color: #94a3b8; }
+    body.light-mode .av-chip.selected { border-color: #16a34a; box-shadow: 0 0 0 3px rgba(22,163,74,0.22); }
+    body.light-mode .av-card { background: rgba(0,0,0,0.02); border-color: rgba(0,0,0,0.07); }
+    body.light-mode .av-card:hover { background: rgba(0,0,0,0.05); }
+    body.light-mode .av-card.selected { background: rgba(22,163,74,0.08); border-color: #16a34a; }
+    body.light-mode .av-card-label { color: #64748b; }
+    body.light-mode .av-card.selected .av-card-label { color: #16a34a; }
+    body.light-mode .av-open-btn { background: linear-gradient(135deg,#f8fafc,#f1f5f9); border-color: rgba(22,163,74,0.4); color: #16a34a; }
+    body.light-mode .av-open-btn:hover { background: rgba(22,163,74,0.08); border-color: #16a34a; box-shadow: 0 0 12px rgba(22,163,74,0.15); }
+    @media (max-width: 600px) {
+      #avatar-customizer-modal { border-radius: 16px 16px 0 0; align-self: flex-end; width: 100%; max-height: 85vh; }
+      #avatar-customizer-overlay { align-items: flex-end; }
+      .av-body { flex-direction: column; }
+      .av-preview { width: 100%; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.06); padding: 14px 20px; flex-direction: row; justify-content: center; gap: 16px; }
+      body.light-mode .av-preview { border-bottom-color: rgba(0,0,0,0.06); }
+      .av-cards-row { gap: 5px; }
+      .av-card { min-width: 52px; padding: 7px 8px; }
+    }
   </style>
 </head>
  <body>
@@ -1386,6 +1502,9 @@
                   <circle cx="103.5" cy="90.5" r="2.2" fill="#fce0cc"/>
                 </g>
 
+                <!-- ── 옷 오버레이 (몸 위, 머리 아래) ── -->
+                <g id="cat-outfit-overlay"></g>
+
                 <!-- ── 머리 ── -->
                 <circle cx="70" cy="45" r="27" fill="url(#cHead)" filter="url(#cDrop)"/>
                 <!-- 구체 하이라이트 (왼쪽 위) -->
@@ -1453,8 +1572,6 @@
                 <path d="M77 52.5 Q85 51 96 49" stroke="rgba(235,235,235,0.88)" stroke-width="0.95" fill="none" stroke-linecap="round"/>
                 <path d="M77 54 Q85 54 96.5 53.5" stroke="rgba(235,235,235,0.88)" stroke-width="0.95" fill="none" stroke-linecap="round"/>
                 <path d="M77 55.5 Q85 56.5 94.5 58" stroke="rgba(235,235,235,0.68)" stroke-width="0.95" fill="none" stroke-linecap="round"/>
-                <!-- ── 옷 오버레이 ── -->
-                <g id="cat-outfit-overlay"></g>
                 <!-- ── 모자 오버레이 ── -->
                 <g id="cat-hat-overlay"></g>
                 <!-- ── 악세서리 오버레이 ── -->
@@ -5492,7 +5609,513 @@ function updateStatusBadge(type) {
     </div>
   </div>
 
-  <script src="{{ url_for('static', filename='js/avatar-system.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/avatar-renderer.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/avatar-customizer.js') }}"></script>
+  <script>
+  'use strict';
+
+  /* ─── AvatarSystem ─── */
+  const AV_CAT_BODY = {
+    orange: { h:['#ffe0a0','#f4a460','#c07030'], b:['#ffc870','#f4a460','#b86820'], e:['#ffe0c0','#f4a060'] },
+    gray:   { h:['#d8d8e0','#9090a0','#606070'], b:['#c8c8d8','#8888a0','#585868'], e:['#d0d0e0','#8888a0'] },
+    cream:  { h:['#fff8e8','#f5e0b0','#d8c090'], b:['#fff0d0','#eed8a0','#c8a870'], e:['#fff0d8','#eeda98'] },
+    brown:  { h:['#d09060','#9b6a3e','#6b4020'], b:['#c08050','#9b6a3e','#5a3018'], e:['#c08050','#9b6a3e'] },
+    black:  { h:['#606070','#404055','#282835'], b:['#505060','#383850','#202030'], e:['#505060','#383850'] },
+    white:  { h:['#ffffff','#f0f0f0','#d8d8dc'], b:['#f8f8fc','#e8e8ee','#d0d0d8'], e:['#f8f8fc','#e8e8ee'] },
+  };
+  const AV_CAT_EAR = {
+    pink:  ['#ffd0dc','#f070a0'],
+    mint:  ['#b0f0e0','#40b898'],
+    lilac: ['#d8c8f0','#9870c0'],
+    coral: ['#ffc0b0','#e07060'],
+  };
+  const AV_BICHON_COAT = {
+    white:  { h:['#ffffff','#f4f5f8','#e0e2e8'] },
+    cream:  { h:['#fffaf0','#f5e8c4','#ded0a8'] },
+    golden: { h:['#fff8d8','#f5d07a','#d0a840'] },
+    silver: { h:['#f2f4f8','#d5dae5','#b0b8c8'] },
+  };
+  const AV_HAT_SVG = {
+    none: '',
+    party:  '<path d="M70 6 L52 29 L88 29Z" fill="#ff5090"/><path d="M63 8 L54 26 L59 26 L67 8Z" fill="#ffe050" opacity="0.82"/><path d="M75 8 L69 26 L74 26 L80 8Z" fill="#50c0ff" opacity="0.82"/><ellipse cx="70" cy="29" rx="19" ry="5" fill="#ff5090"/><circle cx="70" cy="4" r="5" fill="#ffe8a0"/>',
+    wizard: '<path d="M70 4 L50 30 L90 30Z" fill="#2a1a80"/><ellipse cx="70" cy="30" rx="21" ry="5.5" fill="#3a28a0"/><polygon points="70,8 72,13 77,13 73,16 74.5,21 70,18 65.5,21 67,16 63,13 68,13" fill="#ffd700"/>',
+    crown:  '<polygon points="53,29 53,11 62,19 70,8 78,19 87,11 87,29" fill="#ffd700"/><rect x="53" y="24" width="34" height="7" rx="2" fill="#e6b000"/><circle cx="70" cy="9.5" r="3.5" fill="#ff4060"/><circle cx="57" cy="17.5" r="2.5" fill="#60a8ff"/><circle cx="83" cy="17.5" r="2.5" fill="#60a8ff"/>',
+    santa:  '<path d="M70 4 L51 31 L89 31Z" fill="#cc1010"/><ellipse cx="70" cy="31" rx="20" ry="5.5" fill="white"/><circle cx="70" cy="2" r="5.5" fill="white"/>',
+    beanie: '<path d="M52 30 Q52 8 70 8 Q88 8 88 30Z" fill="#4a68e8"/><rect x="50" y="26" width="40" height="7" rx="3.5" fill="#3858d8"/><circle cx="70" cy="7" r="7" fill="#5a78f8"/>',
+    beret:  '<ellipse cx="70" cy="23" rx="24" ry="10" fill="#cc3068"/><ellipse cx="70" cy="25.5" rx="23" ry="5.5" fill="#b82858"/><circle cx="81" cy="16" r="4.5" fill="#dd4078"/>',
+  };
+  const AV_ACC_SVG = {
+    none: '',
+    glasses: '<rect x="55" y="38" width="14" height="11" rx="5.5" fill="rgba(28,28,40,0.12)" stroke="#303848" stroke-width="1.8"/><rect x="71" y="38" width="14" height="11" rx="5.5" fill="rgba(28,28,40,0.12)" stroke="#303848" stroke-width="1.8"/><line x1="56" y1="43.5" x2="53" y2="41.5" stroke="#303848" stroke-width="1.6" stroke-linecap="round"/><line x1="85" y1="43.5" x2="88" y2="41.5" stroke="#303848" stroke-width="1.6" stroke-linecap="round"/><line x1="69" y1="43.5" x2="71" y2="43.5" stroke="#303848" stroke-width="1.6"/>',
+    ribbon:   '<path d="M83 20 Q89 14 92 21 Q89 28 83 22Z" fill="#ff4090"/><path d="M101 20 Q95 14 92 21 Q95 28 101 22Z" fill="#ff4090"/><circle cx="92" cy="21" r="4" fill="#ff80b8"/>',
+    bowtie:   '<path d="M55 62 Q62 56 69 62 Q62 68 55 62Z" fill="#2855cc"/><path d="M71 62 Q78 56 85 62 Q78 68 71 62Z" fill="#2855cc"/><circle cx="70" cy="62" r="4" fill="#3a68e0"/>',
+    necklace: '<path d="M49 58 Q70 70 91 58" stroke="#d4ae28" stroke-width="2.4" fill="none" stroke-linecap="round"/><ellipse cx="70" cy="69" rx="5" ry="4" fill="#e8c838"/><ellipse cx="70" cy="69" rx="3" ry="2.5" fill="#c8a018"/>',
+  };
+  const AV_CAT_EXPR = {
+    happy:   '<ellipse cx="63" cy="44" rx="5.8" ry="7" fill="#120a02"/><ellipse cx="77" cy="44" rx="5.8" ry="7" fill="#120a02"/><ellipse cx="63" cy="44" rx="4.2" ry="6" fill="#3c1e06"/><ellipse cx="77" cy="44" rx="4.2" ry="6" fill="#3c1e06"/><ellipse cx="63" cy="44" rx="2" ry="5.5" fill="#0a0402"/><ellipse cx="77" cy="44" rx="2" ry="5.5" fill="#0a0402"/><circle cx="65.5" cy="40.5" r="2.6" fill="white"/><circle cx="79.5" cy="40.5" r="2.6" fill="white"/><circle cx="60.5" cy="47" r="1.3" fill="white" opacity="0.55"/><circle cx="74.5" cy="47" r="1.3" fill="white" opacity="0.55"/>',
+    focused: '<ellipse cx="63" cy="45" rx="5.8" ry="5" fill="#120a02"/><ellipse cx="77" cy="45" rx="5.8" ry="5" fill="#120a02"/><ellipse cx="63" cy="45" rx="4.2" ry="4" fill="#3c1e06"/><ellipse cx="77" cy="45" rx="4.2" ry="4" fill="#3c1e06"/><ellipse cx="63" cy="45" rx="2" ry="3.5" fill="#0a0402"/><ellipse cx="77" cy="45" rx="2" ry="3.5" fill="#0a0402"/><circle cx="65" cy="42" r="2" fill="white"/><circle cx="79" cy="42" r="2" fill="white"/><path d="M57 39 L69 42" stroke="#4a2808" stroke-width="2.2" stroke-linecap="round"/><path d="M71 42 L83 39" stroke="#4a2808" stroke-width="2.2" stroke-linecap="round"/>',
+    wink:    '<ellipse cx="63" cy="44" rx="5.8" ry="7" fill="#120a02"/><ellipse cx="63" cy="44" rx="4.2" ry="6" fill="#3c1e06"/><ellipse cx="63" cy="44" rx="2" ry="5.5" fill="#0a0402"/><circle cx="65.5" cy="40.5" r="2.6" fill="white"/><circle cx="60.5" cy="47" r="1.3" fill="white" opacity="0.55"/><path d="M71 44 Q77 51.5 83 44" stroke="#120a02" stroke-width="3.4" fill="none" stroke-linecap="round"/>',
+    sleepy:  '<path d="M57 46 Q63 38 69 46" fill="#120a02"/><path d="M71 46 Q77 38 83 46" fill="#120a02"/><path d="M58 46 Q63 40.5 68 46 Q63 42 58 46Z" fill="#3c1e06"/><path d="M72 46 Q77 40.5 82 46 Q77 42 72 46Z" fill="#3c1e06"/><circle cx="65" cy="43" r="1.8" fill="white" opacity="0.7"/><circle cx="79" cy="43" r="1.8" fill="white" opacity="0.7"/>',
+  };
+  const AV_BICHON_EXPR = {
+    happy:   '<circle cx="63" cy="44" r="6" fill="#1a0a08"/><circle cx="77" cy="44" r="6" fill="#1a0a08"/><circle cx="65" cy="41.5" r="2.4" fill="white"/><circle cx="79" cy="41.5" r="2.4" fill="white"/><circle cx="60.5" cy="47" r="1.2" fill="white" opacity="0.5"/><circle cx="74.5" cy="47" r="1.2" fill="white" opacity="0.5"/>',
+    focused: '<circle cx="63" cy="44" r="6" fill="#1a0a08"/><circle cx="77" cy="44" r="6" fill="#1a0a08"/><path d="M56 38 Q63 36 70 38" stroke="#4a2808" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M70 38 Q77 36 84 38" stroke="#4a2808" stroke-width="2" stroke-linecap="round" fill="none"/><circle cx="65" cy="43" r="2.2" fill="white"/><circle cx="79" cy="43" r="2.2" fill="white"/>',
+    wink:    '<circle cx="63" cy="44" r="6" fill="#1a0a08"/><circle cx="65" cy="41.5" r="2.4" fill="white"/><path d="M71 44 Q77 51 83 44" stroke="#1a0a08" stroke-width="3.2" fill="none" stroke-linecap="round"/>',
+    sleepy:  '<path d="M57 47 Q63 39 69 47" fill="#1a0a08"/><path d="M71 47 Q77 39 83 47" fill="#1a0a08"/><path d="M58 47 Q63 42 68 47 Q63 44 58 47Z" fill="#2a1808"/><path d="M72 47 Q77 42 82 47 Q77 44 72 47Z" fill="#2a1808"/>',
+  };
+  const AV_OUTFIT_SVG = {
+    none:   '',
+    hoodie: '<path d="M30 107 Q31 80 70 78 Q109 80 110 107Z" fill="#3060e0"/><path d="M51 78 Q44 70 42 63" stroke="#2850d0" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M89 78 Q96 70 98 63" stroke="#2850d0" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M57 92 Q70 90 83 92 Q83 102 70 102 Q57 102 57 92Z" fill="#2850d0"/>',
+    knit:   '<path d="M31 107 Q31 80 70 78 Q109 80 109 107Z" fill="#c83060"/><path d="M36 87 Q53 83 70 87 Q87 83 104 87" stroke="rgba(255,255,255,0.2)" stroke-width="2.5" fill="none"/><path d="M35 93 Q53 89 70 93 Q87 89 105 93" stroke="rgba(255,255,255,0.2)" stroke-width="2.5" fill="none"/><path d="M35 99 Q53 95 70 99 Q87 95 105 99" stroke="rgba(255,255,255,0.2)" stroke-width="2.5" fill="none"/>',
+    cape:   '<path d="M35 68 Q29 84 34 108 Q70 116 106 108 Q111 84 105 68 Q88 73 70 73 Q52 73 35 68Z" fill="#6010a0" opacity="0.9"/><path d="M50 68 Q70 62 90 68" stroke="rgba(180,80,255,0.35)" stroke-width="3" fill="none" stroke-linecap="round"/>',
+    formal: '<path d="M32 107 Q32 80 70 78 Q108 80 108 107Z" fill="#1a2040"/><path d="M55 75 L62 83 L70 79 L78 83 L85 75" stroke="white" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M67.5 79 L70 87 L72.5 79 Q70 75 67.5 79Z" fill="#c03030"/><line x1="70" y1="82" x2="70" y2="107" stroke="#2a3050" stroke-width="1.5" stroke-dasharray="3,3"/>',
+    space:  '<path d="M28 107 Q28 76 70 74 Q112 76 112 107Z" fill="#c8d8e8"/><path d="M44 78 Q33 85 30 97" stroke="white" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M96 78 Q107 85 110 97" stroke="white" stroke-width="4" fill="none" stroke-linecap="round"/><rect x="55" y="82" width="30" height="18" rx="4" fill="#a8b8c8"/><circle cx="65" cy="91" r="2.5" fill="#6ee7c0"/><circle cx="70" cy="91" r="2.5" fill="#fbbf24"/><circle cx="75" cy="91" r="2.5" fill="#f06363"/>',
+  };
+  const CHARACTER_CONFIGS = {
+    cat: {
+      id:'cat', labelKo:'고양이', emoji:'🐱',
+      defaults:{ bodyColor:'orange', earColor:'pink', hat:'none', accessory:'none', expression:'happy', outfit:'none' },
+      colorGroups:[
+        { key:'bodyColor', label:'몸 색상', options:[
+          {id:'orange',color:'linear-gradient(135deg,#ffc870,#c07030)',label:'오렌지'},
+          {id:'gray',  color:'linear-gradient(135deg,#e0e0f0,#606070)',label:'그레이'},
+          {id:'cream', color:'linear-gradient(135deg,#fff8e8,#d0a060)',label:'크림'},
+          {id:'brown', color:'linear-gradient(135deg,#c09050,#603010)',label:'브라운'},
+          {id:'black', color:'linear-gradient(135deg,#606060,#101018)',label:'블랙'},
+          {id:'white', color:'linear-gradient(135deg,#ffffff,#d0d0d8)',label:'화이트',outline:true},
+        ]},
+        { key:'earColor', label:'귀 속 색상', options:[
+          {id:'pink', color:'linear-gradient(135deg,#ffd0dc,#f070a0)',label:'핑크'},
+          {id:'mint', color:'linear-gradient(135deg,#c0f0e0,#40c090)',label:'민트'},
+          {id:'lilac',color:'linear-gradient(135deg,#e8d0f8,#9060c8)',label:'라일락'},
+          {id:'coral',color:'linear-gradient(135deg,#ffd8c0,#f07050)',label:'코랄'},
+        ]},
+      ],
+    },
+    bichon: {
+      id:'bichon', labelKo:'비숑', emoji:'🐶',
+      defaults:{ coatColor:'white', hat:'none', accessory:'none', expression:'happy', outfit:'none' },
+      colorGroups:[
+        { key:'coatColor', label:'털 색상', options:[
+          {id:'white', color:'linear-gradient(135deg,#ffffff,#e8e8f0)',label:'퓨어 화이트',outline:true},
+          {id:'cream', color:'linear-gradient(135deg,#fffaf0,#ddd0a0)',label:'크림'},
+          {id:'golden',color:'linear-gradient(135deg,#fff8d8,#d0a840)',label:'골든'},
+          {id:'silver',color:'linear-gradient(135deg,#edf0f5,#b0b8c8)',label:'실버'},
+        ]},
+      ],
+    },
+  };
+  const SHARED_OPTIONS = [
+    { key:'hat', label:'모자', options:[
+      {id:'none',emoji:'—',label:'없음'},{id:'party',emoji:'🎉',label:'파티'},
+      {id:'wizard',emoji:'🧙',label:'마법사'},{id:'crown',emoji:'👑',label:'왕관'},
+      {id:'santa',emoji:'🎅',label:'산타'},{id:'beanie',emoji:'🧢',label:'비니'},
+      {id:'beret',emoji:'🎩',label:'베레모'},
+    ]},
+    { key:'outfit', label:'옷', options:[
+      {id:'none',emoji:'—',label:'없음'},{id:'hoodie',emoji:'👕',label:'후드티'},
+      {id:'knit',emoji:'🧶',label:'니트'},{id:'cape',emoji:'🦸',label:'망토'},
+      {id:'formal',emoji:'👔',label:'교복'},{id:'space',emoji:'🚀',label:'우주복'},
+    ]},
+    { key:'accessory', label:'악세서리', options:[
+      {id:'none',emoji:'—',label:'없음'},{id:'glasses',emoji:'👓',label:'안경'},
+      {id:'ribbon',emoji:'🎀',label:'리본'},{id:'bowtie',emoji:'🪢',label:'나비넥타이'},
+      {id:'necklace',emoji:'📿',label:'목걸이'},
+    ]},
+    { key:'expression', label:'표정', options:[
+      {id:'happy',emoji:'😊',label:'행복'},{id:'focused',emoji:'😤',label:'집중'},
+      {id:'wink',emoji:'😉',label:'윙크'},{id:'sleepy',emoji:'😴',label:'졸린'},
+    ]},
+  ];
+  const AV_TAB_POS = {
+    gc:{ cx:83,cy:36,r:23,bodyCx:83,bodyCy:78,bodyRx:28,bodyRy:13,hatTx:23.4,hatTy:-2.3,hatS:0.852 },
+    sc:{ cx:49,cy:34,r:21,bodyCx:49,bodyCy:78,bodyRx:22,bodyRy:12,hatTx:-5.5,hatTy:-1,  hatS:0.778 },
+    wc:{ cx:65,cy:30,r:21,bodyCx:65,bodyCy:53,bodyRx:24,bodyRy:9, hatTx:10.5,hatTy:-5,  hatS:0.778 },
+    rc:{ cx:65,cy:38,r:21,bodyCx:65,bodyCy:50,bodyRx:24,bodyRy:9, hatTx:10.5,hatTy:3,   hatS:0.778 },
+    ec:{ cx:58,cy:36,r:21,bodyCx:58,bodyCy:78,bodyRx:26,bodyRy:13,hatTx:3.5, hatTy:1,   hatS:0.778 },
+    cc:{ cx:65,cy:38,r:22,bodyCx:65,bodyCy:80,bodyRx:26,bodyRy:12,hatTx:8,   hatTy:1.3, hatS:0.815 },
+    mc:{ cx:65,cy:32,r:22,bodyCx:65,bodyCy:62,bodyRx:25,bodyRy:11,hatTx:8,   hatTy:-4.7,hatS:0.815 },
+  };
+  const AvatarSystem = (() => {
+    const KEY = 'avatarState_v2';
+    function _defaults() {
+      const s = { selectedCharacter:'cat', customization:{} };
+      Object.keys(CHARACTER_CONFIGS).forEach(id => { s.customization[id] = {...CHARACTER_CONFIGS[id].defaults}; });
+      return s;
+    }
+    let _state = _defaults();
+    function load() {
+      try {
+        const raw = localStorage.getItem(KEY);
+        if (!raw) {
+          const old = JSON.parse(localStorage.getItem('catConfig')||'null');
+          if (old) _state.customization.cat = { bodyColor:old.bodyColor||'orange', earColor:old.earColor||'pink', hat:old.hat||'none', accessory:old.accessory||'none', expression:old.expression||'happy', outfit:'none' };
+          return;
+        }
+        const saved = JSON.parse(raw);
+        if (saved.selectedCharacter && CHARACTER_CONFIGS[saved.selectedCharacter]) _state.selectedCharacter = saved.selectedCharacter;
+        if (saved.customization) Object.keys(CHARACTER_CONFIGS).forEach(id => { if (saved.customization[id]) _state.customization[id] = {...CHARACTER_CONFIGS[id].defaults,...saved.customization[id]}; });
+      } catch(e) {}
+    }
+    function save() { localStorage.setItem(KEY, JSON.stringify(_state)); }
+    function get() { return _state; }
+    function setCharacter(charId) {
+      if (!CHARACTER_CONFIGS[charId]) return;
+      _state.selectedCharacter = charId; save();
+      AvatarRenderer.applyAll(_state);
+      AvatarCustomizer.refresh();
+    }
+    function setOption(key, val) {
+      _state.customization[_state.selectedCharacter][key] = val; save();
+      AvatarRenderer.applyAll(_state);
+      AvatarCustomizer.refreshPreview();
+    }
+    return { load, save, get, setCharacter, setOption };
+  })();
+
+  /* ─── AvatarRenderer ─── */
+  const AvatarRenderer = (() => {
+    function _setGrad(svgEl, id, stops) {
+      if (!svgEl) return;
+      stops.forEach((color, i) => {
+        const s = svgEl.querySelector('#'+id+' stop:nth-child('+(i+1)+')');
+        if (s) s.style.stopColor = color;
+      });
+    }
+    function _ensureGrad(svgEl, id, stops) {
+      if (!svgEl) return;
+      let defs = svgEl.querySelector('defs');
+      if (!defs) { defs = document.createElementNS('http://www.w3.org/2000/svg','defs'); svgEl.insertBefore(defs, svgEl.firstChild); }
+      if (!svgEl.querySelector('#'+id)) {
+        const grad = document.createElementNS('http://www.w3.org/2000/svg','radialGradient');
+        grad.setAttribute('id', id); grad.setAttribute('cx','35%'); grad.setAttribute('cy','35%'); grad.setAttribute('r','65%');
+        stops.forEach((color, i) => {
+          const s = document.createElementNS('http://www.w3.org/2000/svg','stop');
+          s.setAttribute('offset', Math.round(i/(stops.length-1)*100)+'%'); s.style.stopColor = color; grad.appendChild(s);
+        });
+        defs.appendChild(grad);
+      } else { _setGrad(svgEl, id, stops); }
+    }
+    function _catExprSVG(pos, expr) {
+      const base = AV_CAT_EXPR[expr] || AV_CAT_EXPR.happy;
+      const s = pos.r/27, tx = pos.cx-70*s, ty = pos.cy-45*s;
+      return '<g transform="translate('+tx.toFixed(2)+','+ty.toFixed(2)+') scale('+s+')">' + base + '</g>';
+    }
+    function _bichonEyesSVG(pos, expr) {
+      const {cx,cy,r} = pos;
+      const eyeOff = r*0.38, eyeR = r*0.22, ey = cy-r*0.05;
+      const lx = cx-eyeOff, rx2 = cx+eyeOff, hlR = eyeR*0.42, hlOff = eyeR*0.38;
+      if (expr==='sleepy') {
+        return '<path d="M'+(lx-eyeR)+' '+ey+' Q'+lx+' '+(ey-eyeR*1.1)+' '+(lx+eyeR)+' '+ey+'" fill="#1a0a08"/>'+
+               '<path d="M'+(rx2-eyeR)+' '+ey+' Q'+rx2+' '+(ey-eyeR*1.1)+' '+(rx2+eyeR)+' '+ey+'" fill="#1a0a08"/>';
+      }
+      if (expr==='wink') {
+        return '<circle cx="'+lx+'" cy="'+ey+'" r="'+eyeR+'" fill="#1a0a08"/>'+
+               '<circle cx="'+(lx-hlOff)+'" cy="'+(ey-hlOff)+'" r="'+hlR+'" fill="white"/>'+
+               '<path d="M'+(rx2-eyeR)+' '+ey+' Q'+rx2+' '+(ey+eyeR*1.2)+' '+(rx2+eyeR)+' '+ey+'" stroke="#1a0a08" stroke-width="'+(eyeR*0.5)+'" fill="none" stroke-linecap="round"/>';
+      }
+      let brows = '';
+      if (expr==='focused') {
+        brows = '<path d="M'+(lx-eyeR*1.1)+' '+(ey-eyeR*1.3)+' Q'+lx+' '+(ey-eyeR*1.6)+' '+(lx+eyeR*1.1)+' '+(ey-eyeR*1.3)+'" stroke="#4a2808" stroke-width="'+(eyeR*0.35)+'" fill="none" stroke-linecap="round"/>'+
+                '<path d="M'+(rx2-eyeR*1.1)+' '+(ey-eyeR*1.3)+' Q'+rx2+' '+(ey-eyeR*1.6)+' '+(rx2+eyeR*1.1)+' '+(ey-eyeR*1.3)+'" stroke="#4a2808" stroke-width="'+(eyeR*0.35)+'" fill="none" stroke-linecap="round"/>';
+      }
+      return brows+
+             '<circle cx="'+lx+'" cy="'+ey+'" r="'+eyeR+'" fill="#1a0a08"/>'+
+             '<circle cx="'+rx2+'" cy="'+ey+'" r="'+eyeR+'" fill="#1a0a08"/>'+
+             '<circle cx="'+(lx-hlOff)+'" cy="'+(ey-hlOff)+'" r="'+hlR+'" fill="white"/>'+
+             '<circle cx="'+(rx2-hlOff)+'" cy="'+(ey-hlOff)+'" r="'+hlR+'" fill="white"/>';
+    }
+    function _scaledHatSVG(pos, hatKey) {
+      const h = AV_HAT_SVG[hatKey]; if (!h) return '';
+      return '<g transform="translate('+pos.hatTx+','+pos.hatTy+') scale('+pos.hatS+')">'+h+'</g>';
+    }
+    function _scaledAccSVG(pos, accKey) {
+      const a = AV_ACC_SVG[accKey]; if (!a) return '';
+      const s = pos.r/27, tx = pos.cx-70*s, ty = pos.cy-45*s;
+      return '<g transform="translate('+tx.toFixed(2)+','+ty.toFixed(2)+') scale('+s+')">'+a+'</g>';
+    }
+    function _buildBichonTab(p, pos, cust) {
+      const coat = AV_BICHON_COAT[cust.coatColor]||AV_BICHON_COAT.white;
+      const {cx,cy,r,bodyCx,bodyCy,bodyRx,bodyRy} = pos;
+      const gid = p+'_bh';
+      const earR   = (r*0.52).toFixed(1);
+      const earLX  = (cx - r*0.62*0.7).toFixed(1), earY = (cy - r*0.62*0.7).toFixed(1);
+      const earRX  = (cx + r*0.62*0.7).toFixed(1);
+      const hoR    = (r*1.04).toFixed(1);
+      const chR    = (r*0.46).toFixed(1);
+      const chLX   = (cx - r*0.7).toFixed(1), chRX = (cx + r*0.7).toFixed(1), chY = (cy + r*0.25).toFixed(1);
+      const faceR  = (r*0.85).toFixed(1);
+      const nX = cx, nY = (cy + r*0.32).toFixed(1);
+      const m1Y = (cy + r*0.32 + r*0.09).toFixed(1);
+      const body = '<ellipse cx="'+bodyCx+'" cy="'+bodyCy+'" rx="'+(bodyRx*1.1).toFixed(1)+'" ry="'+(bodyRy*1.1).toFixed(1)+'" fill="url(#'+gid+')"/>';
+      const eyes = _bichonEyesSVG(pos, cust.expression||'happy');
+      const hat  = _scaledHatSVG(pos, cust.hat||'none');
+      const acc  = _scaledAccSVG(pos, cust.accessory||'none');
+      return '<g id="'+p+'-bichon-body">'+body+
+             '<circle cx="'+earLX+'" cy="'+earY+'" r="'+earR+'" fill="url(#'+gid+')"/>'+
+             '<circle cx="'+earRX+'" cy="'+earY+'" r="'+earR+'" fill="url(#'+gid+')"/>'+
+             '<circle cx="'+cx+'" cy="'+(cy+r*0.04).toFixed(1)+'" r="'+hoR+'" fill="url(#'+gid+')"/>'+
+             '<circle cx="'+chLX+'" cy="'+chY+'" r="'+chR+'" fill="url(#'+gid+')"/>'+
+             '<circle cx="'+chRX+'" cy="'+chY+'" r="'+chR+'" fill="url(#'+gid+')"/>'+
+             '<circle cx="'+cx+'" cy="'+cy+'" r="'+faceR+'" fill="url(#'+gid+')"/>'+
+             '<ellipse cx="'+(cx-r*0.2).toFixed(1)+'" cy="'+(cy+r*0.2).toFixed(1)+'" rx="'+(r*0.2).toFixed(1)+'" ry="'+(r*0.12).toFixed(1)+'" fill="#ffb0c8" opacity="0.38"/>'+
+             '<ellipse cx="'+(cx+r*0.2).toFixed(1)+'" cy="'+(cy+r*0.2).toFixed(1)+'" rx="'+(r*0.2).toFixed(1)+'" ry="'+(r*0.12).toFixed(1)+'" fill="#ffb0c8" opacity="0.38"/>'+
+             '<ellipse cx="'+nX+'" cy="'+nY+'" rx="'+(r*0.13).toFixed(1)+'" ry="'+(r*0.09).toFixed(1)+'" fill="#b06080"/>'+
+             '<path d="M'+nX+' '+m1Y+' Q'+(nX-r*0.15).toFixed(1)+' '+(cy+r*0.5).toFixed(1)+' '+(nX-r*0.28).toFixed(1)+' '+(cy+r*0.42).toFixed(1)+'" stroke="#a05070" stroke-width="1.1" fill="none" stroke-linecap="round"/>'+
+             '<path d="M'+nX+' '+m1Y+' Q'+(nX+r*0.15).toFixed(1)+' '+(cy+r*0.5).toFixed(1)+' '+(nX+r*0.28).toFixed(1)+' '+(cy+r*0.42).toFixed(1)+'" stroke="#a05070" stroke-width="1.1" fill="none" stroke-linecap="round"/>'+
+             '</g>'+
+             '<g id="'+p+'-bichon-eyes">'+eyes+'</g>'+
+             '<g id="'+p+'-bichon-hat">'+hat+'</g>'+
+             '<g id="'+p+'-bichon-acc">'+acc+'</g>';
+    }
+    function _buildMainBichon(cust) {
+      const coat = AV_BICHON_COAT[cust.coatColor]||AV_BICHON_COAT.white;
+      const [c0,c1,c2] = coat.h;
+      const outfit = AV_OUTFIT_SVG[cust.outfit]||'';
+      const hat    = AV_HAT_SVG[cust.hat]||'';
+      const acc    = AV_ACC_SVG[cust.accessory]||'';
+      const expr   = AV_BICHON_EXPR[cust.expression]||AV_BICHON_EXPR.happy;
+      return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 122" width="160" height="122">'+
+        '<defs><radialGradient id="bHead" cx="35%" cy="35%" r="65%">'+
+        '<stop offset="0%" style="stop-color:'+c0+'"/>'+
+        '<stop offset="55%" style="stop-color:'+c1+'"/>'+
+        '<stop offset="100%" style="stop-color:'+c2+'"/>'+
+        '</radialGradient></defs>'+
+        '<!-- laptop -->'+
+        '<rect x="22" y="88" width="116" height="26" rx="5" fill="#2c2c3a"/>'+
+        '<rect x="30" y="72" width="100" height="52" rx="4" fill="#1a1a28"/>'+
+        '<rect x="33" y="75" width="94" height="46" rx="2" fill="#0d1117"/>'+
+        '<circle cx="80" cy="118" r="3" fill="#3a3a50"/>'+
+        '<!-- paws -->'+
+        '<ellipse cx="44" cy="90" rx="13" ry="8" fill="url(#bHead)"/>'+
+        '<ellipse cx="96" cy="90" rx="13" ry="8" fill="url(#bHead)"/>'+
+        '<!-- torso -->'+
+        '<ellipse cx="70" cy="96" rx="34" ry="16" fill="url(#bHead)"/>'+
+        '<!-- outfit (몸 위, 머리 아래) -->'+
+        '<g id="bichon-outfit-overlay">'+outfit+'</g>'+
+        '<!-- ear fluffs -->'+
+        '<circle cx="51" cy="24" r="15" fill="url(#bHead)"/>'+
+        '<circle cx="89" cy="24" r="15" fill="url(#bHead)"/>'+
+        '<!-- head outer fluffy -->'+
+        '<circle cx="70" cy="48" r="28" fill="url(#bHead)"/>'+
+        '<!-- cheek fluffs -->'+
+        '<circle cx="44" cy="52" r="13" fill="url(#bHead)"/>'+
+        '<circle cx="96" cy="52" r="13" fill="url(#bHead)"/>'+
+        '<!-- face center -->'+
+        '<circle cx="70" cy="44" r="23" fill="url(#bHead)"/>'+
+        '<!-- blush -->'+
+        '<ellipse cx="57" cy="52" rx="6" ry="3.5" fill="#ffb0c8" opacity="0.38"/>'+
+        '<ellipse cx="83" cy="52" rx="6" ry="3.5" fill="#ffb0c8" opacity="0.38"/>'+
+        '<!-- eyes -->'+
+        '<g id="bichon-eyes-open">'+expr+'</g>'+
+        '<!-- nose -->'+
+        '<ellipse cx="70" cy="53" rx="3.5" ry="2.5" fill="#b06080"/>'+
+        '<circle cx="68.6" cy="52.3" r="0.9" fill="rgba(255,255,255,0.55)"/>'+
+        '<!-- mouth -->'+
+        '<path d="M70 55.5 Q64 59 60 56" stroke="#a05070" stroke-width="1.4" fill="none" stroke-linecap="round"/>'+
+        '<path d="M70 55.5 Q76 59 80 56" stroke="#a05070" stroke-width="1.4" fill="none" stroke-linecap="round"/>'+
+        '<!-- hat -->'+
+        '<g id="bichon-hat-overlay">'+hat+'</g>'+
+        '<!-- acc -->'+
+        '<g id="bichon-acc-overlay">'+acc+'</g>'+
+        '</svg>';
+    }
+    function _buildPreview(state) {
+      const charId = state.selectedCharacter;
+      const cust   = state.customization[charId];
+      if (charId==='bichon') {
+        const coat = AV_BICHON_COAT[cust.coatColor]||AV_BICHON_COAT.white;
+        const [c0,c1,c2] = coat.h;
+        const hat  = AV_HAT_SVG[cust.hat]||'';
+        const hatSVG = hat ? '<g transform="translate(10,5) scale(1.1)">'+hat+'</g>' : '';
+        const acc  = AV_ACC_SVG[cust.accessory]||'';
+        const outfit = AV_OUTFIT_SVG[cust.outfit]||'';
+        const outfitSVG = outfit ? '<g transform="translate(0,30) scale(0.9)">'+outfit+'</g>' : '';
+        const expr = AV_BICHON_EXPR[cust.expression]||AV_BICHON_EXPR.happy;
+        return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 140" width="140" height="140">'+
+          '<defs><radialGradient id="pvbh" cx="35%" cy="35%" r="65%">'+
+          '<stop offset="0%" style="stop-color:'+c0+'"/><stop offset="55%" style="stop-color:'+c1+'"/><stop offset="100%" style="stop-color:'+c2+'"/>'+
+          '</radialGradient></defs>'+
+          '<ellipse cx="70" cy="115" rx="30" ry="14" fill="url(#pvbh)"/>'+
+          '<ellipse cx="50" cy="108" rx="12" ry="18" fill="url(#pvbh)"/>'+
+          '<ellipse cx="90" cy="108" rx="12" ry="18" fill="url(#pvbh)"/>'+
+          outfitSVG+
+          '<circle cx="51" cy="30" r="17" fill="url(#pvbh)"/>'+
+          '<circle cx="89" cy="30" r="17" fill="url(#pvbh)"/>'+
+          '<circle cx="70" cy="58" r="30" fill="url(#pvbh)"/>'+
+          '<circle cx="42" cy="63" r="15" fill="url(#pvbh)"/>'+
+          '<circle cx="98" cy="63" r="15" fill="url(#pvbh)"/>'+
+          '<circle cx="70" cy="54" r="25" fill="url(#pvbh)"/>'+
+          '<ellipse cx="57" cy="62" rx="7" ry="4" fill="#ffb0c8" opacity="0.38"/>'+
+          '<ellipse cx="83" cy="62" rx="7" ry="4" fill="#ffb0c8" opacity="0.38"/>'+
+          expr+
+          '<ellipse cx="70" cy="63" rx="3.5" ry="2.5" fill="#b06080"/>'+
+          '<path d="M70 65.5 Q64 69 60 66" stroke="#a05070" stroke-width="1.4" fill="none" stroke-linecap="round"/>'+
+          '<path d="M70 65.5 Q76 69 80 66" stroke="#a05070" stroke-width="1.4" fill="none" stroke-linecap="round"/>'+
+          hatSVG + acc + '</svg>';
+      }
+      const body = AV_CAT_BODY[cust.bodyColor]||AV_CAT_BODY.orange;
+      const ear  = AV_CAT_EAR[cust.earColor]||AV_CAT_EAR.pink;
+      const [c0,c1,c2] = body.h, [b0,b1,b2] = body.b, [e0,e1] = body.e;
+      const expr = AV_CAT_EXPR[cust.expression]||AV_CAT_EXPR.happy;
+      const hat  = AV_HAT_SVG[cust.hat]||'';
+      const hatSVG = hat ? '<g transform="translate(10,5) scale(1.1)">'+hat+'</g>' : '';
+      const acc  = AV_ACC_SVG[cust.accessory]||'';
+      const outfit = AV_OUTFIT_SVG[cust.outfit]||'';
+      const outfitSVG = outfit ? '<g transform="translate(0,30) scale(0.9)">'+outfit+'</g>' : '';
+      return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 140" width="140" height="140">'+
+        '<defs>'+
+        '<radialGradient id="pvHead" cx="35%" cy="35%" r="65%"><stop offset="0%" style="stop-color:'+c0+'"/><stop offset="55%" style="stop-color:'+c1+'"/><stop offset="100%" style="stop-color:'+c2+'"/></radialGradient>'+
+        '<radialGradient id="pvBody" cx="35%" cy="30%" r="65%"><stop offset="0%" style="stop-color:'+b0+'"/><stop offset="55%" style="stop-color:'+b1+'"/><stop offset="100%" style="stop-color:'+b2+'"/></radialGradient>'+
+        '<radialGradient id="pvEar" cx="50%" cy="50%" r="60%"><stop offset="0%" style="stop-color:'+e0+'"/><stop offset="100%" style="stop-color:'+e1+'"/></radialGradient>'+
+        '<radialGradient id="pvInn" cx="40%" cy="38%" r="65%"><stop offset="0%" style="stop-color:'+ear[0]+'"/><stop offset="100%" style="stop-color:'+ear[1]+'"/></radialGradient>'+
+        '</defs>'+
+        '<ellipse cx="70" cy="115" rx="32" ry="13" fill="url(#pvBody)"/>'+
+        '<ellipse cx="52" cy="105" rx="11" ry="18" fill="url(#pvBody)"/>'+
+        '<ellipse cx="88" cy="105" rx="11" ry="18" fill="url(#pvBody)"/>'+
+        outfitSVG+
+        '<polygon points="48,42 40,20 62,34" fill="url(#pvHead)"/>'+
+        '<polygon points="92,42 100,20 78,34" fill="url(#pvHead)"/>'+
+        '<polygon points="50,41 43,25 60,35" fill="url(#pvEar)"/>'+
+        '<polygon points="90,41 97,25 80,35" fill="url(#pvEar)"/>'+
+        '<circle cx="70" cy="62" r="30" fill="url(#pvHead)"/>'+
+        expr+hatSVG+acc+'</svg>';
+    }
+    function _applyCatColors(state) {
+      const cust = state.customization.cat;
+      const body = AV_CAT_BODY[cust.bodyColor]||AV_CAT_BODY.orange;
+      const ear  = AV_CAT_EAR[cust.earColor]||AV_CAT_EAR.pink;
+      const mainSVG = document.getElementById('cat-wrap');
+      if (mainSVG) { _setGrad(mainSVG,'cHead',body.h); _setGrad(mainSVG,'cBody',body.b); _setGrad(mainSVG,'cEar',body.e); _setGrad(mainSVG,'cInner',ear); }
+      Object.keys(AV_TAB_POS).forEach(p => {
+        const svgEl = document.getElementById(p+'-wrap'); if (!svgEl) return;
+        _setGrad(svgEl,p+'_h',body.h); _setGrad(svgEl,p+'_b',body.b); _setGrad(svgEl,p+'_ie',ear);
+      });
+    }
+    function _applyCatExpression(state) {
+      const expr = state.customization.cat.expression||'happy';
+      const mainEyes = document.getElementById('cat-eyes-open');
+      if (mainEyes) mainEyes.innerHTML = AV_CAT_EXPR[expr]||AV_CAT_EXPR.happy;
+      Object.keys(AV_TAB_POS).forEach(p => {
+        const g = document.getElementById(p+'-eyes-ov'); if (!g) return;
+        g.innerHTML = _catExprSVG(AV_TAB_POS[p], expr);
+      });
+    }
+    function _applyCatHat(state) {
+      const hat = state.customization.cat.hat||'none';
+      const mh = document.getElementById('cat-hat-overlay'); if (mh) mh.innerHTML = AV_HAT_SVG[hat]||'';
+      Object.keys(AV_TAB_POS).forEach(p => {
+        const g = document.getElementById(p+'-hat-ov'); if (!g) return;
+        g.innerHTML = _scaledHatSVG(AV_TAB_POS[p], hat);
+      });
+    }
+    function _applyCatAcc(state) {
+      const acc = state.customization.cat.accessory||'none';
+      const ma = document.getElementById('cat-acc-overlay'); if (ma) ma.innerHTML = AV_ACC_SVG[acc]||'';
+      Object.keys(AV_TAB_POS).forEach(p => {
+        const g = document.getElementById(p+'-acc-ov'); if (!g) return;
+        g.innerHTML = _scaledAccSVG(AV_TAB_POS[p], acc);
+      });
+    }
+    function _applyCatOutfit(state) {
+      const outfit = state.customization.cat.outfit||'none';
+      const mo = document.getElementById('cat-outfit-overlay'); if (mo) mo.innerHTML = AV_OUTFIT_SVG[outfit]||'';
+    }
+    function _applyBichonMain(state) {
+      const cust  = state.customization.bichon;
+      const slot  = document.getElementById('main-avatar-slot'); if (!slot) return;
+      let outer = document.getElementById('bichon-wrap-outer');
+      if (!outer) {
+        outer = document.createElement('div'); outer.id = 'bichon-wrap-outer';
+        outer.style.cssText = 'position:absolute;top:0;left:0;width:160px;height:122px;display:none;';
+        slot.style.position = 'relative'; slot.appendChild(outer);
+      }
+      outer.innerHTML = _buildMainBichon(cust);
+    }
+    function _applyBichonTabs(state) {
+      const cust = state.customization.bichon;
+      Object.keys(AV_TAB_POS).forEach(p => {
+        const g = document.getElementById(p+'-bichon'); if (!g) return;
+        const svgEl = document.getElementById(p+'-wrap'); if (!svgEl) return;
+        const pos  = AV_TAB_POS[p];
+        const coat = AV_BICHON_COAT[cust.coatColor]||AV_BICHON_COAT.white;
+        _ensureGrad(svgEl, p+'_bh', coat.h);
+        if (!g.dataset.rendered) {
+          g.innerHTML = _buildBichonTab(p, pos, cust); g.dataset.rendered = '1';
+        } else {
+          _ensureGrad(svgEl, p+'_bh', coat.h);
+          const eg = document.getElementById(p+'-bichon-eyes'); if (eg) eg.innerHTML = _bichonEyesSVG(pos, cust.expression||'happy');
+          const hg = document.getElementById(p+'-bichon-hat');  if (hg) hg.innerHTML = _scaledHatSVG(pos, cust.hat||'none');
+          const ag = document.getElementById(p+'-bichon-acc');  if (ag) ag.innerHTML = _scaledAccSVG(pos, cust.accessory||'none');
+        }
+      });
+    }
+    function _toggleMain(charId) {
+      const cw = document.getElementById('cat-wrap'); if (cw) cw.style.display = charId==='cat' ? '' : 'none';
+      const bw = document.getElementById('bichon-wrap-outer'); if (bw) bw.style.display = charId==='bichon' ? '' : 'none';
+    }
+    function _toggleTabs(charId) {
+      document.querySelectorAll('.char-cat-elems').forEach(el => { el.style.display = charId==='cat' ? '' : 'none'; });
+      document.querySelectorAll('.char-bichon-elems').forEach(el => { el.style.display = charId==='bichon' ? '' : 'none'; });
+    }
+    function applyAll(state) {
+      const charId = state.selectedCharacter;
+      _toggleTabs(charId);
+      if (charId==='cat') { _applyCatColors(state); _applyCatExpression(state); _applyCatHat(state); _applyCatAcc(state); _applyCatOutfit(state); }
+      else if (charId==='bichon') { _applyBichonMain(state); _applyBichonTabs(state); }
+      _toggleMain(charId);
+    }
+    function renderPreview(state) {
+      const c = document.getElementById('av-preview-container'); if (!c) return;
+      c.innerHTML = _buildPreview(state);
+    }
+    return { applyAll, renderPreview };
+  })();
+
+  /* ─── AvatarCustomizer ─── */
+  const AvatarCustomizer = (() => {
+    function open() {
+      const o = document.getElementById('avatar-customizer-overlay');
+      if (o) { o.classList.add('av-open'); refresh(); }
+    }
+    function close() {
+      const o = document.getElementById('avatar-customizer-overlay');
+      if (o) o.classList.remove('av-open');
+    }
+    function refresh() { _updateCharTabs(); _renderOptions(); AvatarRenderer.renderPreview(AvatarSystem.get()); }
+    function refreshPreview() { AvatarRenderer.renderPreview(AvatarSystem.get()); _updateSelected(); }
+    function _updateCharTabs() {
+      const s = AvatarSystem.get();
+      document.querySelectorAll('[data-av-char]').forEach(btn => { btn.classList.toggle('active', btn.dataset.avChar===s.selectedCharacter); });
+    }
+    function _updateSelected() {
+      const s = AvatarSystem.get(), cust = s.customization[s.selectedCharacter];
+      document.querySelectorAll('[data-av-key]').forEach(el => { el.classList.toggle('selected', cust[el.dataset.avKey]===el.dataset.avVal); });
+    }
+    function _renderOptions() {
+      const panel = document.getElementById('av-options-panel'); if (!panel) return;
+      const s = AvatarSystem.get(), charId = s.selectedCharacter, cust = s.customization[charId];
+      const config = CHARACTER_CONFIGS[charId]; if (!config) return;
+      let html = '';
+      config.colorGroups.forEach(group => {
+        html += '<div class="av-section"><div class="av-section-label">'+group.label+'</div><div class="av-chips-row">';
+        group.options.forEach(opt => {
+          const sel = cust[group.key]===opt.id ? ' selected' : '';
+          const ex  = opt.outline ? ' av-chip-outline' : '';
+          html += '<button class="av-chip'+sel+ex+'" data-av-key="'+group.key+'" data-av-val="'+opt.id+'" style="background:'+opt.color+';" title="'+opt.label+'" onclick="AvatarSystem.setOption(\''+group.key+'\',\''+opt.id+'\')"></button>';
+        });
+        html += '</div></div>';
+      });
+      SHARED_OPTIONS.forEach(group => {
+        html += '<div class="av-section"><div class="av-section-label">'+group.label+'</div><div class="av-cards-row">';
+        group.options.forEach(opt => {
+          const sel = cust[group.key]===opt.id ? ' selected' : '';
+          html += '<button class="av-card'+sel+'" data-av-key="'+group.key+'" data-av-val="'+opt.id+'" onclick="AvatarSystem.setOption(\''+group.key+'\',\''+opt.id+'\')">'+
+                  '<span class="av-card-emoji">'+opt.emoji+'</span><span class="av-card-label">'+opt.label+'</span></button>';
+        });
+        html += '</div></div>';
+      });
+      panel.innerHTML = html;
+    }
+    return { open, close, refresh, refreshPreview };
+  })();
+  </script>
 </body>
