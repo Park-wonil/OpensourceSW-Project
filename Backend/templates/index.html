@@ -1098,7 +1098,11 @@
             flex:1; overflow-y:auto; padding:12px;
             display:flex; flex-direction:column; gap:8px;
           ">
-            <div class="ai-welcome-msg" style="text-align:center; font-size:12px; color:var(--text-sub); padding:16px 0;">
+            <div class="ai-welcome-msg" style="text-align:center; font-size:12px; color:var(--text-sub); padding:8px 0 14px;">
+              <div id="ai-study-buddy-stage" aria-hidden="true">
+                <div id="ai-study-buddy-shadow"></div>
+                <div id="ai-study-buddy-avatar"></div>
+              </div>
               깜찍이가 오늘 공부를 같이 도와줄게요.<br>
               <span style="font-size:11px; opacity:0.65;">모르는 개념, 문제 풀이, 암기 팁을 편하게 물어보세요.</span>
             </div>
@@ -1200,6 +1204,89 @@
                 background: rgba(24,95,165,0.08);
                 border-color: rgba(24,95,165,0.2);
                 color: #185fa5;
+              }
+              #ai-study-buddy-stage {
+                position: relative;
+                height: 76px;
+                width: min(260px, 92%);
+                margin: 0 auto 8px;
+                overflow: hidden;
+                pointer-events: none;
+              }
+              #ai-study-buddy-avatar {
+                position: absolute;
+                left: 0;
+                bottom: 5px;
+                width: 76px;
+                height: 76px;
+                transform-origin: 50% 86%;
+                animation: aiBuddyWalk 4.8s ease-in-out infinite;
+                filter: drop-shadow(0 8px 10px rgba(0,0,0,0.18));
+              }
+              #ai-study-buddy-avatar svg {
+                width: 100%;
+                height: 100%;
+                display: block;
+              }
+              #ai-study-buddy-shadow {
+                position: absolute;
+                left: 11px;
+                bottom: 2px;
+                width: 54px;
+                height: 8px;
+                border-radius: 999px;
+                background: rgba(0,0,0,0.18);
+                filter: blur(2px);
+                animation: aiBuddyShadow 4.8s ease-in-out infinite;
+              }
+              #ai-study-buddy-stage.is-typing #ai-study-buddy-avatar {
+                animation: aiBuddyDance 0.46s ease-in-out infinite;
+              }
+              #ai-study-buddy-stage.is-typing #ai-study-buddy-shadow {
+                animation: aiBuddyDanceShadow 0.46s ease-in-out infinite;
+              }
+              @keyframes aiBuddyWalk {
+                0% { transform: translateX(0) translateY(0) rotate(-2deg) scaleX(1); }
+                12% { transform: translateX(22px) translateY(-5px) rotate(3deg) scaleX(1); }
+                25% { transform: translateX(52px) translateY(0) rotate(-2deg) scaleX(1); }
+                38% { transform: translateX(82px) translateY(-5px) rotate(3deg) scaleX(1); }
+                50% { transform: translateX(112px) translateY(0) rotate(-1deg) scaleX(1); }
+                50.1% { transform: translateX(112px) translateY(0) rotate(1deg) scaleX(-1); }
+                62% { transform: translateX(82px) translateY(-5px) rotate(-3deg) scaleX(-1); }
+                75% { transform: translateX(52px) translateY(0) rotate(2deg) scaleX(-1); }
+                88% { transform: translateX(22px) translateY(-5px) rotate(-3deg) scaleX(-1); }
+                100% { transform: translateX(0) translateY(0) rotate(2deg) scaleX(-1); }
+              }
+              @keyframes aiBuddyShadow {
+                0%,100% { transform: translateX(0) scaleX(1); opacity: 0.34; }
+                25%,75% { transform: translateX(52px) scaleX(0.82); opacity: 0.24; }
+                50% { transform: translateX(112px) scaleX(1); opacity: 0.34; }
+              }
+              @keyframes aiBuddyDance {
+                0%,100% { transform: translateX(92px) translateY(0) rotate(-6deg) scale(1); }
+                25% { transform: translateX(92px) translateY(-10px) rotate(8deg) scale(1.04); }
+                50% { transform: translateX(92px) translateY(-2px) rotate(-8deg) scale(0.98); }
+                75% { transform: translateX(92px) translateY(-9px) rotate(6deg) scale(1.04); }
+              }
+              @keyframes aiBuddyDanceShadow {
+                0%,100% { transform: translateX(92px) scaleX(1); opacity: 0.32; }
+                50% { transform: translateX(92px) scaleX(0.72); opacity: 0.18; }
+              }
+              @media (max-width: 520px) {
+                #ai-study-buddy-stage { height: 68px; }
+                #ai-study-buddy-avatar { width: 68px; height: 68px; }
+                @keyframes aiBuddyWalk {
+                  0% { transform: translateX(0) translateY(0) rotate(-2deg) scaleX(1); }
+                  50% { transform: translateX(86px) translateY(0) rotate(-1deg) scaleX(1); }
+                  50.1% { transform: translateX(86px) translateY(0) rotate(1deg) scaleX(-1); }
+                  100% { transform: translateX(0) translateY(0) rotate(2deg) scaleX(-1); }
+                }
+                @keyframes aiBuddyDance {
+                  0%,100% { transform: translateX(70px) translateY(0) rotate(-6deg) scale(1); }
+                  25% { transform: translateX(70px) translateY(-9px) rotate(8deg) scale(1.04); }
+                  50% { transform: translateX(70px) translateY(-2px) rotate(-8deg) scale(0.98); }
+                  75% { transform: translateX(70px) translateY(-8px) rotate(6deg) scale(1.04); }
+                }
               }
             </style>
 
@@ -5836,31 +5923,41 @@ function updateStatusBadge(type) {
       const coat = AV_BICHON_COAT[cust.coatColor]||AV_BICHON_COAT.white;
       const {cx,cy,r,bodyCx,bodyCy,bodyRx,bodyRy} = pos;
       const gid = p+'_bh';
-      const earR   = (r*0.52).toFixed(1);
-      const earLX  = (cx - r*0.62*0.7).toFixed(1), earY = (cy - r*0.62*0.7).toFixed(1);
-      const earRX  = (cx + r*0.62*0.7).toFixed(1);
-      const hoR    = (r*1.04).toFixed(1);
-      const chR    = (r*0.46).toFixed(1);
-      const chLX   = (cx - r*0.7).toFixed(1), chRX = (cx + r*0.7).toFixed(1), chY = (cy + r*0.25).toFixed(1);
-      const faceR  = (r*0.85).toFixed(1);
-      const nX = cx, nY = (cy + r*0.32).toFixed(1);
-      const m1Y = (cy + r*0.32 + r*0.09).toFixed(1);
+      const s = r/27; // 메인 비숑 기준 스케일
+
+      // 메인 비숑 좌표계(r=27) 기반으로 스케일 — 귀가 face circle 밖으로 나오도록
+      const earR  = (15*s).toFixed(1);
+      const earLX = (cx - 19*s).toFixed(1);
+      const earRX = (cx + 19*s).toFixed(1);
+      const earY  = (cy - 21*s).toFixed(1);
+      const hoR   = (28*s).toFixed(1);
+      const hoY   = (cy + 3*s).toFixed(1);
+      const chR   = (13*s).toFixed(1);
+      const chLX  = (cx - 26*s).toFixed(1);
+      const chRX  = (cx + 26*s).toFixed(1);
+      const chY   = (cy + 7*s).toFixed(1);
+      const faceR = (23*s).toFixed(1);
+      const faceY = (cy - s).toFixed(1);
+      const nY    = (cy + 8*s).toFixed(1);
+      const mY    = (cy + 11*s).toFixed(1);
+
       const body = '<ellipse cx="'+bodyCx+'" cy="'+bodyCy+'" rx="'+(bodyRx*1.1).toFixed(1)+'" ry="'+(bodyRy*1.1).toFixed(1)+'" fill="url(#'+gid+')"/>';
       const eyes = _bichonEyesSVG(pos, cust.expression||'happy');
       const hat  = _scaledHatSVG(pos, cust.hat||'none');
       const acc  = _scaledAccSVG(pos, cust.accessory||'none');
+
       return '<g id="'+p+'-bichon-body">'+body+
              '<circle cx="'+earLX+'" cy="'+earY+'" r="'+earR+'" fill="url(#'+gid+')"/>'+
              '<circle cx="'+earRX+'" cy="'+earY+'" r="'+earR+'" fill="url(#'+gid+')"/>'+
-             '<circle cx="'+cx+'" cy="'+(cy+r*0.04).toFixed(1)+'" r="'+hoR+'" fill="url(#'+gid+')"/>'+
+             '<circle cx="'+cx+'" cy="'+hoY+'" r="'+hoR+'" fill="url(#'+gid+')"/>'+
              '<circle cx="'+chLX+'" cy="'+chY+'" r="'+chR+'" fill="url(#'+gid+')"/>'+
              '<circle cx="'+chRX+'" cy="'+chY+'" r="'+chR+'" fill="url(#'+gid+')"/>'+
-             '<circle cx="'+cx+'" cy="'+cy+'" r="'+faceR+'" fill="url(#'+gid+')"/>'+
-             '<ellipse cx="'+(cx-r*0.2).toFixed(1)+'" cy="'+(cy+r*0.2).toFixed(1)+'" rx="'+(r*0.2).toFixed(1)+'" ry="'+(r*0.12).toFixed(1)+'" fill="#ffb0c8" opacity="0.38"/>'+
-             '<ellipse cx="'+(cx+r*0.2).toFixed(1)+'" cy="'+(cy+r*0.2).toFixed(1)+'" rx="'+(r*0.2).toFixed(1)+'" ry="'+(r*0.12).toFixed(1)+'" fill="#ffb0c8" opacity="0.38"/>'+
-             '<ellipse cx="'+nX+'" cy="'+nY+'" rx="'+(r*0.13).toFixed(1)+'" ry="'+(r*0.09).toFixed(1)+'" fill="#b06080"/>'+
-             '<path d="M'+nX+' '+m1Y+' Q'+(nX-r*0.15).toFixed(1)+' '+(cy+r*0.5).toFixed(1)+' '+(nX-r*0.28).toFixed(1)+' '+(cy+r*0.42).toFixed(1)+'" stroke="#a05070" stroke-width="1.1" fill="none" stroke-linecap="round"/>'+
-             '<path d="M'+nX+' '+m1Y+' Q'+(nX+r*0.15).toFixed(1)+' '+(cy+r*0.5).toFixed(1)+' '+(nX+r*0.28).toFixed(1)+' '+(cy+r*0.42).toFixed(1)+'" stroke="#a05070" stroke-width="1.1" fill="none" stroke-linecap="round"/>'+
+             '<circle cx="'+cx+'" cy="'+faceY+'" r="'+faceR+'" fill="url(#'+gid+')"/>'+
+             '<ellipse cx="'+(cx-13*s).toFixed(1)+'" cy="'+chY+'" rx="'+(6*s).toFixed(1)+'" ry="'+(3.5*s).toFixed(1)+'" fill="#ffb0c8" opacity="0.38"/>'+
+             '<ellipse cx="'+(cx+13*s).toFixed(1)+'" cy="'+chY+'" rx="'+(6*s).toFixed(1)+'" ry="'+(3.5*s).toFixed(1)+'" fill="#ffb0c8" opacity="0.38"/>'+
+             '<ellipse cx="'+cx+'" cy="'+nY+'" rx="'+(3.5*s).toFixed(1)+'" ry="'+(2.5*s).toFixed(1)+'" fill="#b06080"/>'+
+             '<path d="M'+cx+' '+mY+' Q'+(cx-5*s).toFixed(1)+' '+(cy+14*s).toFixed(1)+' '+(cx-9*s).toFixed(1)+' '+(cy+11*s).toFixed(1)+'" stroke="#a05070" stroke-width="'+(1.4*s).toFixed(1)+'" fill="none" stroke-linecap="round"/>'+
+             '<path d="M'+cx+' '+mY+' Q'+(cx+5*s).toFixed(1)+' '+(cy+14*s).toFixed(1)+' '+(cx+9*s).toFixed(1)+' '+(cy+11*s).toFixed(1)+'" stroke="#a05070" stroke-width="'+(1.4*s).toFixed(1)+'" fill="none" stroke-linecap="round"/>'+
              '</g>'+
              '<g id="'+p+'-bichon-eyes">'+eyes+'</g>'+
              '<g id="'+p+'-bichon-hat">'+hat+'</g>'+
@@ -5874,47 +5971,70 @@ function updateStatusBadge(type) {
       const acc    = AV_ACC_SVG[cust.accessory]||'';
       const expr   = AV_BICHON_EXPR[cust.expression]||AV_BICHON_EXPR.happy;
       return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 122" width="160" height="122">'+
-        '<defs><radialGradient id="bHead" cx="35%" cy="35%" r="65%">'+
-        '<stop offset="0%" style="stop-color:'+c0+'"/>'+
-        '<stop offset="55%" style="stop-color:'+c1+'"/>'+
-        '<stop offset="100%" style="stop-color:'+c2+'"/>'+
-        '</radialGradient></defs>'+
-        '<!-- laptop -->'+
-        '<rect x="22" y="88" width="116" height="26" rx="5" fill="#2c2c3a"/>'+
-        '<rect x="30" y="72" width="100" height="52" rx="4" fill="#1a1a28"/>'+
-        '<rect x="33" y="75" width="94" height="46" rx="2" fill="#0d1117"/>'+
-        '<circle cx="80" cy="118" r="3" fill="#3a3a50"/>'+
-        '<!-- paws -->'+
-        '<ellipse cx="44" cy="90" rx="13" ry="8" fill="url(#bHead)"/>'+
-        '<ellipse cx="96" cy="90" rx="13" ry="8" fill="url(#bHead)"/>'+
-        '<!-- torso -->'+
-        '<ellipse cx="70" cy="96" rx="34" ry="16" fill="url(#bHead)"/>'+
-        '<!-- outfit (몸 위, 머리 아래) -->'+
+        '<defs>'+
+          '<radialGradient id="bHead" cx="35%" cy="35%" r="65%">'+
+            '<stop offset="0%" style="stop-color:'+c0+'"/>'+
+            '<stop offset="55%" style="stop-color:'+c1+'"/>'+
+            '<stop offset="100%" style="stop-color:'+c2+'"/>'+
+          '</radialGradient>'+
+          '<linearGradient id="bLap" x1="0" y1="0" x2="0" y2="1">'+
+            '<stop offset="0%" stop-color="#ccd8e0"/><stop offset="100%" stop-color="#7e96a8"/>'+
+          '</linearGradient>'+
+          '<filter id="bDrop"><feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="rgba(0,0,0,0.28)"/></filter>'+
+        '</defs>'+
+        '<!-- 노트북 베이스 -->'+
+        '<rect x="13" y="82" width="106" height="9" rx="4.5" fill="url(#bLap)" filter="url(#bDrop)"/>'+
+        '<rect x="48" y="85.5" width="36" height="4" rx="2" fill="rgba(0,0,0,0.14)"/>'+
+        '<!-- 노트북 화면 프레임 -->'+
+        '<rect x="13" y="48" width="106" height="38" rx="6.5" fill="url(#bLap)" filter="url(#bDrop)"/>'+
+        '<!-- 화면 디스플레이 -->'+
+        '<rect x="17" y="51" width="98" height="33" rx="4.5" fill="#0a0e1a"/>'+
+        '<!-- 카메라 점 -->'+
+        '<circle cx="66" cy="53.5" r="1.3" fill="rgba(255,255,255,0.18)"/>'+
+        '<!-- 코드 라인 (신택스 하이라이트) -->'+
+        '<rect x="22" y="57.5" width="16" height="2.2" rx="1.1" fill="#c792ea"/>'+
+        '<rect x="40" y="57.5" width="22" height="2.2" rx="1.1" fill="#82aaff" opacity="0.9"/>'+
+        '<rect x="64" y="57.5" width="9"  height="2.2" rx="1.1" fill="#f78c6c" opacity="0.85"/>'+
+        '<rect x="26" y="62"   width="8"  height="2"   rx="1"   fill="rgba(255,255,255,0.16)"/>'+
+        '<rect x="36" y="62"   width="20" height="2"   rx="1"   fill="#c3e88d"/>'+
+        '<rect x="58" y="62"   width="15" height="2"   rx="1"   fill="#ffcb6b"/>'+
+        '<rect x="26" y="66.5" width="28" height="2"   rx="1"   fill="rgba(255,255,255,0.13)"/>'+
+        '<rect x="56" y="66.5" width="17" height="2"   rx="1"   fill="#6ee7c0" opacity="0.88"/>'+
+        '<rect x="22" y="71"   width="5.5" height="2"  rx="1"   fill="rgba(255,255,255,0.24)"/>'+
+        '<rect x="30" y="70.5" width="1.6" height="7.5" rx="0.8" fill="rgba(255,255,255,0.92)">'+
+          '<animate attributeName="opacity" values="0.92;0;0.92" dur="1.1s" repeatCount="indefinite"/>'+
+        '</rect>'+
+        '<!-- 비숑 몸통 (고양이와 동일 y=86) -->'+
+        '<ellipse cx="70" cy="86" rx="38" ry="19" fill="url(#bHead)" filter="url(#bDrop)"/>'+
+        '<!-- 앞발 (키보드 위) -->'+
+        '<ellipse cx="44" cy="84" rx="14" ry="8" fill="url(#bHead)" filter="url(#bDrop)"/>'+
+        '<ellipse cx="96" cy="84" rx="14" ry="8" fill="url(#bHead)" filter="url(#bDrop)"/>'+
+        '<!-- 옷 (몸 위, 머리 아래) -->'+
         '<g id="bichon-outfit-overlay">'+outfit+'</g>'+
-        '<!-- ear fluffs -->'+
-        '<circle cx="51" cy="24" r="15" fill="url(#bHead)"/>'+
-        '<circle cx="89" cy="24" r="15" fill="url(#bHead)"/>'+
-        '<!-- head outer fluffy -->'+
-        '<circle cx="70" cy="48" r="28" fill="url(#bHead)"/>'+
-        '<!-- cheek fluffs -->'+
+        '<!-- 귀 플러프 -->'+
+        '<circle cx="51" cy="24" r="15" fill="url(#bHead)" filter="url(#bDrop)"/>'+
+        '<circle cx="89" cy="24" r="15" fill="url(#bHead)" filter="url(#bDrop)"/>'+
+        '<!-- 머리 외곽 플러프 -->'+
+        '<circle cx="70" cy="48" r="28" fill="url(#bHead)" filter="url(#bDrop)"/>'+
+        '<!-- 볼 플러프 -->'+
         '<circle cx="44" cy="52" r="13" fill="url(#bHead)"/>'+
         '<circle cx="96" cy="52" r="13" fill="url(#bHead)"/>'+
-        '<!-- face center -->'+
+        '<!-- 얼굴 중심 -->'+
         '<circle cx="70" cy="44" r="23" fill="url(#bHead)"/>'+
-        '<!-- blush -->'+
+        '<!-- 홍조 -->'+
         '<ellipse cx="57" cy="52" rx="6" ry="3.5" fill="#ffb0c8" opacity="0.38"/>'+
         '<ellipse cx="83" cy="52" rx="6" ry="3.5" fill="#ffb0c8" opacity="0.38"/>'+
-        '<!-- eyes -->'+
+        '<!-- 눈 -->'+
         '<g id="bichon-eyes-open">'+expr+'</g>'+
-        '<!-- nose -->'+
+        '<!-- 코 -->'+
         '<ellipse cx="70" cy="53" rx="3.5" ry="2.5" fill="#b06080"/>'+
         '<circle cx="68.6" cy="52.3" r="0.9" fill="rgba(255,255,255,0.55)"/>'+
-        '<!-- mouth -->'+
+        '<!-- 입 -->'+
         '<path d="M70 55.5 Q64 59 60 56" stroke="#a05070" stroke-width="1.4" fill="none" stroke-linecap="round"/>'+
         '<path d="M70 55.5 Q76 59 80 56" stroke="#a05070" stroke-width="1.4" fill="none" stroke-linecap="round"/>'+
-        '<!-- hat -->'+
+        '<!-- 모자 -->'+
         '<g id="bichon-hat-overlay">'+hat+'</g>'+
-        '<!-- acc -->'+
+        '<!-- 악세서리 -->'+
         '<g id="bichon-acc-overlay">'+acc+'</g>'+
         '</svg>';
     }
