@@ -363,6 +363,19 @@ body {
   padding-bottom: 100px; /* 하단 여유 공간 */
 }
 
+body.chat-mode {
+  padding: 12px 16px;
+}
+
+body.chat-mode .app-container {
+  max-width: 1880px;
+  gap: 18px;
+}
+
+body.chat-mode .nav-bar {
+  margin-bottom: 8px;
+}
+
 /* =========================================
    2. 고정 네비게이션
    ========================================= */
@@ -1290,6 +1303,42 @@ body.light-mode .goal-progress-bar {
 /* 대시보드는 flex */
 .container.active {
   display: flex;
+}
+
+#section-chat.active {
+  display: flex !important;
+  width: 100%;
+  height: calc(100vh - 92px) !important;
+  min-height: 720px;
+}
+
+#room-inside {
+  height: 100% !important;
+}
+
+#room-workspace {
+  min-height: 0;
+}
+
+#room-cam-area {
+  flex: 1 1 80%;
+  width: auto !important;
+}
+
+#room-chat-area {
+  flex: 0 0 20%;
+  min-width: 280px;
+  max-width: 400px;
+}
+
+#room-cam-grid {
+  gap: 10px !important;
+}
+
+#my-cam-cell,
+#room-peer-cams > div,
+#room-cam-grid > [id^="empty-cell-"] {
+  min-height: 0;
 }
 
 /* 목표 섹션 개선 */
@@ -3012,6 +3061,10 @@ button { font-family: 'DM Sans', sans-serif !important; }
     /* overflow-x 설정 안 함 → nav-bar 터치 스크롤 허용 */
   }
 
+  body.chat-mode {
+    padding: 6px !important;
+  }
+
   /* 앱 컨테이너 */
   .app-container {
     width: 100% !important;
@@ -3083,20 +3136,37 @@ button { font-family: 'DM Sans', sans-serif !important; }
   .post-item-title { font-size: 14px !important; }
 
   /* 스터디룸 */
-  #room-inside {
-    height: 100dvh !important;
-    height: 100vh !important;
+  #section-chat.active {
+    height: calc(100dvh - 70px) !important;
     min-height: unset !important;
   }
 
-  #room-inside > div:last-child { flex-direction: column !important; }
+  #room-inside {
+    height: 100% !important;
+    min-height: unset !important;
+  }
+
+  #room-workspace { flex-direction: column !important; }
 
   #room-cam-area {
     width: 100% !important;
-    max-height: 40vh !important;
+    flex: 0 0 48% !important;
+    max-height: none !important;
     border-right: none !important;
     border-bottom: 1px solid rgba(255,255,255,0.07) !important;
     padding: 10px !important;
+  }
+
+  #room-chat-area {
+    width: 100% !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    padding: 10px !important;
+  }
+
+  #room-cam-grid {
+    gap: 6px !important;
   }
 
   /* 방 만들기 폼 세로 정렬 */
@@ -3186,6 +3256,7 @@ button { font-family: 'DM Sans', sans-serif !important; }
   /* 섹션 전환 시 깔끔하게 */
   .panel.extra-section { display: none; }
   .panel.extra-section.active { display: block !important; }
+  #section-chat.active { display: flex !important; }
   /* section-main도 active일 때만 표시 */
   #section-main { display: none !important; }
   #section-main.active { display: flex !important; flex-direction: column !important; }
