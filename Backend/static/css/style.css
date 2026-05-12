@@ -329,7 +329,13 @@ body.theme-pink {
   --theme-secondary: #ff5fa0;
   --theme-glow: rgba(255, 128, 181, 0.3);
 }
-
+/* ── 체리 레드 테마 ── */
+body.theme-red {
+  --accent-green: #ef4444; /* 이 변수가 전체 메인 색상을 바꿉니다 */
+  --theme-primary: #ef4444;
+  --theme-secondary: #f87171;
+  --theme-glow: rgba(239, 68, 68, 0.3);
+}
 * {
   box-sizing: border-box;
   margin: 0;
@@ -4134,3 +4140,28 @@ body.light-mode #subject-goal-minutes::placeholder {
   justify-self: center !important;
   text-align: center !important;
 }
+/* 상태 뱃지 디자인 - 기존 버튼들과 조화를 이루도록 설정 */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  margin-left: 8px;
+  vertical-align: middle;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  animation: badge-float 2.5s ease-in-out infinite;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+@keyframes badge-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+/* 상태별 색상 (다크모드/라이트모드 공통 대응) */
+.status-analyzing { background: rgba(110, 231, 192, 0.2); color: #6ee7c0; border-color: rgba(110, 231, 192, 0.4); }
+.status-focus { background: rgba(250, 199, 117, 0.2); color: #fac775; border-color: rgba(250, 199, 117, 0.4); }
+.status-warning { background: rgba(240, 153, 123, 0.2); color: #f0997b; border-color: rgba(240, 153, 123, 0.4); }
