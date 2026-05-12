@@ -432,6 +432,15 @@
       color: #1a1a2e !important;
     }
 
+    /* 디데이 date input 라이트모드 */
+    body.light-mode #dday-add-form input {
+      background: rgba(0,0,0,0.04) !important;
+      border-color: rgba(0,0,0,0.12) !important;
+      color: #1a1a2e !important;
+    }
+    body.light-mode #dday-add-form input::placeholder { color: rgba(0,0,0,0.3) !important; }
+    body.light-mode #dday-list > div { border-color: rgba(0,0,0,0.06) !important; }
+
     /* 섹션 제목 */
     .section-title {
       font-family: 'Space Grotesk', sans-serif !important;
@@ -982,6 +991,47 @@
       </div>
 
       <div class="right-panel">
+
+        <!-- 날짜 & 디데이 패널 -->
+        <div class="panel" id="dday-panel">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+            <div>
+              <div id="today-date-display" style="font-size:22px; font-weight:800; color:var(--text-main); letter-spacing:-0.5px;"></div>
+              <div id="today-weekday-display" style="font-size:12px; color:var(--text-sub); margin-top:2px;"></div>
+            </div>
+            <button onclick="toggleDdayAddForm()" style="
+              background: rgba(110,231,192,0.12);
+              border: 1px solid rgba(110,231,192,0.3);
+              border-radius: 8px;
+              color: var(--accent-green);
+              font-size: 12px;
+              font-weight: 700;
+              padding: 6px 12px;
+              cursor: pointer;
+            ">+ 시험 추가</button>
+          </div>
+
+          <!-- 디데이 추가 폼 (토글) -->
+          <div id="dday-add-form" style="display:none; margin-bottom:12px; padding:12px; background:rgba(255,255,255,0.04); border-radius:10px; border:1px solid rgba(255,255,255,0.08);">
+            <div style="font-size:12px; font-weight:700; color:var(--text-sub); margin-bottom:8px;">새 시험 등록</div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <input type="text" id="dday-name-input" placeholder="시험 이름" maxlength="20"
+                style="flex:1; min-width:100px; padding:8px 10px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:8px; color:var(--text-main); font-size:13px; outline:none;">
+              <input type="date" id="dday-date-input"
+                style="flex:1; min-width:120px; padding:8px 10px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:8px; color:var(--text-main); font-size:13px; outline:none; cursor:pointer;">
+              <button onclick="addDday()" style="
+                padding:8px 14px; background:var(--accent-green); color:#111;
+                border:none; border-radius:8px; font-weight:700; font-size:13px; cursor:pointer;
+              ">저장</button>
+            </div>
+          </div>
+
+          <!-- 디데이 목록 -->
+          <div id="dday-list" style="display:flex; flex-direction:column; gap:7px;">
+            <div style="text-align:center; font-size:12px; color:var(--text-sub); padding:8px 0;" id="dday-empty-msg">시험을 추가해보세요 📅</div>
+          </div>
+        </div>
+
         <div class="panel">
           <div class="stats-box">
             <div class="stats-title">현재 실시간 집중 점수</div>
@@ -1701,9 +1751,128 @@
     let currentCategory = 'tutor';
     let currentPostId = null;
 
+    // ═══════════════════════════════════════
+    // 날짜 & 디데이 기능
+    // ═══════════════════════════════════════
+    const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+
+    function renderTodayDate() {
+      const now = new Date();
+      const mm = now.getMonth() + 1;
+      const dd = now.getDate();
+      const day = WEEKDAYS[now.getDay()];
+      const year = now.getFullYear();
+      document.getElementById('today-date-display').textContent =
+        `${year}년 ${mm}월 ${dd}일`;
+      document.getElementById('today-weekday-display').textContent = `${day}요일`;
+    }
+
+    function toggleDdayAddForm() {
+      const form = document.getElementById('dday-add-form');
+      form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function getDdays() {
+      try { return JSON.parse(localStorage.getItem('focus_ddays') || '[]'); }
+      catch { return []; }
+    }
+
+    function saveDdays(list) {
+      localStorage.setItem('focus_ddays', JSON.stringify(list));
+    }
+
+    function addDday() {
+      const name = document.getElementById('dday-name-input').value.trim();
+      const date = document.getElementById('dday-date-input').value;
+      if (!name || !date) return;
+      const list = getDdays();
+      list.push({ name, date });
+      list.sort((a, b) => a.date.localeCompare(b.date));
+      saveDdays(list);
+      document.getElementById('dday-name-input').value = '';
+      document.getElementById('dday-date-input').value = '';
+      document.getElementById('dday-add-form').style.display = 'none';
+      renderDdays();
+    }
+
+    function deleteDday(idx) {
+      const list = getDdays();
+      list.splice(idx, 1);
+      saveDdays(list);
+      renderDdays();
+    }
+
+    function renderDdays() {
+      const list = getDdays();
+      const container = document.getElementById('dday-list');
+      const emptyMsg = document.getElementById('dday-empty-msg');
+
+      if (list.length === 0) {
+        container.innerHTML = '';
+        container.appendChild(emptyMsg);
+        emptyMsg.style.display = 'block';
+        return;
+      }
+      emptyMsg.style.display = 'none';
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      container.innerHTML = list.map((item, idx) => {
+        const target = new Date(item.date);
+        target.setHours(0, 0, 0, 0);
+        const diff = Math.round((target - today) / (1000 * 60 * 60 * 24));
+
+        let label, labelColor, bgColor;
+        if (diff < 0) {
+          label = `D+${Math.abs(diff)}`;
+          labelColor = 'rgba(255,255,255,0.35)';
+          bgColor = 'rgba(255,255,255,0.04)';
+        } else if (diff === 0) {
+          label = 'D-DAY';
+          labelColor = '#f06363';
+          bgColor = 'rgba(240,99,99,0.1)';
+        } else if (diff <= 7) {
+          label = `D-${diff}`;
+          labelColor = '#fbbf24';
+          bgColor = 'rgba(251,191,36,0.08)';
+        } else {
+          label = `D-${diff}`;
+          labelColor = 'var(--accent-green)';
+          bgColor = 'rgba(110,231,192,0.07)';
+        }
+
+        const dateStr = item.date.replace(/-/g, '.');
+        return `<div style="
+          display:flex; align-items:center; justify-content:space-between;
+          padding:9px 12px;
+          background:${bgColor};
+          border-radius:9px;
+          border: 1px solid rgba(255,255,255,0.06);
+        ">
+          <div>
+            <div style="font-size:13px; font-weight:700; color:var(--text-main);">${item.name}</div>
+            <div style="font-size:11px; color:var(--text-sub); margin-top:2px;">${dateStr}</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div style="font-size:16px; font-weight:800; color:${labelColor}; min-width:52px; text-align:right;">${label}</div>
+            <button onclick="deleteDday(${idx})" style="
+              background:none; border:none; color:rgba(255,255,255,0.25);
+              cursor:pointer; font-size:14px; padding:2px 4px; line-height:1;
+            " title="삭제">✕</button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    // ═══════════════════════════════════════
     // 초기화
+    // ═══════════════════════════════════════
     window.addEventListener('DOMContentLoaded', () => {
       document.getElementById('section-main').classList.add('active');
+      renderTodayDate();
+      renderDdays();
+      setInterval(renderTodayDate, 60000);
       loadSubjects();
       loadTheme();
       if (window.currentUser) {
