@@ -772,7 +772,9 @@
 
     <!-- 대시보드 -->
     <div id="section-main" class="container active">
-      <div class="panel left-panel">
+
+      <!-- 왼쪽 패널: 캠 + AI채팅 + 친구캠 -->
+      <div class="panel left-panel" id="main-left-panel">
         <div class="cam-header">
           <div>
             <div id="state-badge" class="state-badge waiting"><span></span> 대기 중</div>
@@ -785,11 +787,11 @@
             <button class="btn-off" onclick="stopCamera()">카메라 OFF</button>
           </div>
         </div>
+
         <!-- 내 캠 -->
         <div class="video-container" id="my-video-container">
           <div id="cam-placeholder">카메라가 꺼져 있습니다.</div>
           <img id="video" src="" alt="Live Feed" style="display:none;">
-          <!-- 외부접속(ngrok) 시 브라우저 캠 표시용 -->
           <video id="browser-cam-video" autoplay playsinline muted
             style="display:none; width:100%; height:100%; object-fit:cover; position:absolute; inset:0;"></video>
         </div>
@@ -802,7 +804,167 @@
           </div>
         </div>
 
-        <!-- 친구 캠 목록 (내 캠 아래에 독립적으로 배치) -->
+        <!-- 🤖 AI 공부 도우미 채팅창 -->
+        <div id="ai-chat-box" style="
+          margin-top:16px;
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 18px;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+          height: 380px;
+        ">
+          <div style="
+            display:flex; align-items:center; justify-content:space-between;
+            padding:10px 14px;
+            background: rgba(110,231,192,0.08);
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+            flex-shrink:0;
+          ">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:15px;">🤖</span>
+              <span style="font-size:13px; font-weight:800; color:var(--text-main);">AI 공부 도우미</span>
+              <span id="ai-model-badge" style="
+                font-size:10px; padding:2px 8px;
+                background:rgba(110,231,192,0.15);
+                border:1px solid rgba(110,231,192,0.3);
+                border-radius:10px; color:var(--accent-green); font-weight:700;
+              ">GPT-4o-mini</span>
+            </div>
+            <div style="display:flex; gap:6px; align-items:center;">
+              <span id="ai-key-status" style="font-size:11px; color:var(--text-sub);">설정에서 API 키 입력</span>
+              <button onclick="clearAiChat()" title="대화 초기화"
+                style="padding:3px 8px; font-size:11px; background:rgba(255,255,255,0.06);
+                border:1px solid rgba(255,255,255,0.1); border-radius:8px;
+                color:var(--text-sub); cursor:pointer;">초기화</button>
+            </div>
+          </div>
+
+          <div id="ai-chat-messages" style="
+            flex:1; overflow-y:auto; padding:12px;
+            display:flex; flex-direction:column; gap:8px;
+          ">
+            <div class="ai-welcome-msg" style="text-align:center; font-size:12px; color:var(--text-sub); padding:16px 0;">
+              공부하다 모르는 게 있으면 뭐든 물어보세요 😊<br>
+              <span style="font-size:11px; opacity:0.6;">설정 탭에서 OpenAI API 키를 입력하면 사용할 수 있어요.</span>
+            </div>
+          </div>
+
+          <div style="
+            display:flex; gap:8px; padding:10px 12px;
+            border-top:1px solid rgba(255,255,255,0.07);
+            flex-shrink:0;
+          ">
+            <!-- 수식 버튼 팔레트 -->
+            <div id="math-palette" style="
+              display:flex; flex-wrap:wrap; gap:4px;
+              padding:8px 12px 0;
+              border-top:1px solid rgba(255,255,255,0.06);
+            ">
+              <!-- 자주 쓰는 수식 버튼들 -->
+              <button onclick="insertMath('²')"   title="제곱"       class="math-btn">x²</button>
+              <button onclick="insertMath('³')"   title="세제곱"     class="math-btn">x³</button>
+              <button onclick="insertMath('ⁿ')"   title="n제곱"      class="math-btn">xⁿ</button>
+              <button onclick="insertMath('√')"   title="루트"       class="math-btn">√</button>
+              <button onclick="insertMath('∛')"   title="세제곱근"   class="math-btn">∛</button>
+              <button onclick="insertMath('π')"   title="파이"       class="math-btn">π</button>
+              <button onclick="insertMath('∞')"   title="무한대"     class="math-btn">∞</button>
+              <button onclick="insertMath('÷')"   title="나누기"     class="math-btn">÷</button>
+              <button onclick="insertMath('×')"   title="곱하기"     class="math-btn">×</button>
+              <button onclick="insertMath('≠')"   title="같지않음"   class="math-btn">≠</button>
+              <button onclick="insertMath('≤')"   title="이하"       class="math-btn">≤</button>
+              <button onclick="insertMath('≥')"   title="이상"       class="math-btn">≥</button>
+              <button onclick="insertMath('±')"   title="플러스마이너스" class="math-btn">±</button>
+              <button onclick="insertMath('∑')"   title="시그마"     class="math-btn">∑</button>
+              <button onclick="insertMath('∫')"   title="적분"       class="math-btn">∫</button>
+              <button onclick="insertMath('∂')"   title="편미분"     class="math-btn">∂</button>
+              <button onclick="insertMath('Δ')"   title="델타"       class="math-btn">Δ</button>
+              <button onclick="insertMath('α')"   title="알파"       class="math-btn">α</button>
+              <button onclick="insertMath('β')"   title="베타"       class="math-btn">β</button>
+              <button onclick="insertMath('θ')"   title="세타"       class="math-btn">θ</button>
+              <button onclick="insertMath('λ')"   title="람다"       class="math-btn">λ</button>
+              <button onclick="insertMath('μ')"   title="뮤"         class="math-btn">μ</button>
+              <button onclick="insertMath('½')"   title="2분의 1"    class="math-btn">½</button>
+              <button onclick="insertMath('¼')"   title="4분의 1"    class="math-btn">¼</button>
+              <button onclick="insertMath('¾')"   title="4분의 3"    class="math-btn">¾</button>
+              <!-- 자주 쓰는 수식 템플릿 -->
+              <button onclick="insertMath('f(x) = ')"  title="함수"    class="math-btn math-btn-tpl">f(x)</button>
+              <button onclick="insertMath('lim(x→')"   title="극한"    class="math-btn math-btn-tpl">lim</button>
+              <button onclick="insertMath('log')"       title="로그"    class="math-btn math-btn-tpl">log</button>
+              <button onclick="insertMath('ln(')"       title="자연로그" class="math-btn math-btn-tpl">ln</button>
+              <button onclick="insertMath('sin(')"      title="사인"    class="math-btn math-btn-tpl">sin</button>
+              <button onclick="insertMath('cos(')"      title="코사인"  class="math-btn math-btn-tpl">cos</button>
+              <button onclick="insertMath('tan(')"      title="탄젠트"  class="math-btn math-btn-tpl">tan</button>
+            </div>
+
+            <style>
+              .math-btn {
+                padding: 4px 8px;
+                font-size: 13px;
+                font-weight: 700;
+                background: rgba(255,255,255,0.07);
+                border: 1px solid rgba(255,255,255,0.12);
+                border-radius: 8px;
+                color: var(--text-main);
+                cursor: pointer;
+                transition: all 0.15s;
+                min-width: 32px;
+                text-align: center;
+                line-height: 1.4;
+                font-family: 'Space Grotesk', monospace;
+              }
+              .math-btn:hover {
+                background: rgba(110,231,192,0.18);
+                border-color: var(--accent-green);
+                color: var(--accent-green);
+                transform: translateY(-1px);
+              }
+              .math-btn:active {
+                transform: scale(0.94);
+              }
+              .math-btn-tpl {
+                background: rgba(96,180,255,0.08);
+                border-color: rgba(96,180,255,0.2);
+                color: #60b4ff;
+                font-size: 11px;
+              }
+              .math-btn-tpl:hover {
+                background: rgba(96,180,255,0.2);
+                border-color: #60b4ff;
+                color: #60b4ff;
+              }
+              body.light-mode .math-btn {
+                background: rgba(0,0,0,0.05);
+                border-color: rgba(0,0,0,0.12);
+                color: #1a1a2e;
+              }
+              body.light-mode .math-btn:hover {
+                background: rgba(110,231,192,0.2);
+                color: #0a5c4a;
+              }
+              body.light-mode .math-btn-tpl {
+                background: rgba(24,95,165,0.08);
+                border-color: rgba(24,95,165,0.2);
+                color: #185fa5;
+              }
+            </style>
+
+            <!-- 입력창 + 전송 -->
+            <div style="display:flex; gap:8px; padding:8px 12px 10px; flex-shrink:0;">
+              <input type="text" id="ai-chat-input"
+                placeholder="질문을 입력하세요... (Enter로 전송)"
+                maxlength="500"
+                onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAiMessage();}"
+                style="flex:1; padding:9px 13px; border-radius:12px; font-size:13px;">
+              <button onclick="sendAiMessage()" id="ai-send-btn"
+                style="padding:9px 16px; background:var(--accent-green); color:#111;
+                border:none; border-radius:12px; font-weight:800; font-size:13px; cursor:pointer; flex-shrink:0;">전송</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 친구 캠 (초대 수락 시 여기에 표시) -->
         <div id="friend-cams" style="margin-top:12px; display:flex; flex-direction:column; gap:12px;"></div>
       </div>
 
@@ -1179,6 +1341,30 @@
           <button class="theme-btn" data-theme="purple"  onclick="setTheme('purple')"  style="--c:#b088f9;" title="퍼플">🟣 퍼플</button>
           <button class="theme-btn" data-theme="orange"  onclick="setTheme('orange')"  style="--c:#ffaa5c;" title="오렌지">🟠 오렌지</button>
           <button class="theme-btn" data-theme="pink"    onclick="setTheme('pink')"    style="--c:#ff80b5;" title="핑크">🩷 핑크</button>
+        </div>
+      </div>
+
+      <!-- 🤖 OpenAI API 키 설정 -->
+      <div class="detail-row" style="flex-direction:column; align-items:flex-start; gap:10px;">
+        <span>🤖 AI 공부 도우미 API 키</span>
+        <div style="display:flex; gap:8px; width:100%; flex-wrap:wrap;">
+          <input type="password" id="openai-key-input"
+            placeholder="sk-... (OpenAI API Key)"
+            maxlength="200"
+            style="flex:1; min-width:180px; font-size:13px;">
+          <button onclick="saveApiKey()"
+            style="padding:10px 18px; background:var(--accent-green); color:#111;
+            border:none; border-radius:10px; font-weight:700; cursor:pointer; flex-shrink:0;">저장</button>
+          <button onclick="clearApiKey()"
+            style="padding:10px 14px; background:rgba(240,99,99,0.15); color:var(--accent-red);
+            border:1px solid var(--accent-red); border-radius:10px; font-weight:700; cursor:pointer; flex-shrink:0;">삭제</button>
+        </div>
+        <div id="api-key-saved-msg" style="display:none; font-size:12px; color:var(--accent-green); font-weight:700;">
+          ✅ API 키가 저장되었습니다. 대시보드 AI 채팅을 사용할 수 있어요!
+        </div>
+        <div style="font-size:11px; color:var(--text-sub); line-height:1.6;">
+          ⚠️ API 키는 브라우저 로컬 저장소에만 저장됩니다.<br>
+          OpenAI 계정에서 발급: <span style="color:var(--accent-green);">platform.openai.com/api-keys</span>
         </div>
       </div>
     </div>
@@ -2308,6 +2494,227 @@
       });
     }
 
+    // =============================================
+    // 🤖 AI 공부 도우미 (OpenAI ChatGPT)
+    // =============================================
+
+    let aiHistory = []; // 대화 히스토리
+
+    function saveApiKey() {
+      const key = document.getElementById('openai-key-input').value.trim();
+      if (!key || !key.startsWith('sk-')) {
+        showToastMsg('⚠️ 올바른 API 키를 입력하세요 (sk-로 시작)');
+        return;
+      }
+      localStorage.setItem('openai_api_key', key);
+      document.getElementById('openai-key-input').value = '';
+      document.getElementById('api-key-saved-msg').style.display = 'block';
+      setTimeout(() => {
+        document.getElementById('api-key-saved-msg').style.display = 'none';
+      }, 4000);
+      updateAiKeyStatus();
+      showToastMsg('✅ API 키 저장 완료! AI 도우미를 사용할 수 있어요.');
+    }
+
+    function clearApiKey() {
+      if (!confirm('API 키를 삭제하시겠습니까?')) return;
+      localStorage.removeItem('openai_api_key');
+      updateAiKeyStatus();
+      showToastMsg('🗑️ API 키가 삭제되었습니다.');
+    }
+
+    function updateAiKeyStatus() {
+      const key = localStorage.getItem('openai_api_key');
+      const el = document.getElementById('ai-key-status');
+      if (el) {
+        if (key) {
+          el.textContent = '✅ API 키 연결됨';
+          el.style.color = 'var(--accent-green)';
+        } else {
+          el.textContent = '설정에서 API 키 입력';
+          el.style.color = 'var(--text-sub)';
+        }
+      }
+      // 설정 탭 입력란 초기화
+      const inp = document.getElementById('openai-key-input');
+      if (inp && key) inp.placeholder = '키가 저장됨 (변경하려면 새로 입력)';
+    }
+
+    function clearAiChat() {
+      aiHistory = [];
+      const box = document.getElementById('ai-chat-messages');
+      if (box) box.innerHTML = `<div style="text-align:center;font-size:12px;color:var(--text-sub);padding:16px 0;">
+        대화가 초기화되었습니다 🔄<br>
+        <span style="font-size:11px;opacity:0.6;">새 질문을 입력해보세요!</span>
+      </div>`;
+    }
+
+    function appendAiMsg(role, text) {
+      const box = document.getElementById('ai-chat-messages');
+      if (!box) return;
+      // 웰컴 메시지 제거
+      const welcome = box.querySelector('.ai-welcome-msg');
+      if (welcome) welcome.remove();
+
+      const isUser = role === 'user';
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'display:flex;flex-direction:column;align-items:' + (isUser ? 'flex-end' : 'flex-start') + ';gap:3px;';
+
+      const label = document.createElement('span');
+      label.style.cssText = 'font-size:10px;color:var(--text-sub);margin:0 4px;';
+      label.textContent = isUser ? '나' : '🤖 AI';
+      wrap.appendChild(label);
+
+      const bubble = document.createElement('div');
+      bubble.style.cssText = [
+        'max-width:88%;padding:9px 13px;font-size:13px;line-height:1.55;word-break:break-word;white-space:pre-wrap;',
+        'border-radius:' + (isUser ? '16px 16px 3px 16px' : '16px 16px 16px 3px') + ';',
+        'background:' + (isUser ? 'var(--accent-green)' : 'rgba(255,255,255,0.07)') + ';',
+        'color:' + (isUser ? '#111' : 'var(--text-main)') + ';',
+        'border:' + (isUser ? 'none' : '1px solid rgba(255,255,255,0.08)') + ';',
+      ].join('');
+      bubble.textContent = text;
+      wrap.appendChild(bubble);
+
+      box.appendChild(wrap);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function appendAiTyping() {
+      const box = document.getElementById('ai-chat-messages');
+      if (!box) return null;
+      const el = document.createElement('div');
+      el.id = 'ai-typing';
+      el.style.cssText = 'display:flex;align-items:center;gap:6px;padding:8px 4px;';
+      el.innerHTML = `<div style="display:flex;gap:4px;align-items:center;">
+        <div style="width:7px;height:7px;border-radius:50%;background:var(--accent-green);animation:aiDot 1.2s ease-in-out infinite;"></div>
+        <div style="width:7px;height:7px;border-radius:50%;background:var(--accent-green);animation:aiDot 1.2s ease-in-out infinite 0.2s;"></div>
+        <div style="width:7px;height:7px;border-radius:50%;background:var(--accent-green);animation:aiDot 1.2s ease-in-out infinite 0.4s;"></div>
+      </div>
+      <span style="font-size:11px;color:var(--text-sub);">AI가 생각 중...</span>`;
+      if (!document.getElementById('ai-dot-style')) {
+        const st = document.createElement('style');
+        st.id = 'ai-dot-style';
+        st.textContent = '@keyframes aiDot{0%,80%,100%{transform:scale(0.6);opacity:0.4}40%{transform:scale(1);opacity:1}}';
+        document.head.appendChild(st);
+      }
+      box.appendChild(el);
+      box.scrollTop = box.scrollHeight;
+      return el;
+    }
+
+    // 수식 버튼 → 입력창에 삽입 (커서 위치 유지)
+    function insertMath(symbol) {
+      const input = document.getElementById('ai-chat-input');
+      if (!input) return;
+      const start = input.selectionStart;
+      const end   = input.selectionEnd;
+      const val   = input.value;
+      input.value = val.slice(0, start) + symbol + val.slice(end);
+      // 커서를 삽입한 기호 뒤로
+      const newPos = start + symbol.length;
+      input.setSelectionRange(newPos, newPos);
+      input.focus();
+    }
+
+    async function sendAiMessage() {
+      const input = document.getElementById('ai-chat-input');
+      const btn = document.getElementById('ai-send-btn');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const apiKey = localStorage.getItem('openai_api_key');
+      if (!apiKey) {
+        showToastMsg('⚠️ 설정 탭에서 OpenAI API 키를 먼저 입력해주세요!');
+        return;
+      }
+
+      input.value = '';
+      btn.disabled = true;
+      btn.style.opacity = '0.5';
+
+      appendAiMsg('user', text);
+
+      // 현재 과목을 시스템 프롬프트에 반영
+      const subject = document.getElementById('cat-subject-name')?.textContent || '';
+      const systemMsg = subject
+        ? `당신은 친절한 AI 공부 도우미입니다. 현재 사용자는 "${subject}" 과목을 공부 중입니다. 관련 질문에 특히 자세히 답변해주세요. 답변은 간결하고 이해하기 쉽게 해주세요.`
+        : '당신은 친절한 AI 공부 도우미입니다. 질문에 간결하고 이해하기 쉽게 답변해주세요.';
+
+      aiHistory.push({ role: 'user', content: text });
+
+      const typingEl = appendAiTyping();
+
+      try {
+        const res = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + apiKey,
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [
+              { role: 'system', content: systemMsg },
+              ...aiHistory.slice(-10), // 최근 10개만
+            ],
+            max_tokens: 800,
+            temperature: 0.7,
+          }),
+        });
+
+        if (typingEl) typingEl.remove();
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          const msg = err?.error?.message || ('오류: ' + res.status);
+          appendAiMsg('assistant', '❌ ' + msg);
+          aiHistory.pop();
+        } else {
+          const data = await res.json();
+          const reply = data.choices?.[0]?.message?.content || '응답을 받지 못했습니다.';
+          appendAiMsg('assistant', reply);
+          aiHistory.push({ role: 'assistant', content: reply });
+        }
+      } catch(e) {
+        if (typingEl) typingEl.remove();
+        appendAiMsg('assistant', '❌ 네트워크 오류가 발생했습니다. ' + e.message);
+        aiHistory.pop();
+      }
+
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      input.focus();
+    }
+
+    // =============================================
+    // 📐 대시보드 레이아웃 전환 (초대 수락/종료 시)
+    // =============================================
+
+    function expandDashboardForCam() {
+      // 초대 수락 → left-panel을 더 넓게, right-panel은 좁게
+      const leftPanel = document.getElementById('main-left-panel');
+      const sectionMain = document.getElementById('section-main');
+      if (leftPanel) {
+        leftPanel.style.flex = '1.8';
+        leftPanel.style.transition = 'flex 0.4s ease';
+      }
+    }
+
+    function resetDashboardLayout() {
+      // 캠 종료 → 원래 레이아웃
+      const leftPanel = document.getElementById('main-left-panel');
+      if (leftPanel) {
+        leftPanel.style.flex = '';
+        leftPanel.style.transition = 'flex 0.4s ease';
+      }
+    }
+
+    // 페이지 로드 시 API 키 상태 확인
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(updateAiKeyStatus, 500);
+    });
+
     // 랭킹 업데이트 함수 (1분마다 자동 실행 + 랭킹 탭 진입 시 수동 호출)
     function updateMyRanking() {
       fetch('/stats', { credentials: 'include' })
@@ -3016,6 +3423,7 @@ window.onload = checkLogin;
 
       // A가 initiator로 WebRTC 시작
       await createPeerConnection(data.from_sid, data.from_nickname, true);
+      expandDashboardForCam();
     });
 
     // 초대 거절됨
@@ -3044,6 +3452,7 @@ window.onload = checkLogin;
         localStream.getTracks().forEach(t => t.stop());
         localStream = null;
         await restoreFlaskCam();
+        resetDashboardLayout();
       }
     });
 
