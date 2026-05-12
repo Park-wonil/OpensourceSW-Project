@@ -5,6 +5,7 @@ import mediapipe as mp
 import numpy as np
 from collections import deque
 from Backend.database import save_data
+from Vision.neck import NeckPostureDetector, draw_neck_overlay
 
 # --- 상수 및 설정 ---
 ABSENCE_THRESHOLD_S = 2.0
@@ -18,19 +19,26 @@ RIGHT_EYE = [362, 385, 387, 263, 373, 380]
 cap = None
 is_running = False
 capture_thread = None
-current_subject = ""  # 현재 공부 중인 과목
+current_subject = ""   # 현재 공부 중인 과목
+current_username = ""  # 현재 로그인 유저 username
 
 # 웹 라우트에서 가져갈 최신 프레임과 데이터
 latest_frame = None
 latest_data = {"error": "camera off"}
 lock = threading.Lock()
 
-# --- Mediapipe 초기화 ---
+# --- Mediapipe 초기화 (카메라 시작 후 lazy loading) ---
 mp_face_mesh = mp.solutions.face_mesh
-face_mesh = mp_face_mesh.FaceMesh(
-    max_num_faces=1,
-    refine_landmarks=True
-)
+face_mesh = None
+
+def _get_face_mesh():
+    global face_mesh
+    if face_mesh is None:
+        face_mesh = mp_face_mesh.FaceMesh(
+            max_num_faces=1,
+            refine_landmarks=True
+        )
+    return face_mesh
 
 def calculate_ear(landmarks, eye_indices, w, h):
     points = []
@@ -89,12 +97,15 @@ class AbsenceDetector:
         return 0.0
 
 detector = AbsenceDetector()
+neck_detector = NeckPostureDetector()  # 거북목 감지기
 
 def _capture_loop():
-    global cap, is_running, latest_frame, latest_data, detector
+    global cap, is_running, latest_frame, latest_data, detector, neck_detector
     last_save_time = 0
 
     while is_running:
+        face_mesh_model = _get_face_mesh()
+
         if cap is None or not cap.isOpened():
             time.sleep(0.1)
             continue
@@ -106,7 +117,10 @@ def _capture_loop():
 
         h, w, _ = frame.shape
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        results = face_mesh.process(rgb)
+        results = face_mesh_model.process(rgb)
+
+        # 거북목 감지 (같은 rgb 프레임 재사용 - 추가 변환 없음)
+        neck_data = neck_detector.update(rgb)
 
         face_present = bool(results.multi_face_landmarks)
         detector.update(face_present)
@@ -118,7 +132,8 @@ def _capture_loop():
             "total_absence_s": round(detector.total_absence_s, 1),
             "current_absence_s": round(detector.get_current_absence_duration(), 1),
             "ear": 0.0,
-            "state": "absent" if detector.is_absent else "searching..."
+            "state": "absent" if detector.is_absent else "searching...",
+            **neck_data   # 거북목 필드 병합
         }
 
         status_text = "No Face"
@@ -146,6 +161,7 @@ def _capture_loop():
 
         border_color = (0, 0, 220) if detector.is_absent else (0, 200, 80)
         cv2.rectangle(frame, (0, 0), (w - 1, h - 1), border_color, 3)
+        draw_neck_overlay(frame, neck_data)   # 거북목 상태 오버레이
         cv2.rectangle(frame, (0, h - 40), (w, h), (30, 30, 30), -1)
 
         cv2.putText(frame, f"State: {status_text}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, status_color, 2)
@@ -159,9 +175,10 @@ def _capture_loop():
             latest_frame = buffer.tobytes()
 
         now = time.time()
-        if now - last_save_time >= 1:
+        if now - last_save_time >= 3:
             with lock:
                 current_data["subject"] = current_subject
+                current_data["username"] = current_username
                 latest_data = current_data
                 save_data(current_data)
             last_save_time = now
@@ -213,3 +230,7 @@ def get_focus_data():
 def set_current_subject(subject):
     global current_subject
     current_subject = subject
+
+def set_current_username(username):
+    global current_username
+    current_username = username
