@@ -4236,3 +4236,490 @@ body.light-mode #subject-goal-minutes::placeholder {
 .status-analyzing { background: rgba(110, 231, 192, 0.2); color: #6ee7c0; border-color: rgba(110, 231, 192, 0.4); }
 .status-focus { background: rgba(250, 199, 117, 0.2); color: #fac775; border-color: rgba(250, 199, 117, 0.4); }
 .status-warning { background: rgba(240, 153, 123, 0.2); color: #f0997b; border-color: rgba(240, 153, 123, 0.4); }
+
+/* =====================================================
+   테마 색상 전체 반영 FIX
+   선택한 테마 색에 맞춰 초록색 UI 자동 변경
+   ===================================================== */
+
+/* 기본 그린 */
+:root,
+body.theme-green {
+  --primary: #6ee7c0 !important;
+  --primary-light: #b4f5e0 !important;
+  --accent-green: #6ee7c0 !important;
+  --theme-primary: #6ee7c0 !important;
+  --theme-secondary: #5dd1ab !important;
+  --theme-glow: rgba(110, 231, 192, 0.35) !important;
+  --theme-soft: rgba(110, 231, 192, 0.13) !important;
+  --theme-border: rgba(110, 231, 192, 0.32) !important;
+}
+
+/* 블루 */
+body.theme-blue {
+  --primary: #60b4ff !important;
+  --primary-light: #a7d8ff !important;
+  --accent-green: #60b4ff !important;
+  --theme-primary: #60b4ff !important;
+  --theme-secondary: #3a9eff !important;
+  --theme-glow: rgba(96, 180, 255, 0.35) !important;
+  --theme-soft: rgba(96, 180, 255, 0.13) !important;
+  --theme-border: rgba(96, 180, 255, 0.32) !important;
+}
+
+/* 퍼플 */
+body.theme-purple {
+  --primary: #b088f9 !important;
+  --primary-light: #d4c0ff !important;
+  --accent-green: #b088f9 !important;
+  --theme-primary: #b088f9 !important;
+  --theme-secondary: #9b6ef7 !important;
+  --theme-glow: rgba(176, 136, 249, 0.35) !important;
+  --theme-soft: rgba(176, 136, 249, 0.13) !important;
+  --theme-border: rgba(176, 136, 249, 0.32) !important;
+}
+
+/* 오렌지 */
+body.theme-orange {
+  --primary: #ffaa5c !important;
+  --primary-light: #ffd1a6 !important;
+  --accent-green: #ffaa5c !important;
+  --theme-primary: #ffaa5c !important;
+  --theme-secondary: #ff9030 !important;
+  --theme-glow: rgba(255, 170, 92, 0.35) !important;
+  --theme-soft: rgba(255, 170, 92, 0.13) !important;
+  --theme-border: rgba(255, 170, 92, 0.32) !important;
+}
+
+/* 핑크 */
+body.theme-pink {
+  --primary: #ff80b5 !important;
+  --primary-light: #ffc0dc !important;
+  --accent-green: #ff80b5 !important;
+  --theme-primary: #ff80b5 !important;
+  --theme-secondary: #ff5fa0 !important;
+  --theme-glow: rgba(255, 128, 181, 0.35) !important;
+  --theme-soft: rgba(255, 128, 181, 0.13) !important;
+  --theme-border: rgba(255, 128, 181, 0.32) !important;
+}
+
+/* 체리 레드 */
+body.theme-red {
+  --primary: #ef4444 !important;
+  --primary-light: #f87171 !important;
+  --accent-green: #ef4444 !important;
+  --theme-primary: #ef4444 !important;
+  --theme-secondary: #f87171 !important;
+  --theme-glow: rgba(239, 68, 68, 0.38) !important;
+  --theme-soft: rgba(239, 68, 68, 0.14) !important;
+  --theme-border: rgba(239, 68, 68, 0.36) !important;
+}
+
+/* =====================================================
+   공통 테마 적용 대상
+   ===================================================== */
+
+/* 네비게이션 활성 탭 */
+.nav-tab.active {
+  background: var(--theme-primary) !important;
+  color: #0a0f0c !important;
+  box-shadow: 0 4px 18px var(--theme-glow) !important;
+}
+
+/* 닉네임 표시 */
+#username-display {
+  color: var(--theme-primary) !important;
+  background: var(--theme-soft) !important;
+  border-color: var(--theme-border) !important;
+  box-shadow: 0 0 20px var(--theme-glow) !important;
+}
+
+#username-display::before {
+  background: var(--theme-primary) !important;
+  box-shadow: 0 0 12px var(--theme-primary) !important;
+}
+
+/* 현재 온라인 점, 상태 점 */
+.state-badge span,
+#cat-status-dot,
+#status-badge .status-icon,
+.status-icon {
+  color: var(--theme-primary) !important;
+}
+
+/* AI 분석 중 배지 */
+#status-badge,
+.status-badge,
+.status-analyzing {
+  background: var(--theme-soft) !important;
+  border-color: var(--theme-border) !important;
+  color: var(--theme-primary) !important;
+  box-shadow: 0 0 18px var(--theme-glow) !important;
+}
+
+#badge-text,
+.status-text {
+  color: var(--theme-primary) !important;
+}
+
+/* 카메라 ON 버튼 */
+.cam-controls button.btn-on,
+.btn-on {
+  background: var(--theme-soft) !important;
+  color: var(--theme-primary) !important;
+  border-color: var(--theme-border) !important;
+}
+
+.cam-controls button.btn-on:hover,
+.btn-on:hover {
+  background: var(--theme-primary) !important;
+  color: #101010 !important;
+  box-shadow: 0 6px 18px var(--theme-glow) !important;
+}
+
+/* 시험 추가 버튼 */
+#dday-panel button,
+button[onclick="toggleDdayAddForm()"] {
+  background: var(--theme-soft) !important;
+  color: var(--theme-primary) !important;
+  border-color: var(--theme-border) !important;
+}
+
+#dday-panel button:hover,
+button[onclick="toggleDdayAddForm()"]:hover {
+  background: var(--theme-primary) !important;
+  color: #101010 !important;
+  box-shadow: 0 8px 22px var(--theme-glow) !important;
+}
+
+/* 일반 주요 버튼 */
+.btn-write,
+.btn-submit,
+.subject-input-box button,
+.goal-input-box button,
+.my-rank-box button,
+.friend-add-box button,
+.comment-write button,
+.auth-btn.primary,
+#ai-send-btn,
+#room-chat-input + button {
+  background: linear-gradient(
+    135deg,
+    var(--theme-primary),
+    var(--theme-secondary)
+  ) !important;
+  color: #101010 !important;
+  border-color: transparent !important;
+  box-shadow: 0 8px 24px var(--theme-glow) !important;
+}
+
+.btn-write:hover,
+.btn-submit:hover,
+.subject-input-box button:hover,
+.goal-input-box button:hover,
+.my-rank-box button:hover,
+.friend-add-box button:hover,
+.comment-write button:hover,
+.auth-btn.primary:hover,
+#ai-send-btn:hover,
+#room-chat-input + button:hover {
+  box-shadow: 0 12px 30px var(--theme-glow) !important;
+  filter: brightness(1.05) !important;
+}
+
+/* 점수 숫자, 타이머, 통계 강조 */
+.stats-value,
+#score-text,
+#timer-display,
+.stats-highlight,
+.summary-value,
+.ranking-time,
+.month-subject-time,
+.week-total {
+  color: var(--theme-primary) !important;
+  -webkit-text-fill-color: var(--theme-primary) !important;
+}
+
+/* 타이머 그라디언트 제거 후 테마색 적용 */
+#timer-display {
+  background: none !important;
+  -webkit-background-clip: initial !important;
+  background-clip: initial !important;
+}
+
+/* 점수 바 */
+#score-bar {
+  background: var(--theme-primary) !important;
+  box-shadow: 0 0 18px var(--theme-glow) !important;
+}
+
+/* 진행바 */
+.goal-progress-fill {
+  background: linear-gradient(
+    90deg,
+    var(--theme-primary),
+    var(--theme-secondary)
+  ) !important;
+  box-shadow: 0 0 14px var(--theme-glow) !important;
+}
+
+/* 과목 칩 */
+.subject-chip {
+  background: var(--theme-soft) !important;
+  border-color: var(--theme-border) !important;
+  color: var(--theme-primary) !important;
+}
+
+.subject-chip:hover {
+  background: var(--theme-soft) !important;
+  border-color: var(--theme-primary) !important;
+  box-shadow: 0 6px 18px var(--theme-glow) !important;
+}
+
+.subject-chip.active {
+  background: var(--theme-primary) !important;
+  color: #101010 !important;
+  border-color: var(--theme-primary) !important;
+  box-shadow: 0 8px 24px var(--theme-glow) !important;
+}
+
+/* 테마 선택 버튼 */
+.theme-btn:hover {
+  border-color: var(--c, var(--theme-primary)) !important;
+}
+
+.theme-btn.active {
+  border-color: var(--c, var(--theme-primary)) !important;
+  box-shadow: 0 6px 22px var(--theme-glow) !important;
+}
+
+/* 현재 선택된 테마가 적용된 상태에서 설정 버튼도 자연스럽게 */
+body.theme-blue .theme-btn.active {
+  box-shadow: 0 6px 22px rgba(96, 180, 255, 0.35) !important;
+}
+
+body.theme-purple .theme-btn.active {
+  box-shadow: 0 6px 22px rgba(176, 136, 249, 0.35) !important;
+}
+
+body.theme-orange .theme-btn.active {
+  box-shadow: 0 6px 22px rgba(255, 170, 92, 0.35) !important;
+}
+
+body.theme-pink .theme-btn.active {
+  box-shadow: 0 6px 22px rgba(255, 128, 181, 0.35) !important;
+}
+
+body.theme-red .theme-btn.active {
+  box-shadow: 0 6px 22px rgba(239, 68, 68, 0.38) !important;
+}
+
+/* 커뮤니티 탭 */
+.community-tab.active {
+  background: var(--theme-primary) !important;
+  border-color: var(--theme-primary) !important;
+  color: #101010 !important;
+  box-shadow: 0 6px 20px var(--theme-glow) !important;
+}
+
+.community-tab:hover {
+  border-color: var(--theme-primary) !important;
+  box-shadow: 0 4px 16px var(--theme-glow) !important;
+}
+
+/* 게시글 hover 라인 */
+.post-item::before {
+  background: linear-gradient(
+    180deg,
+    var(--theme-primary),
+    var(--theme-secondary)
+  ) !important;
+}
+
+.post-item:hover,
+.goal-item:hover,
+.summary-card:hover,
+.month-subject-item:hover,
+.ranking-row:hover {
+  border-color: var(--theme-border) !important;
+  background: var(--theme-soft) !important;
+}
+
+/* 랭킹 */
+.ranking-name.me,
+.ranking-time {
+  color: var(--theme-primary) !important;
+}
+
+.ranking-rank {
+  color: var(--theme-primary) !important;
+  -webkit-text-fill-color: var(--theme-primary) !important;
+}
+
+.ranking-row:hover {
+  box-shadow: 0 10px 28px var(--theme-glow) !important;
+}
+
+/* 댓글 작성자 */
+.comment-author {
+  color: var(--theme-primary) !important;
+}
+
+.comment-item {
+  border-left-color: var(--theme-primary) !important;
+}
+
+/* 입력창 focus */
+input:not(.auth-input):focus,
+textarea:not(.auth-input):focus,
+select:not(.auth-input):focus,
+.auth-input:focus {
+  border-color: var(--theme-primary) !important;
+  background: var(--theme-soft) !important;
+  box-shadow: 0 0 0 3px var(--theme-glow) !important;
+}
+
+/* 공부 중인 과목 박스 */
+.subject-input-box {
+  border-color: var(--theme-border) !important;
+  box-shadow:
+    0 16px 38px rgba(0, 0, 0, 0.32),
+    0 0 28px var(--theme-glow) !important;
+}
+
+#current-subject-display {
+  background: var(--theme-soft) !important;
+  border-color: var(--theme-border) !important;
+  color: var(--theme-primary) !important;
+}
+
+/* 채팅 스크롤바 */
+#chat-messages::-webkit-scrollbar-thumb,
+#room-chat-messages::-webkit-scrollbar-thumb,
+#room-cam-area::-webkit-scrollbar-thumb {
+  background: var(--theme-primary) !important;
+}
+
+/* 친구 캠 */
+.friend-cam-box {
+  border-color: var(--theme-border) !important;
+}
+
+.friend-cam-name {
+  color: var(--theme-primary) !important;
+}
+
+/* 깜찍이 / AI 채팅 포인트 색 */
+#ai-model-badge {
+  color: var(--theme-primary) !important;
+  background: var(--theme-soft) !important;
+  border-color: var(--theme-border) !important;
+}
+
+#ai-key-status {
+  color: var(--theme-primary) !important;
+}
+
+/* 수식 버튼 hover */
+.math-btn:hover {
+  background: var(--theme-soft) !important;
+  border-color: var(--theme-primary) !important;
+  color: var(--theme-primary) !important;
+}
+
+/* 토글 스위치 */
+input:checked + .toggle-slider {
+  background-color: var(--theme-primary) !important;
+}
+
+/* 스크롤바 */
+::-webkit-scrollbar-thumb {
+  background: var(--theme-border) !important;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--theme-primary) !important;
+}
+
+/* SVG 안의 기존 초록색 선, 막대 일부도 테마색으로 변경 */
+svg [fill="#6ee7c0"],
+svg [fill="#6EE7C0"],
+svg [stroke="#6ee7c0"],
+svg [stroke="#6EE7C0"] {
+  fill: var(--theme-primary) !important;
+  stroke: var(--theme-primary) !important;
+}
+
+/* SVG에서 fill만 필요한 요소 */
+svg rect[fill="#6ee7c0"],
+svg circle[fill="#6ee7c0"],
+svg path[fill="#6ee7c0"] {
+  fill: var(--theme-primary) !important;
+}
+
+/* SVG에서 stroke만 필요한 요소 */
+svg path[stroke="#6ee7c0"],
+svg line[stroke="#6ee7c0"],
+svg rect[stroke="#6ee7c0"] {
+  stroke: var(--theme-primary) !important;
+}
+
+/* =====================================================
+   배경 파티클 주변 글로우 테마색 반영
+   ===================================================== */
+
+:root,
+body.theme-green {
+  --theme-rgb: 110, 231, 192;
+}
+
+body.theme-blue {
+  --theme-rgb: 96, 180, 255;
+}
+
+body.theme-purple {
+  --theme-rgb: 176, 136, 249;
+}
+
+body.theme-orange {
+  --theme-rgb: 255, 170, 92;
+}
+
+body.theme-pink {
+  --theme-rgb: 255, 128, 181;
+}
+
+body.theme-red {
+  --theme-rgb: 239, 68, 68;
+}
+
+/* 앱 배경의 큰 빛 번짐 */
+body::after {
+  background:
+    radial-gradient(
+      ellipse 80% 60% at 5% 10%,
+      rgba(var(--theme-rgb), 0.18) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse 60% 80% at 95% 90%,
+      rgba(var(--theme-rgb), 0.13) 0%,
+      transparent 52%
+    ),
+    radial-gradient(
+      ellipse 50% 50% at 50% 50%,
+      rgba(var(--theme-rgb), 0.07) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 40% 30% at 80% 10%,
+      rgba(var(--theme-rgb), 0.06) 0%,
+      transparent 50%
+    ) !important;
+}
+
+/* 캔버스 자체가 더 자연스럽게 테마와 섞이도록 */
+#app-canvas {
+  opacity: 0.72 !important;
+}
+
