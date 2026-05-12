@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Focus AI</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/avatar-system.css') }}">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -1261,7 +1262,7 @@
               #cat-ear-r { animation: earTwitch 4s ease-in-out infinite 2s; transform-origin: 91px 29px; }
             </style>
 
-            <div style="width:160px;height:122px;margin:2px 0;">
+            <div id="main-avatar-slot" style="width:160px;height:122px;margin:2px 0;">
               <svg id="cat-wrap" viewBox="0 0 160 122" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;">
                 <defs>
                   <!-- 머리 방사형 그라디언트 (왼쪽 위에서 빛) -->
@@ -1452,6 +1453,8 @@
                 <path d="M77 52.5 Q85 51 96 49" stroke="rgba(235,235,235,0.88)" stroke-width="0.95" fill="none" stroke-linecap="round"/>
                 <path d="M77 54 Q85 54 96.5 53.5" stroke="rgba(235,235,235,0.88)" stroke-width="0.95" fill="none" stroke-linecap="round"/>
                 <path d="M77 55.5 Q85 56.5 94.5 58" stroke="rgba(235,235,235,0.68)" stroke-width="0.95" fill="none" stroke-linecap="round"/>
+                <!-- ── 옷 오버레이 ── -->
+                <g id="cat-outfit-overlay"></g>
                 <!-- ── 모자 오버레이 ── -->
                 <g id="cat-hat-overlay"></g>
                 <!-- ── 악세서리 오버레이 ── -->
@@ -1608,6 +1611,7 @@
           <path class="gc-ck" d="M8.5 65 L11 67.5 L15.5 62.5" stroke="#fbbf24" stroke-width="1.8" fill="none" stroke-linecap="round" style="animation-delay:2s;opacity:0.35"/>
           <rect x="18" y="63" width="20" height="2" rx="1" fill="rgba(0,0,0,0.1)"/>
           <rect x="7" y="74" width="34" height="1.5" rx="0.8" fill="rgba(0,0,0,0.07)"/>
+          <g class="char-cat-elems">
           <!-- 몸통 -->
           <ellipse cx="83" cy="78" rx="30" ry="14" fill="url(#gc_b)" filter="url(#gc_s)"/>
           <ellipse cx="74" cy="72" rx="15" ry="6" fill="rgba(255,220,160,0.28)"/>
@@ -1653,6 +1657,8 @@
           <path d="M89 44 Q96 44 107 43.5" stroke="rgba(235,235,235,0.85)" stroke-width="0.85" fill="none"/>
           <g id="gc-hat-ov" transform="translate(23.4,-2.3) scale(0.852)"></g>
           <g id="gc-acc-ov" transform="translate(23.4,-2.3) scale(0.852)"></g>
+          </g>
+          <g class="char-bichon-elems" id="gc-bichon" style="display:none"></g>
         </svg>
       </div>
 
@@ -1693,6 +1699,7 @@
           <rect id="sc-b2" class="sc-bar" x="99" y="60" width="11" height="26" rx="2" fill="#82aaff"/>
           <!-- 바 3 (황) -->
           <rect id="sc-b3" class="sc-bar" x="113" y="73" width="11" height="13" rx="2" fill="#fbbf24"/>
+          <g class="char-cat-elems">
           <!-- 몸통 -->
           <ellipse cx="49" cy="78" rx="24" ry="13" fill="url(#sc_b)" filter="url(#sc_s)"/>
           <ellipse cx="41" cy="72" rx="13" ry="6" fill="rgba(255,220,160,0.28)"/>
@@ -1735,6 +1742,8 @@
           <path d="M55 42 Q61 42 71 41.5" stroke="rgba(235,235,235,0.85)" stroke-width="0.85" fill="none"/>
           <g id="sc-hat-ov" transform="translate(-5.5,-1) scale(0.778)"></g>
           <g id="sc-acc-ov" transform="translate(-5.5,-1) scale(0.778)"></g>
+          </g>
+          <g class="char-bichon-elems" id="sc-bichon" style="display:none"></g>
         </svg>
       </div>
       <div class="stats-grid">
@@ -1778,6 +1787,7 @@
           <rect x="75" y="75" width="14" height="9" rx="2" fill="rgba(255,255,255,0.06)"/>
           <rect x="91" y="75" width="14" height="9" rx="2" fill="rgba(255,255,255,0.06)"/>
           <rect x="107" y="75" width="11" height="9" rx="2" fill="rgba(255,255,255,0.06)"/>
+          <g class="char-cat-elems">
           <!-- 몸통 -->
           <ellipse cx="65" cy="53" rx="26" ry="10" fill="url(#wc_b)" filter="url(#wc_s)"/>
           <ellipse cx="57" cy="48" rx="14" ry="5.5" fill="rgba(255,220,160,0.28)"/>
@@ -1822,6 +1832,8 @@
           <path d="M71 38 Q77 38 87 37.5" stroke="rgba(235,235,235,0.85)" stroke-width="0.85" fill="none"/>
           <g id="wc-hat-ov" transform="translate(10.5,-5) scale(0.778)"></g>
           <g id="wc-acc-ov" transform="translate(10.5,-5) scale(0.778)"></g>
+          </g>
+          <g class="char-bichon-elems" id="wc-bichon" style="display:none"></g>
         </svg>
       </div>
       <div class="weekly-summary">
@@ -1881,6 +1893,7 @@
           <rect x="57" y="69" width="16" height="4" rx="1" fill="#c8900a"/>
           <!-- 1 -->
           <text x="65" y="67" text-anchor="middle" font-size="10" font-weight="900" fill="rgba(255,255,255,0.9)">1</text>
+          <g class="char-cat-elems">
           <!-- 몸통 -->
           <ellipse cx="65" cy="50" rx="26" ry="10" fill="url(#rc_b)" filter="url(#rc_s)"/>
           <ellipse cx="56" cy="44" rx="14" ry="5.5" fill="rgba(255,220,160,0.28)"/>
@@ -1917,6 +1930,8 @@
           <path d="M71 46 Q77 46 87 45.5" stroke="rgba(235,235,235,0.85)" stroke-width="0.85" fill="none"/>
           <g id="rc-hat-ov" transform="translate(10.5,3) scale(0.778)"></g>
           <g id="rc-acc-ov" transform="translate(10.5,3) scale(0.778)"></g>
+          </g>
+          <g class="char-bichon-elems" id="rc-bichon" style="display:none"></g>
         </svg>
       </div>
       <div style="text-align:center; padding:12px 20px; background:rgba(110,231,192,0.07);
@@ -1968,6 +1983,7 @@
             <circle cx="85" cy="70" r="4" fill="none" stroke="#8898b0" stroke-width="2.5"/>
             <circle cx="85" cy="70" r="2" fill="#253048"/>
           </g>
+          <g class="char-cat-elems">
           <!-- 오른발 (렌치 잡고) -->
           <ellipse cx="88" cy="82" rx="10" ry="5.5" fill="url(#ec_b)" filter="url(#ec_s)"/>
           <!-- 몸통 -->
@@ -2007,10 +2023,12 @@
           <path d="M64 44 Q70 44 80 43.5" stroke="rgba(235,235,235,0.85)" stroke-width="0.85" fill="none"/>
           <g id="ec-hat-ov" transform="translate(3.5,1) scale(0.778)"></g>
           <g id="ec-acc-ov" transform="translate(3.5,1) scale(0.778)"></g>
+          </g>
+          <g class="char-bichon-elems" id="ec-bichon" style="display:none"></g>
         </svg>
       </div>
       <div style="margin:0 0 16px;">
-        <button onclick="openCatCustomizer()" class="cust-open-btn">🐱 내 깜찍이 꾸미기</button>
+        <button onclick="typeof AvatarCustomizer!=='undefined'?AvatarCustomizer.open():openCatCustomizer()" class="av-open-btn">✨ 내 깜찍이 꾸미기</button>
       </div>
       <div class="detail-row">
         <span>🌓 다크 모드</span>
@@ -2091,6 +2109,7 @@
         <!-- 오른쪽 이어컵 -->
         <ellipse cx="94" cy="40" rx="8" ry="9" fill="#3a4860" filter="url(#cc_s)"/>
         <ellipse cx="94" cy="40" rx="5" ry="6" fill="#82aaff" opacity="0.6"/>
+        <g class="char-cat-elems">
         <!-- 몸통 -->
         <ellipse cx="65" cy="80" rx="28" ry="13" fill="url(#cc_b)" filter="url(#cc_s)"/>
         <ellipse cx="56" cy="74" rx="14" ry="6" fill="rgba(255,220,160,0.28)"/>
@@ -2129,6 +2148,8 @@
         <path d="M72 47 Q78 47 88 46.5" stroke="rgba(235,235,235,0.85)" stroke-width="0.85" fill="none"/>
         <g id="cc-hat-ov" transform="translate(8,1.3) scale(0.815)"></g>
         <g id="cc-acc-ov" transform="translate(8,1.3) scale(0.815)"></g>
+        </g>
+        <g class="char-bichon-elems" id="cc-bichon" style="display:none"></g>
       </svg>
     </div>
 
@@ -2339,6 +2360,7 @@
       </g>
       <!-- 책 가운데 바인딩 -->
       <rect x="62" y="60" width="6" height="34" rx="3" fill="#c8a878" filter="url(#mc_s)"/>
+      <g class="char-cat-elems">
       <!-- 왼발 (책 잡고) -->
       <ellipse cx="32" cy="66" rx="10" ry="5.5" fill="url(#mc_b)" filter="url(#mc_s)"/>
       <!-- 오른발 (책 잡고) -->
@@ -2379,6 +2401,8 @@
       <path d="M71 41 Q77 41 87 40.5" stroke="rgba(235,235,235,0.85)" stroke-width="0.85" fill="none"/>
       <g id="mc-hat-ov" transform="translate(8,-4.7) scale(0.815)"></g>
       <g id="mc-acc-ov" transform="translate(8,-4.7) scale(0.815)"></g>
+      </g>
+      <g class="char-bichon-elems" id="mc-bichon" style="display:none"></g>
     </svg>
   </div>
 
@@ -2855,6 +2879,10 @@
       loadTheme();
       loadCatConfig();
       applyCatConfig(window.catConfig);
+      if (typeof AvatarSystem !== 'undefined') {
+        AvatarSystem.load();
+        AvatarRenderer.applyAll(AvatarSystem.get());
+      }
       if (window.currentUser) {
   const input = document.getElementById('my-username');
   if (input) {
@@ -5439,107 +5467,32 @@ function updateStatusBadge(type) {
     // login() 함수 안에서 registerSocket() 호출하도록 기존 login 함수에 추가
   </script>
 
-  <!-- 깜찍이 꾸미기 모달 -->
-  <div id="cat-customizer-overlay" onclick="if(event.target===this)closeCatCustomizer()">
-    <div id="cat-customizer-modal">
-      <div class="cust-header">
-        <span>🐱 내 깜찍이 꾸미기</span>
-        <button class="cust-close-btn" onclick="closeCatCustomizer()">✕</button>
+  <!-- 깜찍이 꾸미기 모달 (new) -->
+  <div id="avatar-customizer-overlay" onclick="if(event.target===this)AvatarCustomizer.close()">
+    <div id="avatar-customizer-modal">
+      <div class="av-header">
+        <span class="av-title">✨ 내 깜찍이 꾸미기</span>
+        <button class="av-close-btn" onclick="AvatarCustomizer.close()">✕</button>
       </div>
-      <div class="cust-body">
-        <!-- 왼쪽: 미리보기 -->
-        <div class="cust-preview">
-          <div id="cat-preview-container" style="width:160px;height:122px;"></div>
-          <div class="cust-preview-label">✨ 실시간 미리보기</div>
+      <div class="av-char-selector">
+        <button class="av-char-tab active" data-av-char="cat" onclick="AvatarSystem.setCharacter('cat')">
+          <span class="av-char-emoji">🐱</span><span>CAT</span>
+        </button>
+        <button class="av-char-tab" data-av-char="bichon" onclick="AvatarSystem.setCharacter('bichon')">
+          <span class="av-char-emoji">🐶</span><span>BICHON</span>
+        </button>
+      </div>
+      <div class="av-body">
+        <div class="av-preview">
+          <div id="av-preview-container"></div>
+          <p class="av-preview-label">실시간 미리보기</p>
         </div>
-        <!-- 오른쪽: 옵션 -->
-        <div class="cust-options">
-          <!-- 몸 색상 -->
-          <div>
-            <div class="cust-group-title">🎨 몸 색상</div>
-            <div class="cust-color-row">
-              <div class="cust-chip" data-cust-key="bodyColor" data-cust-val="orange" title="주황"
-                style="background:linear-gradient(135deg,#ffc870,#c07030)"
-                onclick="updateCatOption('bodyColor','orange')"></div>
-              <div class="cust-chip" data-cust-key="bodyColor" data-cust-val="gray" title="회색"
-                style="background:linear-gradient(135deg,#e8e8f0,#606070)"
-                onclick="updateCatOption('bodyColor','gray')"></div>
-              <div class="cust-chip" data-cust-key="bodyColor" data-cust-val="cream" title="크림"
-                style="background:linear-gradient(135deg,#fff8e8,#d0a060)"
-                onclick="updateCatOption('bodyColor','cream')"></div>
-              <div class="cust-chip" data-cust-key="bodyColor" data-cust-val="brown" title="갈색"
-                style="background:linear-gradient(135deg,#c09050,#603010)"
-                onclick="updateCatOption('bodyColor','brown')"></div>
-              <div class="cust-chip" data-cust-key="bodyColor" data-cust-val="black" title="검정"
-                style="background:linear-gradient(135deg,#505060,#101018)"
-                onclick="updateCatOption('bodyColor','black')"></div>
-              <div class="cust-chip" data-cust-key="bodyColor" data-cust-val="white" title="흰색"
-                style="background:linear-gradient(135deg,#ffffff,#d0d0d8);outline:1px solid rgba(180,180,180,0.4)"
-                onclick="updateCatOption('bodyColor','white')"></div>
-            </div>
-          </div>
-          <!-- 귀 속 색상 -->
-          <div>
-            <div class="cust-group-title">👂 귀 속 색상</div>
-            <div class="cust-color-row">
-              <div class="cust-chip" data-cust-key="earColor" data-cust-val="pink" title="핑크"
-                style="background:linear-gradient(135deg,#ffd0dc,#f070a0)"
-                onclick="updateCatOption('earColor','pink')"></div>
-              <div class="cust-chip" data-cust-key="earColor" data-cust-val="mint" title="민트"
-                style="background:linear-gradient(135deg,#c0f0e0,#40c090)"
-                onclick="updateCatOption('earColor','mint')"></div>
-              <div class="cust-chip" data-cust-key="earColor" data-cust-val="lilac" title="라일락"
-                style="background:linear-gradient(135deg,#e8d0f8,#9060c8)"
-                onclick="updateCatOption('earColor','lilac')"></div>
-              <div class="cust-chip" data-cust-key="earColor" data-cust-val="coral" title="산호색"
-                style="background:linear-gradient(135deg,#ffd8c0,#f07050)"
-                onclick="updateCatOption('earColor','coral')"></div>
-            </div>
-          </div>
-          <!-- 모자 -->
-          <div>
-            <div class="cust-group-title">🎩 모자</div>
-            <div class="cust-card-row">
-              <div class="cust-card" data-cust-key="hat" data-cust-val="none"
-                onclick="updateCatOption('hat','none')"><span class="cust-icon">🚫</span>없음</div>
-              <div class="cust-card" data-cust-key="hat" data-cust-val="party"
-                onclick="updateCatOption('hat','party')"><span class="cust-icon">🎉</span>파티</div>
-              <div class="cust-card" data-cust-key="hat" data-cust-val="wizard"
-                onclick="updateCatOption('hat','wizard')"><span class="cust-icon">🧙</span>마법사</div>
-              <div class="cust-card" data-cust-key="hat" data-cust-val="crown"
-                onclick="updateCatOption('hat','crown')"><span class="cust-icon">👑</span>왕관</div>
-              <div class="cust-card" data-cust-key="hat" data-cust-val="santa"
-                onclick="updateCatOption('hat','santa')"><span class="cust-icon">🎅</span>산타</div>
-            </div>
-          </div>
-          <!-- 악세서리 -->
-          <div>
-            <div class="cust-group-title">✨ 악세서리</div>
-            <div class="cust-card-row">
-              <div class="cust-card" data-cust-key="accessory" data-cust-val="none"
-                onclick="updateCatOption('accessory','none')"><span class="cust-icon">🚫</span>없음</div>
-              <div class="cust-card" data-cust-key="accessory" data-cust-val="glasses"
-                onclick="updateCatOption('accessory','glasses')"><span class="cust-icon">👓</span>안경</div>
-              <div class="cust-card" data-cust-key="accessory" data-cust-val="ribbon"
-                onclick="updateCatOption('accessory','ribbon')"><span class="cust-icon">🎀</span>리본</div>
-            </div>
-          </div>
-          <!-- 표정 -->
-          <div>
-            <div class="cust-group-title">😊 표정</div>
-            <div class="cust-card-row">
-              <div class="cust-card" data-cust-key="expression" data-cust-val="happy"
-                onclick="updateCatOption('expression','happy')"><span class="cust-icon">😊</span>행복</div>
-              <div class="cust-card" data-cust-key="expression" data-cust-val="focused"
-                onclick="updateCatOption('expression','focused')"><span class="cust-icon">😤</span>집중</div>
-              <div class="cust-card" data-cust-key="expression" data-cust-val="wink"
-                onclick="updateCatOption('expression','wink')"><span class="cust-icon">😉</span>윙크</div>
-              <div class="cust-card" data-cust-key="expression" data-cust-val="sleepy"
-                onclick="updateCatOption('expression','sleepy')"><span class="cust-icon">😴</span>졸린</div>
-            </div>
-          </div>
-        </div>
+        <div class="av-options" id="av-options-panel"></div>
       </div>
     </div>
   </div>
+
+  <script src="{{ url_for('static', filename='js/avatar-system.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/avatar-renderer.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/avatar-customizer.js') }}"></script>
 </body>
