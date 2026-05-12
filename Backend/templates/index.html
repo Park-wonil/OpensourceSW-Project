@@ -659,6 +659,120 @@
       90%  { opacity: 0.2; }
       100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
     }
+
+    /* ── 깜찍이 꾸미기 모달 ── */
+    #cat-customizer-overlay {
+      display: none; position: fixed; inset: 0; z-index: 9998;
+      background: rgba(0,0,0,0.65); backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      align-items: center; justify-content: center;
+    }
+    #cat-customizer-overlay.open { display: flex; }
+    #cat-customizer-modal {
+      background: rgba(14,15,21,0.96); backdrop-filter: blur(32px);
+      -webkit-backdrop-filter: blur(32px);
+      border: 1px solid rgba(255,255,255,0.12); border-radius: 24px;
+      width: min(760px, 95vw); max-height: 90vh;
+      display: flex; flex-direction: column;
+      box-shadow: 0 16px 60px rgba(0,0,0,0.6); overflow: hidden;
+    }
+    body.light-mode #cat-customizer-modal {
+      background: rgba(255,255,255,0.97); border-color: rgba(0,0,0,0.08);
+      box-shadow: 0 16px 60px rgba(0,0,0,0.18);
+    }
+    .cust-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 24px; border-bottom: 1px solid rgba(255,255,255,0.08);
+      font-size: 18px; font-weight: 800; color: #f0f0f0;
+      font-family: 'DM Sans', sans-serif;
+    }
+    body.light-mode .cust-header { border-bottom-color: rgba(0,0,0,0.08); color: #1a1a2e; }
+    .cust-body { display: flex; flex: 1; overflow: hidden; min-height: 0; }
+    .cust-preview {
+      width: 200px; min-width: 200px; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; padding: 24px 16px;
+      border-right: 1px solid rgba(255,255,255,0.07);
+      background: rgba(255,255,255,0.03); gap: 10px;
+    }
+    body.light-mode .cust-preview {
+      border-right-color: rgba(0,0,0,0.07); background: rgba(0,0,0,0.02);
+    }
+    .cust-preview-label {
+      font-size: 11px; color: rgba(255,255,255,0.4); font-weight: 600; text-align: center;
+    }
+    body.light-mode .cust-preview-label { color: rgba(0,0,0,0.4); }
+    .cust-options {
+      flex: 1; overflow-y: auto; padding: 20px 24px;
+      display: flex; flex-direction: column; gap: 20px;
+      scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent;
+    }
+    .cust-group-title {
+      font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.45);
+      margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.8px;
+    }
+    body.light-mode .cust-group-title { color: rgba(0,0,0,0.4); }
+    .cust-color-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .cust-chip {
+      width: 34px; height: 34px; border-radius: 50%;
+      border: 3px solid transparent; cursor: pointer;
+      transition: transform 0.15s, border-color 0.15s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.35); flex-shrink: 0;
+    }
+    .cust-chip:hover { transform: scale(1.18) translateY(-1px); }
+    .cust-chip.selected {
+      border-color: var(--accent-green); transform: scale(1.1);
+      box-shadow: 0 0 0 2px rgba(110,231,192,0.3), 0 2px 8px rgba(0,0,0,0.35);
+    }
+    .cust-card-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .cust-card {
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      padding: 8px 12px; border-radius: 14px !important;
+      border: 2px solid rgba(255,255,255,0.08) !important;
+      background: rgba(255,255,255,0.04); cursor: pointer; transition: all 0.15s;
+      font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.5); min-width: 58px;
+    }
+    body.light-mode .cust-card {
+      border-color: rgba(0,0,0,0.08) !important; background: rgba(0,0,0,0.04);
+      color: rgba(0,0,0,0.45);
+    }
+    .cust-card:hover {
+      background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2) !important;
+      color: rgba(255,255,255,0.85); transform: translateY(-1px);
+    }
+    body.light-mode .cust-card:hover {
+      background: rgba(0,0,0,0.06); border-color: rgba(0,0,0,0.15) !important;
+      color: rgba(0,0,0,0.7);
+    }
+    .cust-card.selected {
+      border-color: var(--accent-green) !important;
+      background: rgba(110,231,192,0.1); color: var(--accent-green);
+    }
+    .cust-icon { font-size: 22px; line-height: 1; }
+    .cust-close-btn {
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1) !important;
+      border-radius: 10px !important; cursor: pointer; font-size: 16px;
+      color: rgba(255,255,255,0.5); padding: 6px 10px; transition: all 0.15s; line-height: 1;
+    }
+    .cust-close-btn:hover {
+      background: rgba(255,255,255,0.14); color: #fff; transform: none;
+    }
+    body.light-mode .cust-close-btn {
+      background: rgba(0,0,0,0.06); border-color: rgba(0,0,0,0.1) !important;
+      color: rgba(0,0,0,0.5);
+    }
+    .cust-open-btn {
+      display: flex; align-items: center; gap: 8px; padding: 12px 18px;
+      background: linear-gradient(135deg, rgba(110,231,192,0.15), rgba(96,180,255,0.1));
+      border: 1.5px solid rgba(110,231,192,0.3) !important;
+      border-radius: 14px !important; color: var(--accent-green);
+      font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+      width: 100%; justify-content: center; font-family: 'DM Sans', sans-serif;
+    }
+    .cust-open-btn:hover {
+      background: linear-gradient(135deg, rgba(110,231,192,0.22), rgba(96,180,255,0.16));
+      border-color: rgba(110,231,192,0.5) !important;
+      transform: translateY(-1px); box-shadow: 0 4px 16px rgba(110,231,192,0.2);
+    }
   </style>
 </head>
  <body>
@@ -1338,6 +1452,10 @@
                 <path d="M77 52.5 Q85 51 96 49" stroke="rgba(235,235,235,0.88)" stroke-width="0.95" fill="none" stroke-linecap="round"/>
                 <path d="M77 54 Q85 54 96.5 53.5" stroke="rgba(235,235,235,0.88)" stroke-width="0.95" fill="none" stroke-linecap="round"/>
                 <path d="M77 55.5 Q85 56.5 94.5 58" stroke="rgba(235,235,235,0.68)" stroke-width="0.95" fill="none" stroke-linecap="round"/>
+                <!-- ── 모자 오버레이 ── -->
+                <g id="cat-hat-overlay"></g>
+                <!-- ── 악세서리 오버레이 ── -->
+                <g id="cat-acc-overlay"></g>
               </svg>
             </div>
 
@@ -1871,6 +1989,9 @@
           <path d="M64 44 Q70 44 80 43.5" stroke="rgba(235,235,235,0.85)" stroke-width="0.85" fill="none"/>
         </svg>
       </div>
+      <div style="margin:0 0 16px;">
+        <button onclick="openCatCustomizer()" class="cust-open-btn">🐱 내 깜찍이 꾸미기</button>
+      </div>
       <div class="detail-row">
         <span>🌓 다크 모드</span>
         <label class="toggle-switch">
@@ -2351,6 +2472,203 @@
 </div> <!-- app-container 끝 -->
   </div> <!-- 🔥 app 끝 -->
   <script>
+    // ═══════════════════════════════════════════════════
+    // 🐱 깜찍이 꾸미기 시스템
+    // ═══════════════════════════════════════════════════
+    const CAT_BODY_COLORS = {
+      orange: { h:['#ffe0a0','#f4a460','#c07030'], b:['#ffc870','#f4a460','#b86820'], e:['#ffd898','#d08040'] },
+      gray:   { h:['#e8e8f0','#9898a8','#606070'], b:['#d8d8e4','#9898a8','#606070'], e:['#d8d8e8','#8888a0'] },
+      cream:  { h:['#fff8e8','#f0d8b0','#d0a060'], b:['#ffe8c0','#f0d8b0','#c09050'], e:['#ffe8cc','#d0a870'] },
+      brown:  { h:['#d4a060','#8b5a2b','#603010'], b:['#c09050','#8b5a2b','#603010'], e:['#c89060','#9b6030'] },
+      black:  { h:['#505060','#2a2a38','#101018'], b:['#404050','#282834','#101018'], e:['#484850','#202028'] },
+      white:  { h:['#ffffff','#f0f0f0','#d0d0d8'], b:['#ffffff','#f0f0f4','#d0d0d8'], e:['#fff5f5','#e8e0e0'] },
+    };
+    const CAT_EAR_COLORS = {
+      pink:  ['#ffd0dc','#f070a0'],
+      mint:  ['#c0f0e0','#40c090'],
+      lilac: ['#e8d0f8','#9060c8'],
+      coral: ['#ffd8c0','#f07050'],
+    };
+    const CAT_HAT_SVG = {
+      none: '',
+      party:  `<path d="M70 6 L52 29 L88 29Z" fill="#ff5090"/>
+               <path d="M63 8 L54 26 L59 26 L67 8Z" fill="#ffe050" opacity="0.82"/>
+               <path d="M75 8 L69 26 L74 26 L80 8Z" fill="#50c0ff" opacity="0.82"/>
+               <ellipse cx="70" cy="29" rx="19" ry="5" fill="#ff5090"/>
+               <circle cx="70" cy="4" r="5" fill="#ffe8a0"/>`,
+      wizard: `<path d="M70 4 L50 30 L90 30Z" fill="#2a1a80"/>
+               <ellipse cx="70" cy="30" rx="21" ry="5.5" fill="#3a28a0"/>
+               <polygon points="70,8 72,13 77,13 73,16 74.5,21 70,18 65.5,21 67,16 63,13 68,13" fill="#ffd700"/>`,
+      crown:  `<polygon points="53,29 53,11 62,19 70,8 78,19 87,11 87,29" fill="#ffd700"/>
+               <rect x="53" y="24" width="34" height="7" rx="2" fill="#e6b000"/>
+               <circle cx="70" cy="9.5" r="3.5" fill="#ff4060"/>
+               <circle cx="57" cy="17.5" r="2.5" fill="#60a8ff"/>
+               <circle cx="83" cy="17.5" r="2.5" fill="#60a8ff"/>`,
+      santa:  `<path d="M70 4 L51 31 L89 31Z" fill="#cc1010"/>
+               <ellipse cx="70" cy="31" rx="20" ry="5.5" fill="white"/>
+               <circle cx="70" cy="2" r="5.5" fill="white"/>`,
+    };
+    const CAT_ACC_SVG = {
+      none: '',
+      glasses: `<rect x="56" y="39" width="14" height="10" rx="5" fill="rgba(30,30,40,0.15)" stroke="#303848" stroke-width="2"/>
+                <rect x="70" y="39" width="14" height="10" rx="5" fill="rgba(30,30,40,0.15)" stroke="#303848" stroke-width="2"/>
+                <line x1="57" y1="44" x2="55" y2="42" stroke="#303848" stroke-width="1.8" stroke-linecap="round"/>
+                <line x1="84" y1="44" x2="86" y2="42" stroke="#303848" stroke-width="1.8" stroke-linecap="round"/>
+                <line x1="70" y1="44" x2="70" y2="44" stroke="#303848" stroke-width="2" stroke-linecap="round"/>`,
+      ribbon: `<path d="M83 20 Q89 14 92 21 Q89 28 83 22Z" fill="#ff4090"/>
+               <path d="M101 20 Q95 14 92 21 Q95 28 101 22Z" fill="#ff4090"/>
+               <circle cx="92" cy="21" r="4" fill="#ff80b8"/>`,
+    };
+    const CAT_EXPRESSION_SVG = {
+      happy: `<ellipse cx="63" cy="44" rx="5.8" ry="7" fill="#120a02"/>
+              <ellipse cx="77" cy="44" rx="5.8" ry="7" fill="#120a02"/>
+              <ellipse cx="63" cy="44" rx="4.2" ry="6" fill="#3c1e06"/>
+              <ellipse cx="77" cy="44" rx="4.2" ry="6" fill="#3c1e06"/>
+              <ellipse cx="63" cy="44" rx="2" ry="5.5" fill="#0a0402"/>
+              <ellipse cx="77" cy="44" rx="2" ry="5.5" fill="#0a0402"/>
+              <circle cx="65.5" cy="40.5" r="2.6" fill="white"/>
+              <circle cx="79.5" cy="40.5" r="2.6" fill="white"/>
+              <circle cx="60.5" cy="47" r="1.3" fill="white" opacity="0.55"/>
+              <circle cx="74.5" cy="47" r="1.3" fill="white" opacity="0.55"/>`,
+      focused: `<ellipse cx="63" cy="45" rx="5.8" ry="5" fill="#120a02"/>
+                <ellipse cx="77" cy="45" rx="5.8" ry="5" fill="#120a02"/>
+                <ellipse cx="63" cy="45" rx="4.2" ry="4" fill="#3c1e06"/>
+                <ellipse cx="77" cy="45" rx="4.2" ry="4" fill="#3c1e06"/>
+                <ellipse cx="63" cy="45" rx="2" ry="3.5" fill="#0a0402"/>
+                <ellipse cx="77" cy="45" rx="2" ry="3.5" fill="#0a0402"/>
+                <circle cx="65" cy="42" r="2" fill="white"/>
+                <circle cx="79" cy="42" r="2" fill="white"/>
+                <path d="M57 39 L69 42" stroke="#4a2808" stroke-width="2.2" stroke-linecap="round"/>
+                <path d="M71 42 L83 39" stroke="#4a2808" stroke-width="2.2" stroke-linecap="round"/>`,
+      wink: `<ellipse cx="63" cy="44" rx="5.8" ry="7" fill="#120a02"/>
+             <ellipse cx="63" cy="44" rx="4.2" ry="6" fill="#3c1e06"/>
+             <ellipse cx="63" cy="44" rx="2" ry="5.5" fill="#0a0402"/>
+             <circle cx="65.5" cy="40.5" r="2.6" fill="white"/>
+             <circle cx="60.5" cy="47" r="1.3" fill="white" opacity="0.55"/>
+             <path d="M71 44 Q77 51.5 83 44" stroke="#120a02" stroke-width="3.4" fill="none" stroke-linecap="round"/>`,
+      sleepy: `<path d="M57 46 Q63 38 69 46" fill="#120a02"/>
+               <path d="M71 46 Q77 38 83 46" fill="#120a02"/>
+               <path d="M58 46 Q63 40.5 68 46 Q63 42 58 46Z" fill="#3c1e06"/>
+               <path d="M72 46 Q77 40.5 82 46 Q77 42 72 46Z" fill="#3c1e06"/>
+               <circle cx="65" cy="43" r="1.8" fill="white" opacity="0.7"/>
+               <circle cx="79" cy="43" r="1.8" fill="white" opacity="0.7"/>`,
+    };
+
+    window.catConfig = { bodyColor:'orange', earColor:'pink', hat:'none', accessory:'none', expression:'happy' };
+
+    function loadCatConfig() {
+      try {
+        const s = JSON.parse(localStorage.getItem('catConfig') || 'null');
+        if (s) window.catConfig = Object.assign(window.catConfig, s);
+      } catch(e) {}
+    }
+    function saveCatConfig() {
+      localStorage.setItem('catConfig', JSON.stringify(window.catConfig));
+    }
+    function _setGradStops(id, colors) {
+      const g = document.getElementById(id);
+      if (!g) return;
+      const stops = g.querySelectorAll('stop');
+      colors.forEach((c, i) => { if (stops[i]) stops[i].setAttribute('stop-color', c); });
+    }
+    function applyCatConfig(cfg) {
+      const bc = CAT_BODY_COLORS[cfg.bodyColor] || CAT_BODY_COLORS.orange;
+      const ec = CAT_EAR_COLORS[cfg.earColor]   || CAT_EAR_COLORS.pink;
+      // 메인 고양이 그라디언트
+      _setGradStops('cHead', bc.h);
+      _setGradStops('cBody', bc.b);
+      _setGradStops('cEar',  bc.e);
+      _setGradStops('cInner', ec);
+      // 탭 고양이 그라디언트
+      ['gc','sc','wc','rc','cc','mc','ec'].forEach(p => {
+        _setGradStops(p+'_h',  bc.h);
+        _setGradStops(p+'_b',  bc.b);
+        _setGradStops(p+'_ie', ec);
+      });
+      // 모자 오버레이
+      const hatEl = document.getElementById('cat-hat-overlay');
+      if (hatEl) hatEl.innerHTML = CAT_HAT_SVG[cfg.hat] || '';
+      // 악세서리 오버레이
+      const accEl = document.getElementById('cat-acc-overlay');
+      if (accEl) accEl.innerHTML = CAT_ACC_SVG[cfg.accessory] || '';
+      // 표정 (눈)
+      const eyesEl = document.getElementById('cat-eyes-open');
+      if (eyesEl) eyesEl.innerHTML = CAT_EXPRESSION_SVG[cfg.expression] || CAT_EXPRESSION_SVG.happy;
+      // 모달 미리보기 갱신
+      _renderCustPreview(cfg);
+    }
+    function _buildPreviewSVG(cfg) {
+      const bc = CAT_BODY_COLORS[cfg.bodyColor] || CAT_BODY_COLORS.orange;
+      const ec = CAT_EAR_COLORS[cfg.earColor]   || CAT_EAR_COLORS.pink;
+      const expr = CAT_EXPRESSION_SVG[cfg.expression] || CAT_EXPRESSION_SVG.happy;
+      return `<svg viewBox="0 0 160 122" xmlns="http://www.w3.org/2000/svg" style="width:160px;height:122px;">
+        <defs>
+          <radialGradient id="pvh" cx="36%" cy="28%" r="66%">
+            <stop offset="0%" stop-color="${bc.h[0]}"/><stop offset="48%" stop-color="${bc.h[1]}"/><stop offset="100%" stop-color="${bc.h[2]}"/>
+          </radialGradient>
+          <radialGradient id="pvb" cx="38%" cy="26%" r="68%">
+            <stop offset="0%" stop-color="${bc.b[0]}"/><stop offset="52%" stop-color="${bc.b[1]}"/><stop offset="100%" stop-color="${bc.b[2]}"/>
+          </radialGradient>
+          <radialGradient id="pve" cx="38%" cy="32%" r="68%">
+            <stop offset="0%" stop-color="${bc.e[0]}"/><stop offset="100%" stop-color="${bc.e[1]}"/>
+          </radialGradient>
+          <radialGradient id="pvi" cx="40%" cy="38%" r="65%">
+            <stop offset="0%" stop-color="${ec[0]}"/><stop offset="100%" stop-color="${ec[1]}"/>
+          </radialGradient>
+          <linearGradient id="pvL" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#ccd8e0"/><stop offset="100%" stop-color="#7e96a8"/>
+          </linearGradient>
+          <filter id="pvf"><feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="rgba(0,0,0,0.28)"/></filter>
+        </defs>
+        <rect x="13" y="82" width="106" height="9" rx="4.5" fill="url(#pvL)" filter="url(#pvf)"/>
+        <rect x="13" y="48" width="106" height="38" rx="6.5" fill="url(#pvL)" filter="url(#pvf)"/>
+        <rect x="17" y="51" width="98" height="33" rx="4.5" fill="#0c1e3c"/>
+        <ellipse cx="70" cy="86" rx="40" ry="21" fill="url(#pvb)" filter="url(#pvf)"/>
+        <ellipse cx="44" cy="85" rx="13.5" ry="7.5" fill="url(#pvb)"/>
+        <ellipse cx="96" cy="85" rx="13.5" ry="7.5" fill="url(#pvb)"/>
+        <circle cx="70" cy="45" r="27" fill="url(#pvh)" filter="url(#pvf)"/>
+        <ellipse cx="58" cy="33" rx="14" ry="10" fill="rgba(255,235,180,0.38)"/>
+        <path d="M48 28 Q40 10 60 24 Q56 29 50 32Z" fill="url(#pve)"/>
+        <path d="M49 27 Q43 14 58 23 Q55 27 51 30Z" fill="url(#pvi)"/>
+        <path d="M92 28 Q100 10 80 24 Q84 29 90 32Z" fill="url(#pve)"/>
+        <path d="M91 27 Q97 14 82 23 Q85 27 89 30Z" fill="url(#pvi)"/>
+        <ellipse cx="56" cy="51" rx="8.5" ry="5.5" fill="#ff7070" opacity="0.2"/>
+        <ellipse cx="84" cy="51" rx="8.5" ry="5.5" fill="#ff7070" opacity="0.2"/>
+        <g>${expr}</g>
+        <path d="M67.5 51 L70 54 L72.5 51 Q70 49.5 67.5 51Z" fill="#e0507a"/>
+        <path d="M67.5 54.5 Q70 58.5 72.5 54.5" stroke="#b03060" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+        <path d="M44 49 Q55 51 63 52.5" stroke="rgba(235,235,235,0.88)" stroke-width="0.95" fill="none"/>
+        <path d="M43.5 53.5 Q55 54 63 54" stroke="rgba(235,235,235,0.88)" stroke-width="0.95" fill="none"/>
+        <path d="M77 52.5 Q85 51 96 49" stroke="rgba(235,235,235,0.88)" stroke-width="0.95" fill="none"/>
+        <path d="M77 54 Q85 54 96.5 53.5" stroke="rgba(235,235,235,0.88)" stroke-width="0.95" fill="none"/>
+        ${CAT_HAT_SVG[cfg.hat]||''}
+        ${CAT_ACC_SVG[cfg.accessory]||''}
+      </svg>`;
+    }
+    function _renderCustPreview(cfg) {
+      const el = document.getElementById('cat-preview-container');
+      if (el) el.innerHTML = _buildPreviewSVG(cfg);
+    }
+    function openCatCustomizer() {
+      const ov = document.getElementById('cat-customizer-overlay');
+      if (ov) { ov.classList.add('open'); _refreshCustUI(); _renderCustPreview(window.catConfig); }
+    }
+    function closeCatCustomizer() {
+      const ov = document.getElementById('cat-customizer-overlay');
+      if (ov) ov.classList.remove('open');
+    }
+    function updateCatOption(key, val) {
+      window.catConfig[key] = val;
+      saveCatConfig();
+      applyCatConfig(window.catConfig);
+      _refreshCustUI();
+    }
+    function _refreshCustUI() {
+      document.querySelectorAll('[data-cust-key]').forEach(el => {
+        el.classList.toggle('selected', window.catConfig[el.dataset.custKey] === el.dataset.custVal);
+      });
+    }
+
     // 전역 변수
     let monitoring = null;
     let seconds = 1500;
@@ -2487,6 +2805,8 @@
       setInterval(renderTodayDate, 60000);
       loadSubjects();
       loadTheme();
+      loadCatConfig();
+      applyCatConfig(window.catConfig);
       if (window.currentUser) {
   const input = document.getElementById('my-username');
   if (input) {
@@ -5070,4 +5390,108 @@ function updateStatusBadge(type) {
     // --- 로그인 완료 시 소켓 등록 연동 ---
     // login() 함수 안에서 registerSocket() 호출하도록 기존 login 함수에 추가
   </script>
+
+  <!-- 깜찍이 꾸미기 모달 -->
+  <div id="cat-customizer-overlay" onclick="if(event.target===this)closeCatCustomizer()">
+    <div id="cat-customizer-modal">
+      <div class="cust-header">
+        <span>🐱 내 깜찍이 꾸미기</span>
+        <button class="cust-close-btn" onclick="closeCatCustomizer()">✕</button>
+      </div>
+      <div class="cust-body">
+        <!-- 왼쪽: 미리보기 -->
+        <div class="cust-preview">
+          <div id="cat-preview-container" style="width:160px;height:122px;"></div>
+          <div class="cust-preview-label">✨ 실시간 미리보기</div>
+        </div>
+        <!-- 오른쪽: 옵션 -->
+        <div class="cust-options">
+          <!-- 몸 색상 -->
+          <div>
+            <div class="cust-group-title">🎨 몸 색상</div>
+            <div class="cust-color-row">
+              <div class="cust-chip" data-cust-key="bodyColor" data-cust-val="orange" title="주황"
+                style="background:linear-gradient(135deg,#ffc870,#c07030)"
+                onclick="updateCatOption('bodyColor','orange')"></div>
+              <div class="cust-chip" data-cust-key="bodyColor" data-cust-val="gray" title="회색"
+                style="background:linear-gradient(135deg,#e8e8f0,#606070)"
+                onclick="updateCatOption('bodyColor','gray')"></div>
+              <div class="cust-chip" data-cust-key="bodyColor" data-cust-val="cream" title="크림"
+                style="background:linear-gradient(135deg,#fff8e8,#d0a060)"
+                onclick="updateCatOption('bodyColor','cream')"></div>
+              <div class="cust-chip" data-cust-key="bodyColor" data-cust-val="brown" title="갈색"
+                style="background:linear-gradient(135deg,#c09050,#603010)"
+                onclick="updateCatOption('bodyColor','brown')"></div>
+              <div class="cust-chip" data-cust-key="bodyColor" data-cust-val="black" title="검정"
+                style="background:linear-gradient(135deg,#505060,#101018)"
+                onclick="updateCatOption('bodyColor','black')"></div>
+              <div class="cust-chip" data-cust-key="bodyColor" data-cust-val="white" title="흰색"
+                style="background:linear-gradient(135deg,#ffffff,#d0d0d8);outline:1px solid rgba(180,180,180,0.4)"
+                onclick="updateCatOption('bodyColor','white')"></div>
+            </div>
+          </div>
+          <!-- 귀 속 색상 -->
+          <div>
+            <div class="cust-group-title">👂 귀 속 색상</div>
+            <div class="cust-color-row">
+              <div class="cust-chip" data-cust-key="earColor" data-cust-val="pink" title="핑크"
+                style="background:linear-gradient(135deg,#ffd0dc,#f070a0)"
+                onclick="updateCatOption('earColor','pink')"></div>
+              <div class="cust-chip" data-cust-key="earColor" data-cust-val="mint" title="민트"
+                style="background:linear-gradient(135deg,#c0f0e0,#40c090)"
+                onclick="updateCatOption('earColor','mint')"></div>
+              <div class="cust-chip" data-cust-key="earColor" data-cust-val="lilac" title="라일락"
+                style="background:linear-gradient(135deg,#e8d0f8,#9060c8)"
+                onclick="updateCatOption('earColor','lilac')"></div>
+              <div class="cust-chip" data-cust-key="earColor" data-cust-val="coral" title="산호색"
+                style="background:linear-gradient(135deg,#ffd8c0,#f07050)"
+                onclick="updateCatOption('earColor','coral')"></div>
+            </div>
+          </div>
+          <!-- 모자 -->
+          <div>
+            <div class="cust-group-title">🎩 모자</div>
+            <div class="cust-card-row">
+              <div class="cust-card" data-cust-key="hat" data-cust-val="none"
+                onclick="updateCatOption('hat','none')"><span class="cust-icon">🚫</span>없음</div>
+              <div class="cust-card" data-cust-key="hat" data-cust-val="party"
+                onclick="updateCatOption('hat','party')"><span class="cust-icon">🎉</span>파티</div>
+              <div class="cust-card" data-cust-key="hat" data-cust-val="wizard"
+                onclick="updateCatOption('hat','wizard')"><span class="cust-icon">🧙</span>마법사</div>
+              <div class="cust-card" data-cust-key="hat" data-cust-val="crown"
+                onclick="updateCatOption('hat','crown')"><span class="cust-icon">👑</span>왕관</div>
+              <div class="cust-card" data-cust-key="hat" data-cust-val="santa"
+                onclick="updateCatOption('hat','santa')"><span class="cust-icon">🎅</span>산타</div>
+            </div>
+          </div>
+          <!-- 악세서리 -->
+          <div>
+            <div class="cust-group-title">✨ 악세서리</div>
+            <div class="cust-card-row">
+              <div class="cust-card" data-cust-key="accessory" data-cust-val="none"
+                onclick="updateCatOption('accessory','none')"><span class="cust-icon">🚫</span>없음</div>
+              <div class="cust-card" data-cust-key="accessory" data-cust-val="glasses"
+                onclick="updateCatOption('accessory','glasses')"><span class="cust-icon">👓</span>안경</div>
+              <div class="cust-card" data-cust-key="accessory" data-cust-val="ribbon"
+                onclick="updateCatOption('accessory','ribbon')"><span class="cust-icon">🎀</span>리본</div>
+            </div>
+          </div>
+          <!-- 표정 -->
+          <div>
+            <div class="cust-group-title">😊 표정</div>
+            <div class="cust-card-row">
+              <div class="cust-card" data-cust-key="expression" data-cust-val="happy"
+                onclick="updateCatOption('expression','happy')"><span class="cust-icon">😊</span>행복</div>
+              <div class="cust-card" data-cust-key="expression" data-cust-val="focused"
+                onclick="updateCatOption('expression','focused')"><span class="cust-icon">😤</span>집중</div>
+              <div class="cust-card" data-cust-key="expression" data-cust-val="wink"
+                onclick="updateCatOption('expression','wink')"><span class="cust-icon">😉</span>윙크</div>
+              <div class="cust-card" data-cust-key="expression" data-cust-val="sleepy"
+                onclick="updateCatOption('expression','sleepy')"><span class="cust-icon">😴</span>졸린</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
