@@ -27,12 +27,18 @@ latest_frame = None
 latest_data = {"error": "camera off"}
 lock = threading.Lock()
 
-# --- Mediapipe 초기화 ---
+# --- Mediapipe 초기화 (카메라 시작 후 lazy loading) ---
 mp_face_mesh = mp.solutions.face_mesh
-face_mesh = mp_face_mesh.FaceMesh(
-    max_num_faces=1,
-    refine_landmarks=True
-)
+face_mesh = None
+
+def _get_face_mesh():
+    global face_mesh
+    if face_mesh is None:
+        face_mesh = mp_face_mesh.FaceMesh(
+            max_num_faces=1,
+            refine_landmarks=True
+        )
+    return face_mesh
 
 def calculate_ear(landmarks, eye_indices, w, h):
     points = []
@@ -98,6 +104,8 @@ def _capture_loop():
     last_save_time = 0
 
     while is_running:
+        face_mesh_model = _get_face_mesh()
+
         if cap is None or not cap.isOpened():
             time.sleep(0.1)
             continue
@@ -109,7 +117,7 @@ def _capture_loop():
 
         h, w, _ = frame.shape
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        results = face_mesh.process(rgb)
+        results = face_mesh_model.process(rgb)
 
         # 거북목 감지 (같은 rgb 프레임 재사용 - 추가 변환 없음)
         neck_data = neck_detector.update(rgb)
