@@ -1592,6 +1592,9 @@
                 <!-- ── 옷 오버레이 (몸 위, 머리 아래) ── -->
                 <g id="cat-outfit-overlay"></g>
 
+                <!-- ── 목 (머리-몸통 연결) ── -->
+                <ellipse cx="70" cy="73" rx="14" ry="7" fill="url(#cBody)"/>
+
                 <!-- ── 머리 ── -->
                 <circle cx="70" cy="45" r="27" fill="url(#cHead)" filter="url(#cDrop)"/>
                 <!-- 구체 하이라이트 (왼쪽 위) -->
@@ -2010,6 +2013,7 @@
           <ellipse cx="48" cy="55" rx="10" ry="5.5" fill="url(#wc_b)" filter="url(#wc_s)"/>
           <!-- 오른발 -->
           <ellipse cx="82" cy="55" rx="10" ry="5.5" fill="url(#wc_b)" filter="url(#wc_s)"/>
+          <g id="wc-outfit-ov" transform=""></g>
           <!-- 머리 -->
           <circle cx="65" cy="30" r="21" fill="url(#wc_h)" filter="url(#wc_s)"/>
           <ellipse cx="56" cy="21" rx="11" ry="8" fill="rgba(255,235,180,0.36)"/>
@@ -6071,10 +6075,10 @@ function updateStatusBadge(type) {
       const expr   = AV_BICHON_EXPR[cust.expression]||AV_BICHON_EXPR.happy;
       return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 122" width="160" height="122">'+
         '<defs>'+
-          '<radialGradient id="bHead" cx="35%" cy="35%" r="65%">'+
-            '<stop offset="0%" style="stop-color:'+c0+'"/>'+
-            '<stop offset="55%" style="stop-color:'+c1+'"/>'+
-            '<stop offset="100%" style="stop-color:'+c2+'"/>'+
+          '<radialGradient id="bHead" gradientUnits="userSpaceOnUse" cx="50" cy="15" r="95">'+
+            '<stop offset="0%" stop-color="'+c0+'"/>'+
+            '<stop offset="55%" stop-color="'+c1+'"/>'+
+            '<stop offset="100%" stop-color="'+c2+'"/>'+
           '</radialGradient>'+
           '<linearGradient id="bLap" x1="0" y1="0" x2="0" y2="1">'+
             '<stop offset="0%" stop-color="#ccd8e0"/><stop offset="100%" stop-color="#7e96a8"/>'+
@@ -6144,63 +6148,63 @@ function updateStatusBadge(type) {
       if (charId==='bichon') {
         const coat = AV_BICHON_COAT[cust.coatColor]||AV_BICHON_COAT.white;
         const [c0,c1,c2] = coat.h;
-        const hat  = AV_HAT_SVG[cust.hat]||'';
-        const hatSVG = hat ? '<g transform="translate(-7,5) scale(1.1)">'+hat+'</g>' : '';
-        const acc  = AV_ACC_SVG[cust.accessory]||'';
+        const expr   = AV_BICHON_EXPR[cust.expression]||AV_BICHON_EXPR.happy;
+        const hat    = AV_HAT_SVG[cust.hat]||'';
+        const acc    = AV_ACC_SVG[cust.accessory]||'';
         const outfit = AV_OUTFIT_SVG[cust.outfit]||'';
-        const outfitSVG = outfit ? '<g transform="translate(0,28)">'+outfit+'</g>' : '';
-        const expr = AV_BICHON_EXPR[cust.expression]||AV_BICHON_EXPR.happy;
-        return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 140" width="140" height="140">'+
-          '<defs><radialGradient id="'+p+'bh" cx="35%" cy="35%" r="65%">'+
-          '<stop offset="0%" style="stop-color:'+c0+'"/><stop offset="55%" style="stop-color:'+c1+'"/><stop offset="100%" style="stop-color:'+c2+'"/>'+
+        return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 122" width="140" height="140">'+
+          '<defs><radialGradient id="'+p+'bh" gradientUnits="userSpaceOnUse" cx="50" cy="15" r="95">'+
+          '<stop offset="0%" stop-color="'+c0+'"/><stop offset="55%" stop-color="'+c1+'"/><stop offset="100%" stop-color="'+c2+'"/>'+
           '</radialGradient></defs>'+
-          '<ellipse cx="70" cy="115" rx="30" ry="14" fill="url(#'+p+'bh)"/>'+
-          outfitSVG+
-          '<ellipse cx="50" cy="108" rx="12" ry="18" fill="url(#'+p+'bh)"/>'+
-          '<ellipse cx="90" cy="108" rx="12" ry="18" fill="url(#'+p+'bh)"/>'+
-          '<circle cx="51" cy="30" r="17" fill="url(#'+p+'bh)"/>'+
-          '<circle cx="89" cy="30" r="17" fill="url(#'+p+'bh)"/>'+
-          '<circle cx="70" cy="58" r="30" fill="url(#'+p+'bh)"/>'+
-          '<circle cx="42" cy="63" r="15" fill="url(#'+p+'bh)"/>'+
-          '<circle cx="98" cy="63" r="15" fill="url(#'+p+'bh)"/>'+
-          '<circle cx="70" cy="54" r="25" fill="url(#'+p+'bh)"/>'+
-          '<ellipse cx="57" cy="62" rx="7" ry="4" fill="#ffb0c8" opacity="0.38"/>'+
-          '<ellipse cx="83" cy="62" rx="7" ry="4" fill="#ffb0c8" opacity="0.38"/>'+
+          '<ellipse cx="70" cy="86" rx="38" ry="19" fill="url(#'+p+'bh)"/>'+
+          '<ellipse cx="44" cy="84" rx="14" ry="8" fill="url(#'+p+'bh)"/>'+
+          '<ellipse cx="96" cy="84" rx="14" ry="8" fill="url(#'+p+'bh)"/>'+
+          outfit+
+          '<circle cx="51" cy="24" r="15" fill="url(#'+p+'bh)"/>'+
+          '<circle cx="89" cy="24" r="15" fill="url(#'+p+'bh)"/>'+
+          '<circle cx="70" cy="48" r="28" fill="url(#'+p+'bh)"/>'+
+          '<circle cx="44" cy="52" r="13" fill="url(#'+p+'bh)"/>'+
+          '<circle cx="96" cy="52" r="13" fill="url(#'+p+'bh)"/>'+
+          '<circle cx="70" cy="44" r="23" fill="url(#'+p+'bh)"/>'+
+          '<ellipse cx="57" cy="52" rx="6" ry="3.5" fill="#ffb0c8" opacity="0.38"/>'+
+          '<ellipse cx="83" cy="52" rx="6" ry="3.5" fill="#ffb0c8" opacity="0.38"/>'+
           expr+
-          '<ellipse cx="70" cy="63" rx="3.5" ry="2.5" fill="#b06080"/>'+
-          '<path d="M70 65.5 Q64 69 60 66" stroke="#a05070" stroke-width="1.4" fill="none" stroke-linecap="round"/>'+
-          '<path d="M70 65.5 Q76 69 80 66" stroke="#a05070" stroke-width="1.4" fill="none" stroke-linecap="round"/>'+
-          hatSVG + acc + '</svg>';
+          '<ellipse cx="70" cy="53" rx="3.5" ry="2.5" fill="#b06080"/>'+
+          '<circle cx="68.6" cy="52.3" r="0.9" fill="rgba(255,255,255,0.55)"/>'+
+          '<path d="M70 55.5 Q64 59 60 56" stroke="#a05070" stroke-width="1.4" fill="none" stroke-linecap="round"/>'+
+          '<path d="M70 55.5 Q76 59 80 56" stroke="#a05070" stroke-width="1.4" fill="none" stroke-linecap="round"/>'+
+          hat+acc+'</svg>';
       }
       const body = AV_CAT_BODY[cust.bodyColor]||AV_CAT_BODY.orange;
       const ear  = AV_CAT_EAR[cust.earColor]||AV_CAT_EAR.pink;
       const [c0,c1,c2] = body.h, [b0,b1,b2] = body.b, [e0,e1] = body.e;
-      const expr = AV_CAT_EXPR[cust.expression]||AV_CAT_EXPR.happy;
-      const hat  = AV_HAT_SVG[cust.hat]||'';
-      const hatSVG = hat ? '<g transform="translate(-7,5) scale(1.1)">'+hat+'</g>' : '';
-      const acc  = AV_ACC_SVG[cust.accessory]||'';
+      const expr   = AV_CAT_EXPR[cust.expression]||AV_CAT_EXPR.happy;
+      const hat    = AV_HAT_SVG[cust.hat]||'';
+      const acc    = AV_ACC_SVG[cust.accessory]||'';
       const outfit = AV_OUTFIT_SVG[cust.outfit]||'';
-      const outfitSVG = outfit ? '<g transform="translate(0,20)">'+outfit+'</g>' : '';
-      return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 140" width="140" height="140">'+
+      return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 122" width="140" height="140">'+
         '<defs>'+
-        '<radialGradient id="'+p+'Head" cx="35%" cy="35%" r="65%"><stop offset="0%" style="stop-color:'+c0+'"/><stop offset="55%" style="stop-color:'+c1+'"/><stop offset="100%" style="stop-color:'+c2+'"/></radialGradient>'+
-        '<radialGradient id="'+p+'Body" cx="35%" cy="30%" r="65%"><stop offset="0%" style="stop-color:'+b0+'"/><stop offset="55%" style="stop-color:'+b1+'"/><stop offset="100%" style="stop-color:'+b2+'"/></radialGradient>'+
-        '<radialGradient id="'+p+'Ear" cx="50%" cy="50%" r="60%"><stop offset="0%" style="stop-color:'+e0+'"/><stop offset="100%" style="stop-color:'+e1+'"/></radialGradient>'+
-        '<radialGradient id="'+p+'Inn" cx="40%" cy="38%" r="65%"><stop offset="0%" style="stop-color:'+ear[0]+'"/><stop offset="100%" style="stop-color:'+ear[1]+'"/></radialGradient>'+
+        '<radialGradient id="'+p+'H" cx="35%" cy="35%" r="65%"><stop offset="0%" stop-color="'+c0+'"/><stop offset="55%" stop-color="'+c1+'"/><stop offset="100%" stop-color="'+c2+'"/></radialGradient>'+
+        '<radialGradient id="'+p+'B" cx="35%" cy="30%" r="65%"><stop offset="0%" stop-color="'+b0+'"/><stop offset="55%" stop-color="'+b1+'"/><stop offset="100%" stop-color="'+b2+'"/></radialGradient>'+
+        '<radialGradient id="'+p+'E" cx="50%" cy="50%" r="60%"><stop offset="0%" stop-color="'+e0+'"/><stop offset="100%" stop-color="'+e1+'"/></radialGradient>'+
+        '<radialGradient id="'+p+'I" cx="40%" cy="38%" r="65%"><stop offset="0%" stop-color="'+ear[0]+'"/><stop offset="100%" stop-color="'+ear[1]+'"/></radialGradient>'+
         '</defs>'+
-        '<ellipse cx="70" cy="115" rx="32" ry="13" fill="url(#'+p+'Body)"/>'+
-        outfitSVG+
-        '<ellipse cx="52" cy="105" rx="11" ry="18" fill="url(#'+p+'Body)"/>'+
-        '<ellipse cx="88" cy="105" rx="11" ry="18" fill="url(#'+p+'Body)"/>'+
-        '<g transform="translate(0,-3)">'+
-        '<polygon points="48,42 40,20 62,34" fill="url(#'+p+'Head)"/>'+
-        '<polygon points="92,42 100,20 78,34" fill="url(#'+p+'Head)"/>'+
-        '<polygon points="50,41 43,25 60,35" fill="url(#'+p+'Ear)"/>'+
-        '<polygon points="90,41 97,25 80,35" fill="url(#'+p+'Ear)"/>'+
-        '<circle cx="70" cy="62" r="30" fill="url(#'+p+'Head)"/>'+
-        expr+hatSVG+(acc?'<g transform="translate(0,5)">'+acc+'</g>':'')+
-        '</g>'+
-        '</svg>';
+        '<ellipse cx="70" cy="86" rx="32" ry="16" fill="url(#'+p+'B)"/>'+
+        '<ellipse cx="44" cy="84" rx="13.5" ry="7.5" fill="url(#'+p+'B)"/>'+
+        '<ellipse cx="96" cy="85" rx="13.5" ry="7.5" fill="url(#'+p+'B)"/>'+
+        outfit+
+        '<ellipse cx="70" cy="73" rx="14" ry="7" fill="url(#'+p+'B)"/>'+
+        '<path d="M48 28 Q40 10 60 24 Q56 29 50 32Z" fill="url(#'+p+'E)"/>'+
+        '<path d="M92 28 Q100 10 80 24 Q84 29 90 32Z" fill="url(#'+p+'E)"/>'+
+        '<path d="M49 27 Q43 14 58 23 Q55 27 51 30Z" fill="url(#'+p+'I)"/>'+
+        '<path d="M91 27 Q97 14 82 23 Q85 27 89 30Z" fill="url(#'+p+'I)"/>'+
+        '<circle cx="70" cy="45" r="27" fill="url(#'+p+'H)"/>'+
+        '<ellipse cx="56" cy="51" rx="8.5" ry="5.5" fill="#ff7070" opacity="0.2"/>'+
+        '<ellipse cx="84" cy="51" rx="8.5" ry="5.5" fill="#ff7070" opacity="0.2"/>'+
+        expr+
+        '<path d="M67.5 51 L70 54 L72.5 51 Q70 49.5 67.5 51Z" fill="#e0507a"/>'+
+        '<path d="M67.5 54.5 Q70 58.5 72.5 54.5" stroke="#b03060" stroke-width="1.6" fill="none" stroke-linecap="round"/>'+
+        hat+acc+'</svg>';
     }
     function _applyCatColors(state) {
       const cust = state.customization.cat;
@@ -6227,17 +6231,21 @@ function updateStatusBadge(type) {
       const raw = AV_HAT_SVG[hat]||'';
       const mh = document.getElementById('cat-hat-overlay'); if (mh) mh.innerHTML = raw;
       Object.keys(AV_TAB_POS).forEach(p => {
+        const pos = AV_TAB_POS[p];
         const g = document.getElementById(p+'-hat-ov'); if (!g) return;
-        g.innerHTML = raw; // 탭 <g>에 transform이 이미 있으므로 raw content만 삽입
+        g.setAttribute('transform','translate('+pos.hatTx+','+pos.hatTy+') scale('+pos.hatS+')');
+        g.innerHTML = raw;
       });
     }
     function _applyCatAcc(state) {
       const acc = state.customization.cat.accessory||'none';
-      const raw = AV_ACC_SVG[acc]||'';
-      const ma = document.getElementById('cat-acc-overlay'); if (ma) ma.innerHTML = raw;
+      const ma = document.getElementById('cat-acc-overlay'); if (ma) ma.innerHTML = AV_ACC_SVG[acc]||'';
       Object.keys(AV_TAB_POS).forEach(p => {
+        const pos = AV_TAB_POS[p];
         const g = document.getElementById(p+'-acc-ov'); if (!g) return;
-        g.innerHTML = raw;
+        const s=pos.r/27, tx=(pos.cx-70*s).toFixed(2), ty=(pos.cy-45*s).toFixed(2);
+        g.setAttribute('transform','translate('+tx+','+ty+') scale('+s+')');
+        g.innerHTML = AV_ACC_SVG[acc]||'';
       });
     }
     function _applyCatOutfit(state) {
@@ -6245,8 +6253,10 @@ function updateStatusBadge(type) {
       const raw = AV_OUTFIT_SVG[outfit]||'';
       const mo = document.getElementById('cat-outfit-overlay'); if (mo) mo.innerHTML = raw;
       Object.keys(AV_TAB_POS).forEach(p => {
-        if (p === 'rc') return;
+        const pos = AV_TAB_POS[p];
         const g = document.getElementById(p+'-outfit-ov'); if (!g) return;
+        const s=pos.r/27, tx=(pos.cx-70*s).toFixed(2), ty=(pos.cy-45*s).toFixed(2);
+        g.setAttribute('transform','translate('+tx+','+ty+') scale('+s+')');
         g.innerHTML = raw;
       });
     }
