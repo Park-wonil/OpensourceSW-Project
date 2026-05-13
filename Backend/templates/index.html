@@ -601,6 +601,14 @@
       background: rgba(110,231,192,0.1); border-radius: 20px;
       border: 1px solid rgba(110,231,192,0.2);
     }
+    #nav-level-badge {
+      display: none; font-size: 12px; font-weight: 800;
+      color: #fff; padding: 5px 12px; border-radius: 20px;
+      background: linear-gradient(135deg, #fbbf24, #f97316);
+      box-shadow: 0 2px 10px rgba(251,191,36,0.45);
+      letter-spacing: 0.4px; cursor: default; white-space: nowrap;
+      flex-shrink: 0;
+    }
 
     #toast {
       font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
@@ -852,6 +860,19 @@
     .av-card-emoji { font-size: 20px; line-height: 1; }
     .av-card-label { font-size: 10px; color: #94a3b8; letter-spacing: 0.2px; }
     .av-card.selected .av-card-label { color: #4ade80; }
+    .av-card-locked {
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      padding: 8px 10px; border-radius: 10px; min-width: 60px;
+      border: 1.5px dashed rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.015); cursor: not-allowed; opacity: 0.52;
+    }
+    .av-card-lock { font-size: 9px; color: #f87171; font-weight: 700; letter-spacing: 0.2px; line-height: 1.2; }
+    .av-level-badge {
+      margin-left: auto; padding: 3px 12px; border-radius: 20px;
+      background: linear-gradient(135deg,#fbbf24,#f97316);
+      color: white; font-size: 11px; font-weight: 800; letter-spacing: 0.5px;
+      box-shadow: 0 2px 8px rgba(251,191,36,0.35); cursor: default;
+    }
     .av-open-btn {
       display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px;
       background: linear-gradient(135deg,#1e293b,#0f172a);
@@ -881,6 +902,8 @@
     body.light-mode .av-card.selected .av-card-label { color: #16a34a; }
     body.light-mode .av-open-btn { background: linear-gradient(135deg,#f8fafc,#f1f5f9); border-color: rgba(22,163,74,0.4); color: #16a34a; }
     body.light-mode .av-open-btn:hover { background: rgba(22,163,74,0.08); border-color: #16a34a; box-shadow: 0 0 12px rgba(22,163,74,0.15); }
+    body.light-mode .av-card-locked { border-color: rgba(0,0,0,0.1); background: rgba(0,0,0,0.015); }
+    body.light-mode .av-card-lock { color: #ef4444; }
     @media (max-width: 600px) {
       #avatar-customizer-modal { border-radius: 16px 16px 0 0; align-self: flex-end; width: 100%; max-height: 85vh; }
       #avatar-customizer-overlay { align-items: flex-end; }
@@ -1008,6 +1031,7 @@
       <button class="nav-tab" onclick="showSection('community', this)">커뮤니티</button>
       <button class="nav-tab" onclick="showSection('settings', this)">설정</button>
       <span id="username-display"></span>
+      <span id="nav-level-badge"></span>
     </nav>
 
     <!-- 대시보드 -->
@@ -1295,7 +1319,7 @@
               <input type="text" id="ai-chat-input"
                 placeholder="깜찍이에게 공부 질문하기... (Enter로 전송)"
                 maxlength="500"
-                onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAiMessage();}"
+                onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();sendAiMessage();}"
                 style="flex:1; padding:9px 13px; border-radius:12px; font-size:13px;">
               <button onclick="sendAiMessage()" id="ai-send-btn"
                 style="padding:9px 16px; background:linear-gradient(135deg,#ff80b5,#ffe08a); color:#111;
@@ -2275,27 +2299,19 @@
         </div>
       </div>
 
-      <!-- 깜찍이 OpenAI API 키 설정 -->
-      <div class="detail-row" style="flex-direction:column; align-items:flex-start; gap:10px;">
-        <span>깜찍이 API 키</span>
-        <div style="display:flex; gap:8px; width:100%; flex-wrap:wrap;">
-          <input type="password" id="openai-key-input"
-            placeholder="sk-... (OpenAI API Key)"
-            maxlength="200"
-            style="flex:1; min-width:180px; font-size:13px;">
-          <button onclick="saveApiKey()"
-            style="padding:10px 18px; background:var(--accent-green); color:#111;
-            border:none; border-radius:10px; font-weight:700; cursor:pointer; flex-shrink:0;">저장</button>
-          <button onclick="clearApiKey()"
-            style="padding:10px 14px; background:rgba(240,99,99,0.15); color:var(--accent-red);
-            border:1px solid var(--accent-red); border-radius:10px; font-weight:700; cursor:pointer; flex-shrink:0;">삭제</button>
+      <!-- 깜찍이 AI 상태 -->
+      <div class="detail-row" style="flex-direction:column; align-items:flex-start; gap:8px;">
+        <span>깜찍이 AI</span>
+        <div id="ai-status-badge" style="font-size:13px; font-weight:700; padding:8px 14px;
+          background:rgba(110,231,192,0.1); border:1px solid rgba(110,231,192,0.25);
+          border-radius:12px; color:var(--accent-green);">
+          ⏳ 서버 연결 확인 중...
         </div>
-        <div id="api-key-saved-msg" style="display:none; font-size:12px; color:var(--accent-green); font-weight:700;">
-          API 키가 저장되었습니다. 깜찍이에게 질문할 수 있어요!
-        </div>
-        <div style="font-size:11px; color:var(--text-sub); line-height:1.6;">
-          ⚠️ API 키는 브라우저 로컬 저장소에만 저장됩니다.<br>
-          OpenAI 계정에서 발급: <span style="color:var(--accent-green);">platform.openai.com/api-keys</span>
+        <div style="font-size:11px; color:var(--text-sub); line-height:1.7;">
+          Groq (Llama 3.1) 또는 Gemini 모델 사용 — 무료<br>
+          프로젝트 루트 <code style="font-size:11px;">.env</code> 파일에 키 설정:<br>
+          &nbsp;• Groq (추천): <span style="color:var(--accent-green);">console.groq.com</span> → API Keys<br>
+          &nbsp;• Gemini: <span style="color:var(--accent-green);">aistudio.google.com</span> → Get API Key
         </div>
       </div>
     </div>
@@ -2518,7 +2534,7 @@
         </div>
         <div style="display:flex; gap:8px; flex-shrink:0;">
           <input type="text" id="room-chat-input" placeholder="메시지를 입력하세요..." maxlength="200"
-            onkeydown="if(event.key==='Enter') sendRoomChat()"
+            onkeydown="if(event.key==='Enter'&&!event.isComposing) sendRoomChat()"
             style="flex:1; padding:13px 18px; border-radius:12px;
             border:1.5px solid rgba(255,255,255,0.1); background:var(--stats-bg);
             color:var(--text-main); font-size:14px;">
@@ -3310,6 +3326,8 @@
           // username-display 초기화
           const nameEl = document.getElementById('username-display');
           if (nameEl) nameEl.innerText = '';
+          const lvBadge = document.getElementById('nav-level-badge');
+          if (lvBadge) lvBadge.style.display = 'none';
         });
     }
 
@@ -4068,62 +4086,41 @@
       const text = input.value.trim();
       if (!text) return;
 
-      const apiKey = localStorage.getItem('openai_api_key');
-      if (!apiKey) {
-        showToastMsg('설정 탭에서 API 키를 먼저 입력하면 깜찍이를 사용할 수 있어요.');
-        return;
-      }
-
       input.value = '';
       btn.disabled = true;
       btn.style.opacity = '0.5';
 
       appendAiMsg('user', text);
 
-      // 현재 과목을 시스템 프롬프트에 반영
       const subject = document.getElementById('cat-subject-name')?.textContent || '';
-      const systemMsg = subject
-        ? `당신의 이름은 "깜찍이"입니다. 사용자의 공부를 돕는 밝고 다정한 AI 튜터입니다. 현재 사용자는 "${subject}" 과목을 공부 중입니다. 답변은 한국어로 하고, 핵심을 먼저 말한 뒤 필요한 경우 단계별 풀이와 암기 팁을 제시하세요. 귀여운 말투는 과하지 않게 사용하고, 정확성과 이해하기 쉬운 설명을 최우선으로 하세요.`
-        : '당신의 이름은 "깜찍이"입니다. 사용자의 공부를 돕는 밝고 다정한 AI 튜터입니다. 답변은 한국어로 하고, 핵심을 먼저 말한 뒤 필요한 경우 단계별 풀이와 암기 팁을 제시하세요. 귀여운 말투는 과하지 않게 사용하고, 정확성과 이해하기 쉬운 설명을 최우선으로 하세요.';
-
       aiHistory.push({ role: 'user', content: text });
 
       const typingEl = appendAiTyping();
 
       try {
-        const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        const res = await fetch('/ai/chat', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + apiKey,
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            model: 'gpt-4o-mini',
-            messages: [
-              { role: 'system', content: systemMsg },
-              ...aiHistory.slice(-10), // 최근 10개만
-            ],
-            max_tokens: 800,
-            temperature: 0.7,
+            message: text,
+            subject: subject,
+            history: aiHistory.slice(-11, -1), // 직전 10개 (방금 push한 것 제외)
           }),
         });
 
         if (typingEl) typingEl.remove();
 
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          const msg = err?.error?.message || ('오류: ' + res.status);
-          appendAiMsg('assistant', '❌ ' + msg);
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          appendAiMsg('assistant', '❌ ' + (data.error || '오류: ' + res.status));
           aiHistory.pop();
         } else {
-          const data = await res.json();
-          const reply = data.choices?.[0]?.message?.content || '응답을 받지 못했습니다.';
-          appendAiMsg('assistant', reply);
-          aiHistory.push({ role: 'assistant', content: reply });
+          appendAiMsg('assistant', data.reply);
+          aiHistory.push({ role: 'assistant', content: data.reply });
         }
       } catch(e) {
         if (typingEl) typingEl.remove();
-        appendAiMsg('assistant', '❌ 네트워크 오류가 발생했습니다. ' + e.message);
+        appendAiMsg('assistant', '❌ 네트워크 오류: ' + e.message);
         aiHistory.pop();
       }
 
@@ -4424,6 +4421,9 @@ function escapeHtml(text) {
     const displayEl = document.getElementById('username-display');
     if (displayEl) displayEl.innerText = '🟢 ' + data.nickname;
 
+    // 레벨 로드 후 nav 배지 표시
+    AvatarLevel.load().then(() => AvatarLevel.updateNavBadge());
+
     // 🔥 핵심 3: 소켓에 유저 등록 (온라인 목록 표시)
     registerSocket();
     loadTheme();
@@ -4554,6 +4554,9 @@ async function checkLogin() {
       // 🔥 username 표시 (없어도 에러 안 나게)
       const nameEl = document.getElementById('username-display');
       if (nameEl) nameEl.innerText = '🟢 ' + data.user;
+
+      // 레벨 로드 후 nav 배지 표시
+      AvatarLevel.load().then(() => AvatarLevel.updateNavBadge());
 
       // 세션 유지 상태에서 소켓 등록
       window.currentUser = data.user;
@@ -5771,6 +5774,7 @@ function updateStatusBadge(type) {
     <div id="avatar-customizer-modal">
       <div class="av-header">
         <span class="av-title">✨ 내 깜찍이 꾸미기</span>
+        <span class="av-level-badge" id="av-level-badge" title="레벨">Lv.1</span>
         <button class="av-close-btn" onclick="AvatarCustomizer.close()">✕</button>
       </div>
       <div class="av-char-selector">
@@ -5817,39 +5821,55 @@ function updateStatusBadge(type) {
   };
   const AV_HAT_SVG = {
     none: '',
-    party:  '<path d="M70 6 L52 29 L88 29Z" fill="#ff5090"/><path d="M63 8 L54 26 L59 26 L67 8Z" fill="#ffe050" opacity="0.82"/><path d="M75 8 L69 26 L74 26 L80 8Z" fill="#50c0ff" opacity="0.82"/><ellipse cx="70" cy="29" rx="19" ry="5" fill="#ff5090"/><circle cx="70" cy="4" r="5" fill="#ffe8a0"/>',
-    wizard: '<path d="M70 4 L50 30 L90 30Z" fill="#2a1a80"/><ellipse cx="70" cy="30" rx="21" ry="5.5" fill="#3a28a0"/><polygon points="70,8 72,13 77,13 73,16 74.5,21 70,18 65.5,21 67,16 63,13 68,13" fill="#ffd700"/>',
-    crown:  '<polygon points="53,29 53,11 62,19 70,8 78,19 87,11 87,29" fill="#ffd700"/><rect x="53" y="24" width="34" height="7" rx="2" fill="#e6b000"/><circle cx="70" cy="9.5" r="3.5" fill="#ff4060"/><circle cx="57" cy="17.5" r="2.5" fill="#60a8ff"/><circle cx="83" cy="17.5" r="2.5" fill="#60a8ff"/>',
-    santa:  '<path d="M70 4 L51 31 L89 31Z" fill="#cc1010"/><ellipse cx="70" cy="31" rx="20" ry="5.5" fill="white"/><circle cx="70" cy="2" r="5.5" fill="white"/>',
-    beanie: '<path d="M52 30 Q52 8 70 8 Q88 8 88 30Z" fill="#4a68e8"/><rect x="50" y="26" width="40" height="7" rx="3.5" fill="#3858d8"/><circle cx="70" cy="7" r="7" fill="#5a78f8"/>',
-    beret:  '<ellipse cx="70" cy="23" rx="24" ry="10" fill="#cc3068"/><ellipse cx="70" cy="25.5" rx="23" ry="5.5" fill="#b82858"/><circle cx="81" cy="16" r="4.5" fill="#dd4078"/>',
+    party:        '<path d="M70 6 L52 29 L88 29Z" fill="#ff5090"/><path d="M63 8 L54 26 L59 26 L67 8Z" fill="#ffe050" opacity="0.82"/><path d="M75 8 L69 26 L74 26 L80 8Z" fill="#50c0ff" opacity="0.82"/><ellipse cx="70" cy="29" rx="19" ry="5" fill="#ff5090"/><circle cx="70" cy="4" r="5" fill="#ffe8a0"/>',
+    wizard:       '<path d="M70 4 L50 30 L90 30Z" fill="#2a1a80"/><ellipse cx="70" cy="30" rx="21" ry="5.5" fill="#3a28a0"/><polygon points="70,8 72,13 77,13 73,16 74.5,21 70,18 65.5,21 67,16 63,13 68,13" fill="#ffd700"/>',
+    crown:        '<polygon points="53,29 53,11 62,19 70,8 78,19 87,11 87,29" fill="#ffd700"/><rect x="53" y="24" width="34" height="7" rx="2" fill="#e6b000"/><circle cx="70" cy="9.5" r="3.5" fill="#ff4060"/><circle cx="57" cy="17.5" r="2.5" fill="#60a8ff"/><circle cx="83" cy="17.5" r="2.5" fill="#60a8ff"/>',
+    santa:        '<path d="M70 4 L51 31 L89 31Z" fill="#cc1010"/><ellipse cx="70" cy="31" rx="20" ry="5.5" fill="white"/><circle cx="70" cy="2" r="5.5" fill="white"/>',
+    beanie:       '<path d="M52 30 Q52 8 70 8 Q88 8 88 30Z" fill="#4a68e8"/><rect x="50" y="26" width="40" height="7" rx="3.5" fill="#3858d8"/><circle cx="70" cy="7" r="7" fill="#5a78f8"/>',
+    beret:        '<ellipse cx="70" cy="23" rx="24" ry="10" fill="#cc3068"/><ellipse cx="70" cy="25.5" rx="23" ry="5.5" fill="#b82858"/><circle cx="81" cy="16" r="4.5" fill="#dd4078"/>',
+    flower_crown: '<circle cx="55" cy="26" r="5.5" fill="#ff8bc4"/><circle cx="63" cy="20" r="5" fill="#ff9c5e"/><circle cx="70" cy="18" r="5.5" fill="#ffe066"/><circle cx="77" cy="20" r="5" fill="#66d4ff"/><circle cx="85" cy="26" r="5.5" fill="#b87aff"/><circle cx="55" cy="26" r="2.2" fill="white"/><circle cx="63" cy="20" r="2" fill="white"/><circle cx="70" cy="18" r="2.2" fill="white"/><circle cx="77" cy="20" r="2" fill="white"/><circle cx="85" cy="26" r="2.2" fill="white"/><ellipse cx="59" cy="29" rx="4" ry="2.5" fill="#5cb85c" opacity="0.75"/><ellipse cx="81" cy="29" rx="4" ry="2.5" fill="#5cb85c" opacity="0.75"/>',
+    headphones:   '<path d="M51 32 Q51 10 70 10 Q89 10 89 32" stroke="#282840" stroke-width="5" fill="none" stroke-linecap="round"/><ellipse cx="50" cy="35" rx="7" ry="9" fill="#363858"/><ellipse cx="50" cy="35" rx="4.5" ry="6.5" fill="#4a5070"/><ellipse cx="90" cy="35" rx="7" ry="9" fill="#363858"/><ellipse cx="90" cy="35" rx="4.5" ry="6.5" fill="#4a5070"/><circle cx="50" cy="35" r="2.5" fill="#60d4ff"/><circle cx="90" cy="35" r="2.5" fill="#60d4ff"/>',
+    graduation:   '<polygon points="70,10 50,21 70,29 90,21" fill="#1a1a2e"/><ellipse cx="70" cy="29" rx="21" ry="5.5" fill="#242438"/><line x1="84" y1="20" x2="89" y2="30" stroke="#ffd700" stroke-width="2" stroke-linecap="round"/><circle cx="89" cy="32" r="4" fill="#ffd700"/>',
+    halo:         '<ellipse cx="70" cy="8" rx="20" ry="5.5" fill="rgba(255,220,0,0.18)" stroke="#ffd700" stroke-width="3.5"/><ellipse cx="70" cy="8" rx="14" ry="3.5" fill="rgba(255,240,100,0.15)"/>',
+    rainbow_crown:'<polygon points="53,29 53,11 63,20 70,9 77,20 87,11 87,29" fill="#e040fb"/><rect x="53" y="24" width="5" height="6" rx="1" fill="#ff5252"/><rect x="58" y="24" width="5" height="6" fill="#ff9800"/><rect x="63" y="24" width="5" height="6" fill="#ffeb3b"/><rect x="68" y="24" width="5" height="6" fill="#66bb6a"/><rect x="73" y="24" width="5" height="6" fill="#29b6f6"/><rect x="78" y="24" width="5" height="6" fill="#7e57c2"/><rect x="83" y="24" width="4" height="6" rx="1" fill="#ec407a"/><circle cx="70" cy="10" r="3.5" fill="#ffe082"/><circle cx="57" cy="17" r="2.5" fill="#80deea"/><circle cx="83" cy="17" r="2.5" fill="#ff80ab"/>',
   };
   const AV_ACC_SVG = {
     none: '',
-    glasses: '<rect x="55" y="38" width="14" height="11" rx="5.5" fill="rgba(28,28,40,0.12)" stroke="#303848" stroke-width="1.8"/><rect x="71" y="38" width="14" height="11" rx="5.5" fill="rgba(28,28,40,0.12)" stroke="#303848" stroke-width="1.8"/><line x1="56" y1="43.5" x2="53" y2="41.5" stroke="#303848" stroke-width="1.6" stroke-linecap="round"/><line x1="85" y1="43.5" x2="88" y2="41.5" stroke="#303848" stroke-width="1.6" stroke-linecap="round"/><line x1="69" y1="43.5" x2="71" y2="43.5" stroke="#303848" stroke-width="1.6"/>',
-    ribbon:   '<path d="M83 20 Q89 14 92 21 Q89 28 83 22Z" fill="#ff4090"/><path d="M101 20 Q95 14 92 21 Q95 28 101 22Z" fill="#ff4090"/><circle cx="92" cy="21" r="4" fill="#ff80b8"/>',
-    bowtie:   '<path d="M55 84 Q62 78 69 84 Q62 90 55 84Z" fill="#2855cc"/><path d="M71 84 Q78 78 85 84 Q78 90 71 84Z" fill="#2855cc"/><circle cx="70" cy="84" r="4" fill="#3a68e0"/>',
-    necklace: '<path d="M49 77 Q70 89 91 77" stroke="#d4ae28" stroke-width="2.4" fill="none" stroke-linecap="round"/><ellipse cx="70" cy="88" rx="5" ry="4" fill="#e8c838"/><ellipse cx="70" cy="88" rx="3" ry="2.5" fill="#c8a018"/>',
+    glasses:    '<rect x="55" y="38" width="14" height="11" rx="5.5" fill="rgba(28,28,40,0.12)" stroke="#303848" stroke-width="1.8"/><rect x="71" y="38" width="14" height="11" rx="5.5" fill="rgba(28,28,40,0.12)" stroke="#303848" stroke-width="1.8"/><line x1="56" y1="43.5" x2="53" y2="41.5" stroke="#303848" stroke-width="1.6" stroke-linecap="round"/><line x1="85" y1="43.5" x2="88" y2="41.5" stroke="#303848" stroke-width="1.6" stroke-linecap="round"/><line x1="69" y1="43.5" x2="71" y2="43.5" stroke="#303848" stroke-width="1.6"/>',
+    ribbon:     '<path d="M83 20 Q89 14 92 21 Q89 28 83 22Z" fill="#ff4090"/><path d="M101 20 Q95 14 92 21 Q95 28 101 22Z" fill="#ff4090"/><circle cx="92" cy="21" r="4" fill="#ff80b8"/>',
+    bowtie:     '<path d="M55 84 Q62 78 69 84 Q62 90 55 84Z" fill="#2855cc"/><path d="M71 84 Q78 78 85 84 Q78 90 71 84Z" fill="#2855cc"/><circle cx="70" cy="84" r="4" fill="#3a68e0"/>',
+    necklace:   '<path d="M49 77 Q70 89 91 77" stroke="#d4ae28" stroke-width="2.4" fill="none" stroke-linecap="round"/><ellipse cx="70" cy="88" rx="5" ry="4" fill="#e8c838"/><ellipse cx="70" cy="88" rx="3" ry="2.5" fill="#c8a018"/>',
+    star_badge: '<polygon points="56,78 57.8,83.5 63.5,83.5 59,86.8 61,92 56,89 51,92 53,86.8 48.5,83.5 54.2,83.5" fill="#ffd700"/><circle cx="56" cy="85.5" r="2.5" fill="rgba(255,255,255,0.55)"/>',
+    monocle:    '<circle cx="77" cy="44" r="8" fill="rgba(28,28,40,0.10)" stroke="#a07830" stroke-width="2.2"/><line x1="84" y1="50" x2="90" y2="57" stroke="#a07830" stroke-width="1.8" stroke-linecap="round"/>',
+    earrings:   '<circle cx="43" cy="50" r="3.5" fill="#ffd700"/><circle cx="43" cy="55.5" r="2.5" fill="#ffba55"/><circle cx="97" cy="50" r="3.5" fill="#ffd700"/><circle cx="97" cy="55.5" r="2.5" fill="#ffba55"/>',
   };
   const AV_CAT_EXPR = {
     happy:   '<ellipse cx="63" cy="44" rx="5.8" ry="7" fill="#120a02"/><ellipse cx="77" cy="44" rx="5.8" ry="7" fill="#120a02"/><ellipse cx="63" cy="44" rx="4.2" ry="6" fill="#3c1e06"/><ellipse cx="77" cy="44" rx="4.2" ry="6" fill="#3c1e06"/><ellipse cx="63" cy="44" rx="2" ry="5.5" fill="#0a0402"/><ellipse cx="77" cy="44" rx="2" ry="5.5" fill="#0a0402"/><circle cx="65.5" cy="40.5" r="2.6" fill="white"/><circle cx="79.5" cy="40.5" r="2.6" fill="white"/><circle cx="60.5" cy="47" r="1.3" fill="white" opacity="0.55"/><circle cx="74.5" cy="47" r="1.3" fill="white" opacity="0.55"/>',
     focused: '<ellipse cx="63" cy="45" rx="5.8" ry="5" fill="#120a02"/><ellipse cx="77" cy="45" rx="5.8" ry="5" fill="#120a02"/><ellipse cx="63" cy="45" rx="4.2" ry="4" fill="#3c1e06"/><ellipse cx="77" cy="45" rx="4.2" ry="4" fill="#3c1e06"/><ellipse cx="63" cy="45" rx="2" ry="3.5" fill="#0a0402"/><ellipse cx="77" cy="45" rx="2" ry="3.5" fill="#0a0402"/><circle cx="65" cy="42" r="2" fill="white"/><circle cx="79" cy="42" r="2" fill="white"/><path d="M57 39 L69 42" stroke="#4a2808" stroke-width="2.2" stroke-linecap="round"/><path d="M71 42 L83 39" stroke="#4a2808" stroke-width="2.2" stroke-linecap="round"/>',
     wink:    '<ellipse cx="63" cy="44" rx="5.8" ry="7" fill="#120a02"/><ellipse cx="63" cy="44" rx="4.2" ry="6" fill="#3c1e06"/><ellipse cx="63" cy="44" rx="2" ry="5.5" fill="#0a0402"/><circle cx="65.5" cy="40.5" r="2.6" fill="white"/><circle cx="60.5" cy="47" r="1.3" fill="white" opacity="0.55"/><path d="M71 44 Q77 51.5 83 44" stroke="#120a02" stroke-width="3.4" fill="none" stroke-linecap="round"/>',
     sleepy:  '<path d="M57 46 Q63 38 69 46" fill="#120a02"/><path d="M71 46 Q77 38 83 46" fill="#120a02"/><path d="M58 46 Q63 40.5 68 46 Q63 42 58 46Z" fill="#3c1e06"/><path d="M72 46 Q77 40.5 82 46 Q77 42 72 46Z" fill="#3c1e06"/><circle cx="65" cy="43" r="1.8" fill="white" opacity="0.7"/><circle cx="79" cy="43" r="1.8" fill="white" opacity="0.7"/>',
+    love:    '<path d="M63 47 C58 42.5 56 38 60 37 C61.5 36.5 63 39 63 39 C63 39 64.5 36.5 66 37 C70 38 68 42.5 63 47Z" fill="#ff4080"/><path d="M77 47 C72 42.5 70 38 74 37 C75.5 36.5 77 39 77 39 C77 39 78.5 36.5 80 37 C84 38 82 42.5 77 47Z" fill="#ff4080"/>',
+    star:    '<polygon points="63,37 64.8,42 70,42 65.6,45 67.5,50 63,47 58.5,50 60.4,45 56,42 61.2,42" fill="#ffd700"/><polygon points="77,37 78.8,42 84,42 79.6,45 81.5,50 77,47 72.5,50 74.4,45 70,42 75.2,42" fill="#ffd700"/>',
   };
   const AV_BICHON_EXPR = {
     happy:   '<circle cx="63" cy="44" r="6" fill="#1a0a08"/><circle cx="77" cy="44" r="6" fill="#1a0a08"/><circle cx="65" cy="41.5" r="2.4" fill="white"/><circle cx="79" cy="41.5" r="2.4" fill="white"/><circle cx="60.5" cy="47" r="1.2" fill="white" opacity="0.5"/><circle cx="74.5" cy="47" r="1.2" fill="white" opacity="0.5"/>',
     focused: '<circle cx="63" cy="44" r="6" fill="#1a0a08"/><circle cx="77" cy="44" r="6" fill="#1a0a08"/><path d="M56 38 Q63 36 70 38" stroke="#4a2808" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M70 38 Q77 36 84 38" stroke="#4a2808" stroke-width="2" stroke-linecap="round" fill="none"/><circle cx="65" cy="43" r="2.2" fill="white"/><circle cx="79" cy="43" r="2.2" fill="white"/>',
     wink:    '<circle cx="63" cy="44" r="6" fill="#1a0a08"/><circle cx="65" cy="41.5" r="2.4" fill="white"/><path d="M71 44 Q77 51 83 44" stroke="#1a0a08" stroke-width="3.2" fill="none" stroke-linecap="round"/>',
     sleepy:  '<path d="M57 47 Q63 39 69 47" fill="#1a0a08"/><path d="M71 47 Q77 39 83 47" fill="#1a0a08"/><path d="M58 47 Q63 42 68 47 Q63 44 58 47Z" fill="#2a1808"/><path d="M72 47 Q77 42 82 47 Q77 44 72 47Z" fill="#2a1808"/>',
+    love:    '<path d="M63 47 C58 42.5 56 38 60 37 C61.5 36.5 63 39 63 39 C63 39 64.5 36.5 66 37 C70 38 68 42.5 63 47Z" fill="#ff4080"/><path d="M77 47 C72 42.5 70 38 74 37 C75.5 36.5 77 39 77 39 C77 39 78.5 36.5 80 37 C84 38 82 42.5 77 47Z" fill="#ff4080"/>',
+    star:    '<polygon points="63,37 64.8,42 70,42 65.6,45 67.5,50 63,47 58.5,50 60.4,45 56,42 61.2,42" fill="#ffd700"/><polygon points="77,37 78.8,42 84,42 79.6,45 81.5,50 77,47 72.5,50 74.4,45 70,42 75.2,42" fill="#ffd700"/>',
   };
   const AV_OUTFIT_SVG = {
-    none:   '',
-    hoodie: '<path d="M30 107 Q31 80 70 78 Q109 80 110 107Z" fill="#3060e0"/><path d="M51 78 Q44 70 42 63" stroke="#2850d0" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M89 78 Q96 70 98 63" stroke="#2850d0" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M57 92 Q70 90 83 92 Q83 102 70 102 Q57 102 57 92Z" fill="#2850d0"/>',
-    knit:   '<path d="M31 107 Q31 80 70 78 Q109 80 109 107Z" fill="#c83060"/><path d="M36 87 Q53 83 70 87 Q87 83 104 87" stroke="rgba(255,255,255,0.2)" stroke-width="2.5" fill="none"/><path d="M35 93 Q53 89 70 93 Q87 89 105 93" stroke="rgba(255,255,255,0.2)" stroke-width="2.5" fill="none"/><path d="M35 99 Q53 95 70 99 Q87 95 105 99" stroke="rgba(255,255,255,0.2)" stroke-width="2.5" fill="none"/>',
-    cape:   '<path d="M35 68 Q29 84 34 108 Q70 116 106 108 Q111 84 105 68 Q88 73 70 73 Q52 73 35 68Z" fill="#6010a0" opacity="0.9"/><path d="M50 68 Q70 62 90 68" stroke="rgba(180,80,255,0.35)" stroke-width="3" fill="none" stroke-linecap="round"/>',
-    formal: '<path d="M32 107 Q32 80 70 78 Q108 80 108 107Z" fill="#1a2040"/><path d="M55 75 L62 83 L70 79 L78 83 L85 75" stroke="white" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M67.5 79 L70 87 L72.5 79 Q70 75 67.5 79Z" fill="#c03030"/><line x1="70" y1="82" x2="70" y2="107" stroke="#2a3050" stroke-width="1.5" stroke-dasharray="3,3"/>',
-    space:  '<path d="M28 107 Q28 76 70 74 Q112 76 112 107Z" fill="#c8d8e8"/><path d="M44 78 Q33 85 30 97" stroke="white" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M96 78 Q107 85 110 97" stroke="white" stroke-width="4" fill="none" stroke-linecap="round"/><rect x="55" y="82" width="30" height="18" rx="4" fill="#a8b8c8"/><circle cx="65" cy="91" r="2.5" fill="#6ee7c0"/><circle cx="70" cy="91" r="2.5" fill="#fbbf24"/><circle cx="75" cy="91" r="2.5" fill="#f06363"/>',
+    none:         '',
+    hoodie:       '<path d="M30 107 Q31 80 70 78 Q109 80 110 107Z" fill="#3060e0"/><path d="M51 78 Q44 70 42 63" stroke="#2850d0" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M89 78 Q96 70 98 63" stroke="#2850d0" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M57 92 Q70 90 83 92 Q83 102 70 102 Q57 102 57 92Z" fill="#2850d0"/>',
+    knit:         '<path d="M31 107 Q31 80 70 78 Q109 80 109 107Z" fill="#c83060"/><path d="M36 87 Q53 83 70 87 Q87 83 104 87" stroke="rgba(255,255,255,0.2)" stroke-width="2.5" fill="none"/><path d="M35 93 Q53 89 70 93 Q87 89 105 93" stroke="rgba(255,255,255,0.2)" stroke-width="2.5" fill="none"/><path d="M35 99 Q53 95 70 99 Q87 95 105 99" stroke="rgba(255,255,255,0.2)" stroke-width="2.5" fill="none"/>',
+    cape:         '<path d="M35 68 Q29 84 34 108 Q70 116 106 108 Q111 84 105 68 Q88 73 70 73 Q52 73 35 68Z" fill="#6010a0" opacity="0.9"/><path d="M50 68 Q70 62 90 68" stroke="rgba(180,80,255,0.35)" stroke-width="3" fill="none" stroke-linecap="round"/>',
+    formal:       '<path d="M32 107 Q32 80 70 78 Q108 80 108 107Z" fill="#1a2040"/><path d="M55 75 L62 83 L70 79 L78 83 L85 75" stroke="white" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M67.5 79 L70 87 L72.5 79 Q70 75 67.5 79Z" fill="#c03030"/><line x1="70" y1="82" x2="70" y2="107" stroke="#2a3050" stroke-width="1.5" stroke-dasharray="3,3"/>',
+    space:        '<path d="M28 107 Q28 76 70 74 Q112 76 112 107Z" fill="#c8d8e8"/><path d="M44 78 Q33 85 30 97" stroke="white" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M96 78 Q107 85 110 97" stroke="white" stroke-width="4" fill="none" stroke-linecap="round"/><rect x="55" y="82" width="30" height="18" rx="4" fill="#a8b8c8"/><circle cx="65" cy="91" r="2.5" fill="#6ee7c0"/><circle cx="70" cy="91" r="2.5" fill="#fbbf24"/><circle cx="75" cy="91" r="2.5" fill="#f06363"/>',
+    summer:       '<path d="M31 107 Q32 80 70 78 Q108 80 109 107Z" fill="#ff8a65"/><circle cx="50" cy="90" r="5" fill="#ffee58"/><circle cx="50" cy="90" r="2.5" fill="#ff7043"/><circle cx="65" cy="84" r="5" fill="#ffe082"/><circle cx="65" cy="84" r="2.5" fill="#ff8f00"/><circle cx="90" cy="90" r="5" fill="#ffee58"/><circle cx="90" cy="90" r="2.5" fill="#ff7043"/><circle cx="75" cy="98" r="5" fill="#ffe082"/><circle cx="75" cy="98" r="2.5" fill="#ff8f00"/>',
+    royal:        '<path d="M32 107 Q32 80 70 78 Q108 80 108 107Z" fill="#8d1a2e"/><path d="M32 80 Q70 74 108 80 L108 86 Q70 80 32 86Z" fill="#c8a000"/><path d="M70 78 L64 90 L76 90Z" fill="#c8a000"/><circle cx="70" cy="88" r="4" fill="#c8a000"/><path d="M35 96 Q70 90 105 96" stroke="#c8a000" stroke-width="1.5" fill="none" stroke-linecap="round"/>',
+    galaxy:       '<path d="M28 107 Q28 76 70 74 Q112 76 112 107Z" fill="#1a0a40"/><path d="M50 90 Q60 82 70 90 Q80 98 90 90" stroke="rgba(150,80,255,0.35)" stroke-width="8" fill="none"/><circle cx="45" cy="85" r="2" fill="white" opacity="0.8"/><circle cx="60" cy="92" r="1.5" fill="#60d4ff" opacity="0.9"/><circle cx="70" cy="82" r="2.5" fill="#c060ff" opacity="0.7"/><circle cx="80" cy="95" r="2" fill="#ff80ff" opacity="0.8"/><circle cx="95" cy="86" r="1.5" fill="white" opacity="0.7"/><circle cx="52" cy="99" r="1.5" fill="#60d4ff" opacity="0.6"/><circle cx="88" cy="100" r="2" fill="#c060ff" opacity="0.7"/>',
+    striped:      '<path d="M31 107 Q31 80 70 78 Q109 80 109 107Z" fill="#4a90d9"/><path d="M32 86 Q70 82 108 86 L108 90 Q70 86 32 90Z" fill="white" opacity="0.65"/><path d="M31 94 Q70 90 109 94 L109 98 Q70 94 31 98Z" fill="white" opacity="0.65"/><path d="M31 102 Q70 98 109 102 L109 106 Q70 102 31 106Z" fill="white" opacity="0.65"/>',
   };
   const CHARACTER_CONFIGS = {
     cat: {
@@ -5891,20 +5911,34 @@ function updateStatusBadge(type) {
       {id:'wizard',emoji:'🧙',label:'마법사'},{id:'crown',emoji:'👑',label:'왕관'},
       {id:'santa',emoji:'🎅',label:'산타'},{id:'beanie',emoji:'🧢',label:'비니'},
       {id:'beret',emoji:'🎩',label:'베레모'},
+      {id:'flower_crown',emoji:'🌸',label:'꽃왕관',requiredLevel:2},
+      {id:'headphones',emoji:'🎧',label:'헤드폰',requiredLevel:3},
+      {id:'graduation',emoji:'🎓',label:'학사모',requiredLevel:4},
+      {id:'halo',emoji:'😇',label:'후광',requiredLevel:5},
+      {id:'rainbow_crown',emoji:'🌈',label:'무지개왕관',requiredLevel:6},
     ]},
     { key:'outfit', label:'옷', options:[
       {id:'none',emoji:'—',label:'없음'},{id:'hoodie',emoji:'👕',label:'후드티'},
       {id:'knit',emoji:'🧶',label:'니트'},{id:'cape',emoji:'🦸',label:'망토'},
       {id:'formal',emoji:'👔',label:'교복'},{id:'space',emoji:'🚀',label:'우주복'},
+      {id:'summer',emoji:'🌺',label:'여름옷',requiredLevel:2},
+      {id:'royal',emoji:'👸',label:'왕복',requiredLevel:3},
+      {id:'galaxy',emoji:'🌌',label:'갤럭시',requiredLevel:4},
+      {id:'striped',emoji:'🎽',label:'스트라이프',requiredLevel:5},
     ]},
     { key:'accessory', label:'악세서리', options:[
       {id:'none',emoji:'—',label:'없음'},{id:'glasses',emoji:'👓',label:'안경'},
       {id:'ribbon',emoji:'🎀',label:'리본'},{id:'bowtie',emoji:'🪢',label:'나비넥타이'},
       {id:'necklace',emoji:'📿',label:'목걸이'},
+      {id:'star_badge',emoji:'⭐',label:'별 배지',requiredLevel:2},
+      {id:'monocle',emoji:'🧐',label:'모노클',requiredLevel:3},
+      {id:'earrings',emoji:'💎',label:'귀걸이',requiredLevel:4},
     ]},
     { key:'expression', label:'표정', options:[
       {id:'happy',emoji:'😊',label:'행복'},{id:'focused',emoji:'😤',label:'집중'},
       {id:'wink',emoji:'😉',label:'윙크'},{id:'sleepy',emoji:'😴',label:'졸린'},
+      {id:'love',emoji:'😍',label:'사랑',requiredLevel:2},
+      {id:'star',emoji:'🤩',label:'반짝',requiredLevel:3},
     ]},
   ];
   const AV_TAB_POS = {
@@ -5916,6 +5950,41 @@ function updateStatusBadge(type) {
     cc:{ cx:65,cy:38,r:22,bodyCx:65,bodyCy:80,bodyRx:26,bodyRy:12,hatTx:8,   hatTy:1.3, hatS:0.815 },
     mc:{ cx:65,cy:32,r:22,bodyCx:65,bodyCy:62,bodyRx:25,bodyRy:11,hatTx:8,   hatTy:-4.7,hatS:0.815 },
   };
+  /* ─── AvatarLevel ─── */
+  const AvatarLevel = (() => {
+    const THRESHOLDS = [0, 60, 180, 360, 600, 900, 1200, 1800, 2400, 3600];
+    let _level = 1, _minutes = 0;
+    function _compute(m) {
+      let lv = 1;
+      for (let i = 1; i < THRESHOLDS.length; i++) { if (m >= THRESHOLDS[i]) lv = i+1; else break; }
+      return lv;
+    }
+    async function load() {
+      try {
+        const r = await fetch('/me/total');
+        if (!r.ok) return;
+        const d = await r.json();
+        _minutes = d.total_minutes || 0;
+        _level = _compute(_minutes);
+      } catch(e) {}
+    }
+    function get() { return _level; }
+    function getMinutes() { return _minutes; }
+    function nextThreshold() { return THRESHOLDS[_level] || null; }
+    function updateNavBadge() {
+      const badge = document.getElementById('nav-level-badge');
+      if (!badge) return;
+      if (_level < 1) { badge.style.display = 'none'; return; }
+      badge.style.display = 'inline-block';
+      badge.textContent = 'Lv.' + _level;
+      const next = nextThreshold();
+      badge.title = next
+        ? 'Lv.'+(_level+1)+' 까지 '+(next - _minutes)+'분 남음'
+        : '최고 레벨 달성!';
+    }
+    return { load, get, getMinutes, nextThreshold, updateNavBadge };
+  })();
+
   const AvatarSystem = (() => {
     const KEY = 'avatarState_v2';
     function _defaults() {
@@ -6320,16 +6389,36 @@ function updateStatusBadge(type) {
 
   /* ─── AvatarCustomizer ─── */
   const AvatarCustomizer = (() => {
-    function open() {
+    async function open() {
       const o = document.getElementById('avatar-customizer-overlay');
-      if (o) { o.classList.add('av-open'); refresh(); }
+      if (!o) return;
+      o.classList.add('av-open');
+      await AvatarLevel.load();
+      refresh();
     }
     function close() {
       const o = document.getElementById('avatar-customizer-overlay');
       if (o) o.classList.remove('av-open');
     }
-    function refresh() { _updateCharTabs(); _renderOptions(); AvatarRenderer.renderPreview(AvatarSystem.get()); }
+    function refresh() {
+      _updateCharTabs();
+      _renderOptions();
+      AvatarRenderer.renderPreview(AvatarSystem.get());
+      _updateLevelBadge();
+    }
     function refreshPreview() { AvatarRenderer.renderPreview(AvatarSystem.get()); _updateSelected(); }
+    function _updateLevelBadge() {
+      const lv = AvatarLevel.get();
+      const badge = document.getElementById('av-level-badge');
+      if (badge) {
+        badge.textContent = 'Lv.' + lv;
+        const next = AvatarLevel.nextThreshold();
+        badge.title = next
+          ? 'Lv.'+(lv+1)+' 까지 '+(next - AvatarLevel.getMinutes())+'분 남음'
+          : '최고 레벨 달성!';
+      }
+      AvatarLevel.updateNavBadge();
+    }
     function _updateCharTabs() {
       const s = AvatarSystem.get();
       document.querySelectorAll('[data-av-char]').forEach(btn => { btn.classList.toggle('active', btn.dataset.avChar===s.selectedCharacter); });
@@ -6342,6 +6431,7 @@ function updateStatusBadge(type) {
       const panel = document.getElementById('av-options-panel'); if (!panel) return;
       const s = AvatarSystem.get(), charId = s.selectedCharacter, cust = s.customization[charId];
       const config = CHARACTER_CONFIGS[charId]; if (!config) return;
+      const curLv = AvatarLevel.get();
       let html = '';
       config.colorGroups.forEach(group => {
         html += '<div class="av-section"><div class="av-section-label">'+group.label+'</div><div class="av-chips-row">';
@@ -6355,9 +6445,19 @@ function updateStatusBadge(type) {
       SHARED_OPTIONS.forEach(group => {
         html += '<div class="av-section"><div class="av-section-label">'+group.label+'</div><div class="av-cards-row">';
         group.options.forEach(opt => {
-          const sel = cust[group.key]===opt.id ? ' selected' : '';
-          html += '<button class="av-card'+sel+'" data-av-key="'+group.key+'" data-av-val="'+opt.id+'" onclick="AvatarSystem.setOption(\''+group.key+'\',\''+opt.id+'\')">'+
-                  '<span class="av-card-emoji">'+opt.emoji+'</span><span class="av-card-label">'+opt.label+'</span></button>';
+          const reqLv = opt.requiredLevel || 1;
+          const locked = reqLv > curLv;
+          if (locked) {
+            html += '<div class="av-card av-card-locked" title="레벨 '+reqLv+' 도달 시 해금">'+
+                    '<span class="av-card-emoji">'+opt.emoji+'</span>'+
+                    '<span class="av-card-label">'+opt.label+'</span>'+
+                    '<span class="av-card-lock">🔒 Lv.'+reqLv+'</span>'+
+                    '</div>';
+          } else {
+            const sel = cust[group.key]===opt.id ? ' selected' : '';
+            html += '<button class="av-card'+sel+'" data-av-key="'+group.key+'" data-av-val="'+opt.id+'" onclick="AvatarSystem.setOption(\''+group.key+'\',\''+opt.id+'\')">'+
+                    '<span class="av-card-emoji">'+opt.emoji+'</span><span class="av-card-label">'+opt.label+'</span></button>';
+          }
         });
         html += '</div></div>';
       });
@@ -6369,5 +6469,31 @@ function updateStatusBadge(type) {
   // 페이지 로드 후 아바타 상태 초기화 (두 번째 스크립트 블록 끝에서 호출)
   AvatarSystem.load();
   AvatarRenderer.applyAll(AvatarSystem.get());
+  AvatarLevel.load();
+
+  // AI 서버 상태 확인
+  (async () => {
+    const badge = document.getElementById('ai-status-badge');
+    if (!badge) return;
+    try {
+      const r = await fetch('/ai/status');
+      const d = await r.json();
+      if (d.available) {
+        const providerLabel = d.provider === 'groq'
+          ? 'Groq (Llama 3.1)' : 'Gemini';
+        badge.style.background = 'rgba(110,231,192,0.1)';
+        badge.style.borderColor = 'rgba(110,231,192,0.25)';
+        badge.style.color = 'var(--accent-green)';
+        badge.textContent = '✅ ' + providerLabel + ' 연결됨 — 무료로 이용 중';
+      } else {
+        badge.style.background = 'rgba(240,99,99,0.1)';
+        badge.style.borderColor = 'rgba(240,99,99,0.3)';
+        badge.style.color = 'var(--accent-red)';
+        badge.textContent = '❌ API 키 미설정 — .env 파일에 GROQ_API_KEY 또는 GEMINI_API_KEY를 등록하세요';
+      }
+    } catch(e) {
+      badge.textContent = '⚠️ 서버 연결 실패';
+    }
+  })();
   </script>
 </body>

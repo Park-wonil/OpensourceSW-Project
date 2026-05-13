@@ -13,6 +13,32 @@ from Backend.database import (
 import os
 import time
 
+# 프로젝트 루트의 .env 파일 로드 (추가 패키지 불필요)
+_env_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env')
+if os.path.exists(_env_file):
+    with open(_env_file) as _f:
+        for _line in _f:
+            _line = _line.strip()
+            if _line and not _line.startswith('#') and '=' in _line:
+                _k, _v = _line.split('=', 1)
+                os.environ.setdefault(_k.strip(), _v.strip())
+
+# AI 설정 (Groq 우선, 없으면 Gemini)
+GROQ_API_KEY   = os.environ.get("GROQ_API_KEY", "")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+_ai_client = None
+_ai_provider = None
+try:
+    from openai import OpenAI as _OpenAI
+    if GROQ_API_KEY:
+        _ai_client   = _OpenAI(api_key=GROQ_API_KEY, base_url="https://api.groq.com/openai/v1")
+        _ai_provider = "groq"
+    elif GEMINI_API_KEY:
+        _ai_client   = _OpenAI(api_key=GEMINI_API_KEY, base_url="https://generativelanguage.googleapis.com/v1beta/openai/")
+        _ai_provider = "gemini"
+except ImportError:
+    pass
+
 # 경로 설정
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -107,6 +133,18 @@ def login():
 def me():
     user = session.get('user')
     return jsonify({"user": user})
+
+@app.route('/me/total')
+def me_total():
+    username = get_current_username()
+    if not username:
+        return jsonify({"total_minutes": 0})
+    conn = get_conn()
+    c = conn.cursor()
+    c.execute("SELECT total_minutes FROM users WHERE username = ?", (username,))
+    row = c.fetchone()
+    conn.close()
+    return jsonify({"total_minutes": row[0] if row else 0})
 
 @app.route('/logout', methods=['POST'])
 def logout():
@@ -296,6 +334,41 @@ def community_delete_post(post_id):
     if delete_post(post_id):
         return jsonify({"msg": "deleted"})
     return jsonify({"error": "failed"}), 500
+
+# =========================
+# AI 채팅
+# =========================
+@app.route('/ai/status')
+def ai_status():
+    if not _ai_client:
+        return jsonify({"available": False, "provider": None, "model": None})
+    model = "llama-3.1-8b-instant" if _ai_provider == "groq" else "gemini-2.0-flash-lite"
+    return jsonify({"available": True, "provider": _ai_provider, "model": model})
+
+@app.route('/ai/chat', methods=['POST'])
+def ai_chat():
+    if not _ai_client:
+        return jsonify({"error": "GROQ_API_KEY 또는 GEMINI_API_KEY를 .env 파일에 설정하세요."}), 503
+    data = request.get_json(force=True)
+    message = (data.get('message') or '').strip()
+    subject = (data.get('subject') or '').strip()
+    history = data.get('history') or []
+    if not message:
+        return jsonify({"error": "메시지를 입력하세요."}), 400
+    try:
+        system = '당신의 이름은 "깜찍이"입니다. 사용자의 공부를 돕는 밝고 다정한 AI 튜터입니다.'
+        if subject:
+            system += f' 현재 사용자는 "{subject}" 과목을 공부 중입니다.'
+        system += ' 답변은 한국어로 하고, 핵심을 먼저 말한 뒤 필요한 경우 단계별 풀이와 암기 팁을 제시하세요. 정확성과 이해하기 쉬운 설명을 최우선으로 하세요.'
+        messages = [{"role": "system", "content": system}]
+        for h in history[-10:]:
+            messages.append({"role": h.get("role", "user"), "content": h.get("content", "")})
+        messages.append({"role": "user", "content": message})
+        model = "llama-3.1-8b-instant" if _ai_provider == "groq" else "gemini-2.0-flash-lite"
+        resp = _ai_client.chat.completions.create(model=model, messages=messages, max_tokens=800)
+        return jsonify({"reply": resp.choices[0].message.content})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # =========================
 # 데이터 초기화
@@ -615,7 +688,7 @@ def on_room_ice(data):
 
 # disconnect 시 방에서도 자동 퇴장 처리 (기존 on_disconnect 수정)
 # =========================
-# 🔥 중요: 반드시 맨 아래
+#  중요: 반드시 맨 아래
 # =========================
 if __name__ == "__main__":
     socketio.run(app, host="0.0.0.0", port=5001, debug=True, use_reloader=False, allow_unsafe_werkzeug=True)
