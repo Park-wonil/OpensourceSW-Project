@@ -593,6 +593,55 @@
     }
 
     @keyframes appFadeIn { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes slideFromRight { from { opacity:0; transform:translateX(28px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes slideFromLeft  { from { opacity:0; transform:translateX(-28px); } to { opacity:1; transform:translateX(0); } }
+    .slide-from-right { animation: slideFromRight 0.32s cubic-bezier(0.16,1,0.3,1) forwards !important; }
+    .slide-from-left  { animation: slideFromLeft  0.32s cubic-bezier(0.16,1,0.3,1) forwards !important; }
+
+    /* ── 아바타 오라 ── */
+    #avatar-oura {
+      position: absolute; border-radius: 50%;
+      width: 72px; height: 72px;
+      bottom: 14px; left: 50%; transform: translateX(-50%);
+      transition: box-shadow 1.2s ease, opacity 0.8s ease;
+      pointer-events: none;
+    }
+    @keyframes ouraPulse {
+      0%,100% { transform: translateX(-50%) scale(1); opacity: 0.75; }
+      50%      { transform: translateX(-50%) scale(1.12); opacity: 1; }
+    }
+    #ai-study-buddy-stage.aura-focused #avatar-oura {
+      box-shadow: 0 0 22px 10px rgba(110,231,192,0.55);
+      animation: ouraPulse 2.4s ease-in-out infinite;
+    }
+    #ai-study-buddy-stage.aura-sleepy #avatar-oura {
+      box-shadow: 0 0 22px 10px rgba(167,139,250,0.5);
+      animation: ouraPulse 3.8s ease-in-out infinite;
+    }
+    #ai-study-buddy-stage.aura-away #avatar-oura { box-shadow: none; opacity: 0; }
+
+    /* ── 공부 생태계 ── */
+    #garden-panel {
+      display: flex; flex-direction: column; gap: 10px;
+      padding: 14px 16px;
+    }
+    #garden-panel .garden-row { display: flex; align-items: center; gap: 14px; }
+    #garden-svg-wrap { width: 88px; height: 88px; flex-shrink: 0; }
+    #garden-svg-wrap svg { width: 100%; height: 100%; overflow: visible; }
+    .garden-info { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+    .garden-stage-label { font-size: 18px; font-weight: 800; color: var(--text-main); }
+    .garden-mins-text  { font-size: 12px; color: var(--text-sub); }
+    .garden-next-text  { font-size: 11px; color: var(--accent-green); font-weight: 700; }
+    #garden-progress-track {
+      width: 100%; height: 5px; border-radius: 10px;
+      background: rgba(255,255,255,0.08); margin-top: 6px; overflow: hidden;
+    }
+    #garden-progress-fill {
+      height: 100%; border-radius: 10px;
+      background: linear-gradient(90deg, #6ee7c0, #34d399);
+      transition: width 0.6s ease;
+    }
+    body.light-mode #garden-progress-track { background: rgba(0,0,0,0.08); }
 
     /* username */
     #username-display {
@@ -1146,6 +1195,7 @@
           ">
             <div class="ai-welcome-msg" style="text-align:center; font-size:12px; color:var(--text-sub); padding:8px 0 14px;">
               <div id="ai-study-buddy-stage" aria-hidden="true">
+                <div id="avatar-oura"></div>
                 <div id="ai-study-buddy-shadow"></div>
                 <div id="ai-study-buddy-avatar"></div>
               </div>
@@ -1412,6 +1462,20 @@
               <b id="current-absence-time" style="color: var(--accent-red);">0초</b>
             </div>
           </div>
+        </div>
+
+        <!-- 🌱 공부 생태계 -->
+        <div class="panel" id="garden-panel">
+          <div class="garden-row">
+            <div id="garden-svg-wrap"></div>
+            <div class="garden-info">
+              <div style="font-size:11px; font-weight:600; color:var(--text-sub); letter-spacing:0.4px; text-transform:uppercase;">오늘의 공부나무</div>
+              <div class="garden-stage-label" id="garden-stage-label">맨땅</div>
+              <div class="garden-mins-text" id="garden-mins-text">0분 공부</div>
+              <div class="garden-next-text" id="garden-next-text">30분 → 씨앗!</div>
+            </div>
+          </div>
+          <div id="garden-progress-track"><div id="garden-progress-fill" style="width:0%"></div></div>
         </div>
 
         <div class="panel timer-container">
@@ -3179,16 +3243,25 @@
     }
 
     // 섹션 전환
+    const _TAB_ORDER = ['main','goals','stats','weekly','ranking','chat','community','settings'];
+    let _currentTabId = 'main';
+
     function showSection(id, btn) {
+      const fromIdx = _TAB_ORDER.indexOf(_currentTabId);
+      const toIdx   = _TAB_ORDER.indexOf(id);
+      const dir = toIdx >= fromIdx ? 'right' : 'left';
+
       document.querySelectorAll('.container, .panel.extra-section').forEach(section => {
-        section.classList.remove('active');
+        section.classList.remove('active', 'slide-from-right', 'slide-from-left');
       });
-      
+
       const targetSection = document.getElementById('section-' + id);
       if (targetSection) {
-        targetSection.classList.add('active');
+        targetSection.classList.add('active', 'slide-from-' + dir);
+        setTimeout(() => targetSection.classList.remove('slide-from-right', 'slide-from-left'), 350);
       }
-      
+
+      _currentTabId = id;
       document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
       btn.classList.add('active');
 
@@ -3485,6 +3558,82 @@
       });
     }
 
+    /* ── 오라 업데이트 ── */
+    function updateAura(state, isAbsent) {
+      const stage = document.getElementById('ai-study-buddy-stage');
+      if (!stage) return;
+      stage.classList.remove('aura-focused', 'aura-sleepy', 'aura-away');
+      if (isAbsent) stage.classList.add('aura-away');
+      else if (state === 'sleepy') stage.classList.add('aura-sleepy');
+      else if (state === 'focused') stage.classList.add('aura-focused');
+    }
+
+    /* ── 공부 생태계 ── */
+    const _GARDEN_STAGES = [
+      { mins: 0,   label: '맨땅',  next: '30분 → 씨앗!', color: '#a0845c' },
+      { mins: 30,  label: '씨앗',  next: '60분 → 새싹!', color: '#8bc34a' },
+      { mins: 60,  label: '새싹',  next: '3시간 → 꽃!',  color: '#6aab3e' },
+      { mins: 180, label: '꽃 🌸', next: '5시간 → 나무!', color: '#f472b6' },
+      { mins: 300, label: '나무 🌳', next: '최고 단계 달성!', color: '#34d399' },
+    ];
+    function _gardenSVG(stage) {
+      const pot = `<rect x="28" y="70" width="54" height="30" rx="6" fill="#b8955e"/>
+        <rect x="22" y="64" width="66" height="11" rx="5" fill="#d4aa72"/>
+        <ellipse cx="55" cy="68" rx="28" ry="7" fill="#4a2c0a" opacity="0.55"/>`;
+      if (stage === 0) return `<svg viewBox="0 0 110 110">${pot}</svg>`;
+      if (stage === 1) return `<svg viewBox="0 0 110 110">${pot}
+        <line x1="55" y1="66" x2="55" y2="54" stroke="#5a9e3c" stroke-width="3.5" stroke-linecap="round"/>
+        <ellipse cx="55" cy="50" rx="7" ry="7" fill="#8bc34a"/>
+        <ellipse cx="51" cy="53" rx="5" ry="2.5" fill="#6aab3e" opacity="0.7"/></svg>`;
+      if (stage === 2) return `<svg viewBox="0 0 110 110">${pot}
+        <line x1="55" y1="66" x2="55" y2="36" stroke="#5a9e3c" stroke-width="4" stroke-linecap="round"/>
+        <ellipse cx="42" cy="52" rx="13" ry="6" fill="#7bc44b" transform="rotate(-35 42 52)"/>
+        <ellipse cx="68" cy="52" rx="13" ry="6" fill="#7bc44b" transform="rotate(35 68 52)"/>
+        <ellipse cx="43" cy="42" rx="11" ry="5" fill="#6aab3e" transform="rotate(-25 43 42)"/>
+        <ellipse cx="67" cy="42" rx="11" ry="5" fill="#6aab3e" transform="rotate(25 67 42)"/></svg>`;
+      if (stage === 3) return `<svg viewBox="0 0 110 110">${pot}
+        <line x1="55" y1="66" x2="55" y2="40" stroke="#5a9e3c" stroke-width="4" stroke-linecap="round"/>
+        <ellipse cx="40" cy="54" rx="13" ry="6" fill="#7bc44b" transform="rotate(-35 40 54)"/>
+        <ellipse cx="70" cy="54" rx="13" ry="6" fill="#7bc44b" transform="rotate(35 70 54)"/>
+        <circle cx="55" cy="30" r="5" fill="#fde68a"/>
+        <circle cx="55" cy="20" r="6" fill="#f9a8d4"/>
+        <circle cx="44" cy="25" r="6" fill="#f9a8d4"/>
+        <circle cx="66" cy="25" r="6" fill="#f9a8d4"/>
+        <circle cx="47" cy="37" r="6" fill="#fbcfe8"/>
+        <circle cx="63" cy="37" r="6" fill="#fbcfe8"/>
+        <circle cx="55" cy="30" r="5" fill="#fde68a"/></svg>`;
+      return `<svg viewBox="0 0 110 110">${pot}
+        <rect x="51" y="34" width="8" height="34" rx="4" fill="#8b5e3c"/>
+        <circle cx="40" cy="38" r="19" fill="#4caf50"/>
+        <circle cx="70" cy="38" r="19" fill="#4caf50"/>
+        <circle cx="55" cy="26" r="22" fill="#66bb6a"/>
+        <circle cx="46" cy="30" r="8" fill="#81c784" opacity="0.5"/>
+        <circle cx="64" cy="22" r="6" fill="#81c784" opacity="0.5"/></svg>`;
+    }
+    function updateGarden(todayMinutes) {
+      let stageIdx = 0;
+      for (let i = _GARDEN_STAGES.length - 1; i >= 0; i--) {
+        if (todayMinutes >= _GARDEN_STAGES[i].mins) { stageIdx = i; break; }
+      }
+      const s = _GARDEN_STAGES[stageIdx];
+      const next = _GARDEN_STAGES[stageIdx + 1];
+      const wrap = document.getElementById('garden-svg-wrap');
+      if (wrap) wrap.innerHTML = _gardenSVG(stageIdx);
+      const lbl = document.getElementById('garden-stage-label');
+      const minsEl = document.getElementById('garden-mins-text');
+      const nextEl = document.getElementById('garden-next-text');
+      const fill = document.getElementById('garden-progress-fill');
+      if (lbl) lbl.textContent = s.label;
+      if (minsEl) minsEl.textContent = todayMinutes + '분 공부';
+      if (nextEl) nextEl.textContent = next ? s.next : '🌳 최고 단계!';
+      if (fill) {
+        const pct = next
+          ? Math.min(100, Math.round((todayMinutes - s.mins) / (next.mins - s.mins) * 100))
+          : 100;
+        fill.style.width = pct + '%';
+      }
+    }
+
     function stopBrowserCam() {
       if (browserCamStream) {
         browserCamStream.getTracks().forEach(t => t.stop());
@@ -3534,6 +3683,7 @@
           badge.innerHTML = "<span></span> 집중 중";
           row.style.display = "none";
         }
+        updateAura(data.state, data.is_absent);
       }).catch(err => {});
       fetch('/score').then(res => res.json()).then(data => {
         updateScoreUI(Math.floor(data.score));
@@ -3542,6 +3692,10 @@
         fetch('/stats').then(res => res.json()).then(data => {
           if (data.subject_stats && data.subject_stats.length > 0) {
             renderSubjectChart(data.subject_stats);
+          }
+          if (data.total_focus_time) {
+            const p = data.total_focus_time.split(':');
+            updateGarden(parseInt(p[0]) * 60 + parseInt(p[1]));
           }
         }).catch(err => {});
         window.lastStatsUpdate = Date.now();
@@ -6521,6 +6675,13 @@ function updateStatusBadge(type) {
   AvatarSystem.load();
   AvatarRenderer.applyAll(AvatarSystem.get());
   AvatarLevel.load();
+  updateGarden(0);
+  fetch('/stats').then(r=>r.json()).then(d=>{
+    if (d.total_focus_time) {
+      const p = d.total_focus_time.split(':');
+      updateGarden(parseInt(p[0])*60 + parseInt(p[1]));
+    }
+  }).catch(()=>{});
 
   // AI 서버 상태 확인
   (async () => {
