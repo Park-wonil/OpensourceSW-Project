@@ -2308,10 +2308,9 @@
           ⏳ 서버 연결 확인 중...
         </div>
         <div style="font-size:11px; color:var(--text-sub); line-height:1.7;">
-          Groq (Llama 3.1) 또는 Gemini 모델 사용 — 무료<br>
+          Groq (Llama 3.1) 모델 사용 — 무료<br>
           프로젝트 루트 <code style="font-size:11px;">.env</code> 파일에 키 설정:<br>
-          &nbsp;• Groq (추천): <span style="color:var(--accent-green);">console.groq.com</span> → API Keys<br>
-          &nbsp;• Gemini: <span style="color:var(--accent-green);">aistudio.google.com</span> → Get API Key
+          &nbsp;• <span style="color:var(--accent-green);">console.groq.com</span> → API Keys → Create API Key
         </div>
       </div>
     </div>
@@ -6479,17 +6478,15 @@ function updateStatusBadge(type) {
       const r = await fetch('/ai/status');
       const d = await r.json();
       if (d.available) {
-        const providerLabel = d.provider === 'groq'
-          ? 'Groq (Llama 3.1)' : 'Gemini';
         badge.style.background = 'rgba(110,231,192,0.1)';
         badge.style.borderColor = 'rgba(110,231,192,0.25)';
         badge.style.color = 'var(--accent-green)';
-        badge.textContent = '✅ ' + providerLabel + ' 연결됨 — 무료로 이용 중';
+        badge.textContent = '✅ Groq (Llama 3.1) 연결됨 — 무료로 이용 중';
       } else {
         badge.style.background = 'rgba(240,99,99,0.1)';
         badge.style.borderColor = 'rgba(240,99,99,0.3)';
         badge.style.color = 'var(--accent-red)';
-        badge.textContent = '❌ API 키 미설정 — .env 파일에 GROQ_API_KEY 또는 GEMINI_API_KEY를 등록하세요';
+        badge.textContent = '❌ API 키 미설정 — .env 파일에 GROQ_API_KEY를 등록하세요';
       }
     } catch(e) {
       badge.textContent = '⚠️ 서버 연결 실패';
