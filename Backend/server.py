@@ -23,19 +23,13 @@ if os.path.exists(_env_file):
                 _k, _v = _line.split('=', 1)
                 os.environ.setdefault(_k.strip(), _v.strip())
 
-# AI 설정 (Groq 우선, 없으면 Gemini)
-GROQ_API_KEY   = os.environ.get("GROQ_API_KEY", "")
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+# AI 설정 (Groq)
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 _ai_client = None
-_ai_provider = None
 try:
     from openai import OpenAI as _OpenAI
     if GROQ_API_KEY:
-        _ai_client   = _OpenAI(api_key=GROQ_API_KEY, base_url="https://api.groq.com/openai/v1")
-        _ai_provider = "groq"
-    elif GEMINI_API_KEY:
-        _ai_client   = _OpenAI(api_key=GEMINI_API_KEY, base_url="https://generativelanguage.googleapis.com/v1beta/openai/")
-        _ai_provider = "gemini"
+        _ai_client = _OpenAI(api_key=GROQ_API_KEY, base_url="https://api.groq.com/openai/v1")
 except ImportError:
     pass
 
@@ -342,8 +336,7 @@ def community_delete_post(post_id):
 def ai_status():
     if not _ai_client:
         return jsonify({"available": False, "provider": None, "model": None})
-    model = "llama-3.1-8b-instant" if _ai_provider == "groq" else "gemini-2.0-flash-lite"
-    return jsonify({"available": True, "provider": _ai_provider, "model": model})
+    return jsonify({"available": True, "provider": "groq", "model": "llama-3.1-8b-instant"})
 
 @app.route('/ai/chat', methods=['POST'])
 def ai_chat():
@@ -364,7 +357,7 @@ def ai_chat():
         for h in history[-10:]:
             messages.append({"role": h.get("role", "user"), "content": h.get("content", "")})
         messages.append({"role": "user", "content": message})
-        model = "llama-3.1-8b-instant" if _ai_provider == "groq" else "gemini-2.0-flash-lite"
+        model = "llama-3.1-8b-instant"
         resp = _ai_client.chat.completions.create(model=model, messages=messages, max_tokens=800)
         return jsonify({"reply": resp.choices[0].message.content})
     except Exception as e:
