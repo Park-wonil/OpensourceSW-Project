@@ -873,6 +873,28 @@
       color: white; font-size: 11px; font-weight: 800; letter-spacing: 0.5px;
       box-shadow: 0 2px 8px rgba(251,191,36,0.35); cursor: default;
     }
+    #av-xp-wrap {
+      padding: 10px 16px 4px; display: flex; flex-direction: column; gap: 5px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    #av-xp-row {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 11px; font-weight: 700; color: var(--text-sub);
+    }
+    #av-xp-lv-cur { color: #fbbf24; }
+    #av-xp-lv-next { color: var(--text-sub); }
+    #av-xp-remain { font-size: 10px; color: var(--text-sub); font-weight: 600; }
+    #av-xp-track {
+      width: 100%; height: 7px; border-radius: 10px;
+      background: rgba(255,255,255,0.08);
+    }
+    #av-xp-fill {
+      height: 100%; border-radius: 10px; transition: width 0.5s ease;
+      background: linear-gradient(90deg, #fbbf24, #f97316);
+      box-shadow: 0 0 6px rgba(251,191,36,0.5);
+    }
+    body.light-mode #av-xp-track { background: rgba(0,0,0,0.08); }
+    body.light-mode #av-xp-wrap { border-color: rgba(0,0,0,0.06); }
     .av-open-btn {
       display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px;
       background: linear-gradient(135deg,#1e293b,#0f172a);
@@ -5776,6 +5798,14 @@ function updateStatusBadge(type) {
         <span class="av-level-badge" id="av-level-badge" title="레벨">Lv.1</span>
         <button class="av-close-btn" onclick="AvatarCustomizer.close()">✕</button>
       </div>
+      <div id="av-xp-wrap">
+        <div id="av-xp-row">
+          <span id="av-xp-lv-cur">Lv.1</span>
+          <span id="av-xp-remain">로딩 중...</span>
+          <span id="av-xp-lv-next">Lv.2</span>
+        </div>
+        <div id="av-xp-track"><div id="av-xp-fill" style="width:0%"></div></div>
+      </div>
       <div class="av-char-selector">
         <button class="av-char-tab active" data-av-char="cat" onclick="AvatarSystem.setCharacter('cat')">
           <span class="av-char-emoji">🐱</span><span>고양이</span>
@@ -5969,6 +5999,7 @@ function updateStatusBadge(type) {
     }
     function get() { return _level; }
     function getMinutes() { return _minutes; }
+    function prevThreshold() { return THRESHOLDS[_level - 1] || 0; }
     function nextThreshold() { return THRESHOLDS[_level] || null; }
     function updateNavBadge() {
       const badge = document.getElementById('nav-level-badge');
@@ -5981,7 +6012,7 @@ function updateStatusBadge(type) {
         ? 'Lv.'+(_level+1)+' 까지 '+(next - _minutes)+'분 남음'
         : '최고 레벨 달성!';
     }
-    return { load, get, getMinutes, nextThreshold, updateNavBadge };
+    return { load, get, getMinutes, prevThreshold, nextThreshold, updateNavBadge };
   })();
 
   const AvatarSystem = (() => {
@@ -6408,14 +6439,35 @@ function updateStatusBadge(type) {
     function refreshPreview() { AvatarRenderer.renderPreview(AvatarSystem.get()); _updateSelected(); }
     function _updateLevelBadge() {
       const lv = AvatarLevel.get();
+      const mins = AvatarLevel.getMinutes();
+      const prev = AvatarLevel.prevThreshold();
+      const next = AvatarLevel.nextThreshold();
+
       const badge = document.getElementById('av-level-badge');
       if (badge) {
         badge.textContent = 'Lv.' + lv;
-        const next = AvatarLevel.nextThreshold();
-        badge.title = next
-          ? 'Lv.'+(lv+1)+' 까지 '+(next - AvatarLevel.getMinutes())+'분 남음'
-          : '최고 레벨 달성!';
+        badge.title = next ? 'Lv.'+(lv+1)+' 까지 '+(next-mins)+'분 남음' : '최고 레벨 달성!';
       }
+
+      const fill = document.getElementById('av-xp-fill');
+      const remain = document.getElementById('av-xp-remain');
+      const curEl = document.getElementById('av-xp-lv-cur');
+      const nextEl = document.getElementById('av-xp-lv-next');
+      if (fill && remain && curEl && nextEl) {
+        if (next) {
+          const pct = Math.min(100, Math.round((mins - prev) / (next - prev) * 100));
+          fill.style.width = pct + '%';
+          remain.textContent = (mins - prev) + ' / ' + (next - prev) + '분 (' + (next - mins) + '분 남음)';
+          curEl.textContent = 'Lv.' + lv;
+          nextEl.textContent = 'Lv.' + (lv + 1);
+        } else {
+          fill.style.width = '100%';
+          remain.textContent = '최고 레벨 달성! 🎉';
+          curEl.textContent = 'Lv.' + lv;
+          nextEl.textContent = 'MAX';
+        }
+      }
+
       AvatarLevel.updateNavBadge();
     }
     function _updateCharTabs() {
