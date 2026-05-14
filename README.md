@@ -91,7 +91,7 @@ OpensourceSW-Project/
 | 분류 | 기술 |
 |------|------|
 | Backend | Python 3.11, Flask, Flask-SocketIO |
-| AI 비전 | MediaPipe, OpenCV, NumPy |
+| AI 비전 | MediaPipe|
 | AI 튜터 | Groq API (Llama 3.1) |
 | Frontend | Vanilla JS, SVG 아바타 렌더링 |
 | DB | SQLite |
