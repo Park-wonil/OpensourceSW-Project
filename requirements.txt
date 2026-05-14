@@ -3,5 +3,6 @@ mediapipe==0.10.9
 numpy
 flask
 flask-socketio
+openai
 
 # Python 3.11 사용 권장
