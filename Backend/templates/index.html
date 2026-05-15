@@ -3915,6 +3915,9 @@
         }
         container.innerHTML = data.goals.map(g => {
           const colorClass = g.progress >= 80 ? '' : g.progress >= 50 ? 'warning' : 'danger';
+          const timeLabel = g.target === 0
+            ? `<span style="color:var(--text-sub); font-size:12px;">목표 미설정</span>`
+            : `${g.actual}분 / <span id="target-display-${encodeURIComponent(g.subject)}">${g.target}</span>분`;
           return `
             <div class="goal-item" id="goal-item-${encodeURIComponent(g.subject)}">
               <button class="goal-delete" onclick="deleteGoal('${g.subject.replace(/'/g,"\'")}')">×</button>
@@ -3922,23 +3925,23 @@
                 <span class="goal-subject" style="cursor:pointer;" onclick="selectGoalSubject('${g.subject.replace(/'/g,"\'")}')">
                   📚 ${g.subject}
                 </span>
-                <span class="goal-time">${g.actual}분 / <span id="target-display-${encodeURIComponent(g.subject)}">${g.target}</span>분</span>
+                <span class="goal-time">${timeLabel}</span>
               </div>
               <div class="goal-progress-bar">
                 <div class="goal-progress-fill ${colorClass}" style="width:${g.progress}%"></div>
               </div>
               <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
-                <span class="goal-percent">${g.progress}% 달성</span>
+                <span class="goal-percent">${g.target === 0 ? '목표를 설정하세요' : g.progress + '% 달성'}</span>
                 <div style="display:flex; gap:6px; align-items:center;">
                   <input type="number" id="edit-target-${encodeURIComponent(g.subject)}"
-                    value="${g.target}" min="10" max="600"
+                    placeholder="${g.target || ''}" min="10" max="600"
                     style="width:70px; padding:4px 8px; border-radius:8px; border:1px solid #444;
                     background:#1a1a1a; color:white; font-size:13px; text-align:center;">
                   <span style="font-size:12px; color:var(--text-sub);">분</span>
                   <button onclick="updateGoalTarget('${g.subject.replace(/'/g,"\'")}', '${encodeURIComponent(g.subject)}')"
                     style="padding:4px 12px; background:var(--accent-green); color:#111;
                     border:none; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">
-                    수정
+                    설정
                   </button>
                 </div>
               </div>
@@ -3988,9 +3991,16 @@
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({subject})
       }).then(r => r.json()).then(() => {
+        // 목표 목록에 0분으로 자동 추가
+        return fetch('/goals', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({subject, target_minutes: 0})
+        });
+      }).then(() => {
         inp.value = '';
         window.currentStudySubject = subject;
-        showToastMsg(`✅ "${subject}" 과목 추가 완료! 공부 시작`);
+        showToastMsg(`✅ "${subject}" 과목 추가! 목표 시간을 설정해주세요.`);
         loadGoals();
         loadSubjects();
         showCurrentSubject(subject);
@@ -4013,8 +4023,11 @@
     }
 
     function deleteGoal(subject) {
-      if (!confirm(`"${subject}" 목표를 삭제하시겠습니까?`)) return;
-      fetch(`/goals/${encodeURIComponent(subject)}`, {method: 'DELETE'}).then(() => loadGoals());
+      if (!confirm(`"${subject}" 과목을 삭제하시겠습니까?`)) return;
+      fetch(`/goals/${encodeURIComponent(subject)}`, {method: 'DELETE'}).then(() => {
+        loadGoals();
+        loadSubjects();
+      });
     }
 
     // 주간 통계
@@ -4767,6 +4780,17 @@ window.onload = checkLogin;
       iceServers: [
         { urls: "stun:stun.l.google.com:19302" },
         { urls: "stun:stun1.l.google.com:19302" },
+        { urls: "stun:stun2.l.google.com:19302" },
+        { urls: "stun:stun3.l.google.com:19302" },
+        {
+          urls: [
+            "turn:openrelay.metered.ca:80",
+            "turn:openrelay.metered.ca:443",
+            "turn:openrelay.metered.ca:443?transport=tcp",
+          ],
+          username: "openrelayproject",
+          credential: "openrelayproject",
+        },
       ],
       iceCandidatePoolSize: 10,
     };
@@ -5176,6 +5200,17 @@ window.onload = checkLogin;
       iceServers: [
         {urls: "stun:stun.l.google.com:19302"},
         {urls: "stun:stun1.l.google.com:19302"},
+        {urls: "stun:stun2.l.google.com:19302"},
+        {urls: "stun:stun3.l.google.com:19302"},
+        {
+          urls: [
+            "turn:openrelay.metered.ca:80",
+            "turn:openrelay.metered.ca:443",
+            "turn:openrelay.metered.ca:443?transport=tcp",
+          ],
+          username: "openrelayproject",
+          credential: "openrelayproject",
+        },
       ],
       iceCandidatePoolSize: 10,
     };
