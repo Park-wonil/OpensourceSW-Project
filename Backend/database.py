@@ -422,14 +422,16 @@ def get_goals(username=""):
         return []
 
 def delete_goal(subject, username=""):
-    """목표 삭제 (유저별)"""
+    """목표 + 저장 과목 함께 삭제 (유저별)"""
     try:
         conn = get_conn()
         c = conn.cursor()
         if username:
             c.execute("DELETE FROM goals WHERE subject = ? AND username = ?", (subject, username))
+            c.execute("DELETE FROM saved_subjects WHERE subject = ? AND username = ?", (subject, username))
         else:
             c.execute("DELETE FROM goals WHERE subject = ?", (subject,))
+            c.execute("DELETE FROM saved_subjects WHERE subject = ?", (subject,))
         conn.commit()
         conn.close()
         return True
