@@ -912,10 +912,72 @@
     .av-card-locked {
       display: flex; flex-direction: column; align-items: center; gap: 3px;
       padding: 8px 10px; border-radius: 10px; min-width: 60px;
-      border: 1.5px dashed rgba(255,255,255,0.12);
-      background: rgba(255,255,255,0.015); cursor: not-allowed; opacity: 0.52;
+      border: 1.5px dashed rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.015); cursor: pointer; opacity: 0.65;
+      transition: all 0.15s;
+    }
+    .av-card-locked:hover { opacity: 0.9; border-color: rgba(251,191,36,0.45); background: rgba(251,191,36,0.06); }
+    .av-card-locked.av-card-previewing {
+      border: 1.5px solid rgba(251,191,36,0.75); background: rgba(251,191,36,0.1);
+      opacity: 1;
     }
     .av-card-lock { font-size: 9px; color: #f87171; font-weight: 700; letter-spacing: 0.2px; line-height: 1.2; }
+    .av-card-locked.av-card-previewing .av-card-lock { color: #fbbf24; }
+    /* ─── Level-up modal ─── */
+    #levelup-modal {
+      position: fixed; inset: 0; z-index: 9999;
+      display: flex; align-items: center; justify-content: center;
+      pointer-events: none; opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+    #levelup-modal.active { opacity: 1; pointer-events: auto; }
+    .lu-backdrop {
+      position: absolute; inset: 0; background: rgba(0,0,0,0.55);
+    }
+    .lu-box {
+      position: relative; z-index: 1;
+      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4c1d95 100%);
+      border: 2px solid rgba(167,139,250,0.6);
+      border-radius: 20px; padding: 32px 40px; text-align: center;
+      box-shadow: 0 0 60px rgba(139,92,246,0.5), 0 0 120px rgba(139,92,246,0.2);
+      animation: lu-pop 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
+      max-width: 380px; width: 90%;
+    }
+    #levelup-modal.active .lu-box { animation: lu-pop 0.45s cubic-bezier(0.34,1.56,0.64,1) both; }
+    @keyframes lu-pop {
+      from { transform: scale(0.6) translateY(30px); opacity: 0; }
+      to   { transform: scale(1) translateY(0);      opacity: 1; }
+    }
+    .lu-stars {
+      font-size: 28px; letter-spacing: 6px; margin-bottom: 8px;
+      animation: lu-spin 2s linear infinite;
+      display: inline-block;
+    }
+    @keyframes lu-spin {
+      0%   { filter: hue-rotate(0deg);   }
+      100% { filter: hue-rotate(360deg); }
+    }
+    .lu-title { font-size: 14px; color: #c4b5fd; font-weight: 600; letter-spacing: 1px; margin-bottom: 4px; }
+    .lu-level {
+      font-size: 52px; font-weight: 900; line-height: 1;
+      background: linear-gradient(135deg, #f9a8d4, #c084fc, #818cf8, #67e8f9);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      filter: drop-shadow(0 0 12px rgba(192,132,252,0.8));
+    }
+    .lu-subtitle { font-size: 13px; color: #a78bfa; margin: 8px 0 16px; }
+    .lu-unlocked-label { font-size: 11px; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .lu-items { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 18px; }
+    .lu-item {
+      background: rgba(139,92,246,0.2); border: 1px solid rgba(167,139,250,0.35);
+      border-radius: 20px; padding: 4px 10px; font-size: 13px; color: #e9d5ff;
+    }
+    .lu-close {
+      background: rgba(139,92,246,0.3); border: 1px solid rgba(167,139,250,0.5);
+      color: #e9d5ff; border-radius: 10px; padding: 8px 24px; font-size: 13px;
+      cursor: pointer; transition: background 0.2s;
+    }
+    .lu-close:hover { background: rgba(139,92,246,0.5); }
     .av-level-badge {
       margin-left: auto; padding: 3px 12px; border-radius: 20px;
       background: linear-gradient(135deg,#fbbf24,#f97316);
@@ -1625,6 +1687,9 @@
                     <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
                   </filter>
                 </defs>
+
+                <!-- ── 후광 배경 (꼬리보다 먼저 렌더) ── -->
+                <g id="cat-halo-overlay"></g>
 
                 <!-- ── 꼬리 (몸보다 먼저 렌더) ── -->
                 <g id="cat-tail">
@@ -6045,11 +6110,15 @@ function updateStatusBadge(type) {
     santa:        '<path d="M70 4 L51 31 L89 31Z" fill="#cc1010"/><ellipse cx="70" cy="31" rx="20" ry="5.5" fill="white"/><circle cx="70" cy="2" r="5.5" fill="white"/>',
     beanie:       '<path d="M52 30 Q52 8 70 8 Q88 8 88 30Z" fill="#4a68e8"/><rect x="50" y="26" width="40" height="7" rx="3.5" fill="#3858d8"/><circle cx="70" cy="7" r="7" fill="#5a78f8"/>',
     beret:        '<ellipse cx="70" cy="23" rx="24" ry="10" fill="#cc3068"/><ellipse cx="70" cy="25.5" rx="23" ry="5.5" fill="#b82858"/><circle cx="81" cy="16" r="4.5" fill="#dd4078"/>',
-    flower_crown: '<circle cx="55" cy="26" r="5.5" fill="#ff8bc4"/><circle cx="63" cy="20" r="5" fill="#ff9c5e"/><circle cx="70" cy="18" r="5.5" fill="#ffe066"/><circle cx="77" cy="20" r="5" fill="#66d4ff"/><circle cx="85" cy="26" r="5.5" fill="#b87aff"/><circle cx="55" cy="26" r="2.2" fill="white"/><circle cx="63" cy="20" r="2" fill="white"/><circle cx="70" cy="18" r="2.2" fill="white"/><circle cx="77" cy="20" r="2" fill="white"/><circle cx="85" cy="26" r="2.2" fill="white"/><ellipse cx="59" cy="29" rx="4" ry="2.5" fill="#5cb85c" opacity="0.75"/><ellipse cx="81" cy="29" rx="4" ry="2.5" fill="#5cb85c" opacity="0.75"/>',
-    headphones:   '<path d="M51 32 Q51 10 70 10 Q89 10 89 32" stroke="#282840" stroke-width="5" fill="none" stroke-linecap="round"/><ellipse cx="50" cy="35" rx="7" ry="9" fill="#363858"/><ellipse cx="50" cy="35" rx="4.5" ry="6.5" fill="#4a5070"/><ellipse cx="90" cy="35" rx="7" ry="9" fill="#363858"/><ellipse cx="90" cy="35" rx="4.5" ry="6.5" fill="#4a5070"/><circle cx="50" cy="35" r="2.5" fill="#60d4ff"/><circle cx="90" cy="35" r="2.5" fill="#60d4ff"/>',
-    graduation:   '<polygon points="70,10 50,21 70,29 90,21" fill="#1a1a2e"/><ellipse cx="70" cy="29" rx="21" ry="5.5" fill="#242438"/><line x1="84" y1="20" x2="89" y2="30" stroke="#ffd700" stroke-width="2" stroke-linecap="round"/><circle cx="89" cy="32" r="4" fill="#ffd700"/>',
-    halo:         '<ellipse cx="70" cy="8" rx="20" ry="5.5" fill="rgba(255,220,0,0.18)" stroke="#ffd700" stroke-width="3.5"/><ellipse cx="70" cy="8" rx="14" ry="3.5" fill="rgba(255,240,100,0.15)"/>',
-    rainbow_crown:'<polygon points="53,29 53,11 63,20 70,9 77,20 87,11 87,29" fill="#e040fb"/><rect x="53" y="24" width="5" height="6" rx="1" fill="#ff5252"/><rect x="58" y="24" width="5" height="6" fill="#ff9800"/><rect x="63" y="24" width="5" height="6" fill="#ffeb3b"/><rect x="68" y="24" width="5" height="6" fill="#66bb6a"/><rect x="73" y="24" width="5" height="6" fill="#29b6f6"/><rect x="78" y="24" width="5" height="6" fill="#7e57c2"/><rect x="83" y="24" width="4" height="6" rx="1" fill="#ec407a"/><circle cx="70" cy="10" r="3.5" fill="#ffe082"/><circle cx="57" cy="17" r="2.5" fill="#80deea"/><circle cx="83" cy="17" r="2.5" fill="#ff80ab"/>',
+    flower_crown: '<circle cx="55" cy="26" r="6" fill="#ff70b8"/><circle cx="63" cy="19" r="5.5" fill="#ff9040"/><circle cx="70" cy="17" r="6" fill="#ffe040"/><circle cx="77" cy="19" r="5.5" fill="#40d8ff"/><circle cx="85" cy="26" r="6" fill="#c060ff"/><circle cx="55" cy="26" r="2.4" fill="white"/><circle cx="63" cy="19" r="2.2" fill="white"/><circle cx="70" cy="17" r="2.5" fill="white"/><circle cx="77" cy="19" r="2.2" fill="white"/><circle cx="85" cy="26" r="2.4" fill="white"/><ellipse cx="59" cy="29" rx="4.5" ry="2.8" fill="#48c848" opacity="0.85"/><ellipse cx="81" cy="29" rx="4.5" ry="2.8" fill="#48c848" opacity="0.85"/><circle cx="70" cy="14" r="1.8" fill="#ffe8a0" opacity="0.7"/>',
+    headphones:   '<path d="M51 32 Q51 8 70 8 Q89 8 89 32" stroke="#1a1a40" stroke-width="5" fill="none" stroke-linecap="round"/><ellipse cx="50" cy="35" rx="7" ry="9" fill="#2a2860"/><ellipse cx="50" cy="35" rx="4.5" ry="6.5" fill="#5060c0"/><ellipse cx="90" cy="35" rx="7" ry="9" fill="#2a2860"/><ellipse cx="90" cy="35" rx="4.5" ry="6.5" fill="#5060c0"/><circle cx="50" cy="35" r="3" fill="#40e8ff"/><circle cx="90" cy="35" r="3" fill="#ff60c0"/><circle cx="70" cy="7" r="4" fill="#5060c0"/>',
+    graduation:   '<polygon points="70,10 50,21 70,29 90,21" fill="#1a1a40"/><ellipse cx="70" cy="29" rx="21" ry="5.5" fill="#2a2858"/><line x1="84" y1="20" x2="90" y2="32" stroke="#ffd700" stroke-width="2.5" stroke-linecap="round"/><circle cx="90" cy="34" r="5" fill="#ffd700"/><circle cx="90" cy="34" r="2.5" fill="#fff080"/>',
+    halo_mini:    '<ellipse cx="70" cy="11" rx="15" ry="4" fill="rgba(255,130,220,0.22)" stroke="#ffaaee" stroke-width="2.5"/><ellipse cx="70" cy="11" rx="9" ry="2.5" fill="rgba(255,190,240,0.14)"/><circle cx="57" cy="10.5" r="1.8" fill="#ffccee" opacity="0.75"/><circle cx="83" cy="10.5" r="1.8" fill="#ffccee" opacity="0.75"/>',
+    halo_sparkle: '<ellipse cx="70" cy="8" rx="21" ry="5.5" fill="rgba(190,170,255,0.2)" stroke="#c8b0ff" stroke-width="2.8"/><circle cx="52" cy="8" r="2.8" fill="#ff88d8"/><circle cx="60" cy="3.5" r="2.2" fill="#88d8ff"/><circle cx="70" cy="2.5" r="2.8" fill="#ffe870"/><circle cx="80" cy="3.5" r="2.2" fill="#88ffcc"/><circle cx="88" cy="8" r="2.8" fill="#ff9090"/><ellipse cx="70" cy="8" rx="12" ry="3" fill="rgba(220,200,255,0.14)"/>',
+    halo_rainbow: '<ellipse cx="70" cy="8" rx="22" ry="5.5" fill="rgba(255,80,80,0.06)" stroke="#ff6060" stroke-width="2.5"/><ellipse cx="70" cy="8" rx="19" ry="4.5" fill="rgba(255,160,0,0.06)" stroke="#ff9820" stroke-width="2"/><ellipse cx="70" cy="8" rx="16" ry="3.5" fill="rgba(80,200,100,0.06)" stroke="#50d060" stroke-width="1.8"/><ellipse cx="70" cy="8" rx="13" ry="2.5" fill="rgba(60,100,255,0.06)" stroke="#5090ff" stroke-width="1.6"/><ellipse cx="70" cy="8" rx="10" ry="1.5" fill="rgba(200,60,255,0.06)" stroke="#c060ff" stroke-width="1.4"/>',
+    halo:         '<ellipse cx="70" cy="8" rx="21" ry="5.5" fill="rgba(255,215,0,0.25)" stroke="#ffd700" stroke-width="4"/><ellipse cx="70" cy="8" rx="14" ry="3.5" fill="rgba(255,245,100,0.2)"/><circle cx="51" cy="7.5" r="2.5" fill="#ffe860" opacity="0.75"/><circle cx="89" cy="7.5" r="2.5" fill="#ffe860" opacity="0.75"/><circle cx="70" cy="3" r="2.8" fill="#fff0a0" opacity="0.65"/>',
+    rainbow_crown:'<polygon points="53,29 53,11 63,20 70,9 77,20 87,11 87,29" fill="#e040fb"/><rect x="53" y="24" width="5" height="6" rx="1" fill="#ff5252"/><rect x="58" y="24" width="5" height="6" fill="#ff9800"/><rect x="63" y="24" width="5" height="6" fill="#ffeb3b"/><rect x="68" y="24" width="5" height="6" fill="#66bb6a"/><rect x="73" y="24" width="5" height="6" fill="#29b6f6"/><rect x="78" y="24" width="5" height="6" fill="#7e57c2"/><rect x="83" y="24" width="4" height="6" rx="1" fill="#ec407a"/><circle cx="70" cy="10" r="4" fill="#ffe082"/><circle cx="57" cy="17" r="3" fill="#80deea"/><circle cx="83" cy="17" r="3" fill="#ff80ab"/>',
+    halo_galaxy:  '<ellipse cx="70" cy="8" rx="23" ry="6" fill="rgba(80,0,160,0.22)" stroke="#9840ff" stroke-width="3.5"/><circle cx="51" cy="8" r="2.8" fill="#ff60ff" opacity="0.9"/><circle cx="59" cy="3.5" r="2.2" fill="#60d8ff" opacity="0.9"/><circle cx="70" cy="2.5" r="2.8" fill="#ffe080" opacity="0.85"/><circle cx="81" cy="3.5" r="2.2" fill="#80ffcc" opacity="0.9"/><circle cx="89" cy="8" r="2.8" fill="#ff80ff" opacity="0.9"/><ellipse cx="70" cy="8" rx="14" ry="3.5" fill="rgba(160,80,255,0.16)"/><circle cx="65" cy="10" r="1.3" fill="white" opacity="0.6"/><circle cx="75" cy="6" r="1" fill="white" opacity="0.5"/>',
   };
   const AV_ACC_SVG = {
     none: '',
@@ -6057,9 +6126,11 @@ function updateStatusBadge(type) {
     ribbon:     '<path d="M83 20 Q89 14 92 21 Q89 28 83 22Z" fill="#ff4090"/><path d="M101 20 Q95 14 92 21 Q95 28 101 22Z" fill="#ff4090"/><circle cx="92" cy="21" r="4" fill="#ff80b8"/>',
     bowtie:     '<path d="M55 84 Q62 78 69 84 Q62 90 55 84Z" fill="#2855cc"/><path d="M71 84 Q78 78 85 84 Q78 90 71 84Z" fill="#2855cc"/><circle cx="70" cy="84" r="4" fill="#3a68e0"/>',
     necklace:   '<path d="M49 77 Q70 89 91 77" stroke="#d4ae28" stroke-width="2.4" fill="none" stroke-linecap="round"/><ellipse cx="70" cy="88" rx="5" ry="4" fill="#e8c838"/><ellipse cx="70" cy="88" rx="3" ry="2.5" fill="#c8a018"/>',
-    star_badge: '<polygon points="56,78 57.8,83.5 63.5,83.5 59,86.8 61,92 56,89 51,92 53,86.8 48.5,83.5 54.2,83.5" fill="#ffd700"/><circle cx="56" cy="85.5" r="2.5" fill="rgba(255,255,255,0.55)"/>',
-    monocle:    '<circle cx="77" cy="44" r="8" fill="rgba(28,28,40,0.10)" stroke="#a07830" stroke-width="2.2"/><line x1="84" y1="50" x2="90" y2="57" stroke="#a07830" stroke-width="1.8" stroke-linecap="round"/>',
-    earrings:   '<circle cx="43" cy="50" r="3.5" fill="#ffd700"/><circle cx="43" cy="55.5" r="2.5" fill="#ffba55"/><circle cx="97" cy="50" r="3.5" fill="#ffd700"/><circle cx="97" cy="55.5" r="2.5" fill="#ffba55"/>',
+    star_badge:     '<polygon points="56,78 57.8,83.5 63.5,83.5 59,86.8 61,92 56,89 51,92 53,86.8 48.5,83.5 54.2,83.5" fill="#ffd700"/><circle cx="56" cy="85.5" r="2.5" fill="rgba(255,255,255,0.55)"/><circle cx="56" cy="78.5" r="1.5" fill="#fff8a0" opacity="0.7"/>',
+    monocle:        '<circle cx="77" cy="44" r="8" fill="rgba(28,28,40,0.10)" stroke="#a07830" stroke-width="2.2"/><line x1="84" y1="50" x2="90" y2="57" stroke="#a07830" stroke-width="1.8" stroke-linecap="round"/>',
+    earrings:       '<circle cx="43" cy="50" r="4" fill="#ffd700"/><circle cx="43" cy="56" r="3" fill="#ffba55"/><circle cx="43" cy="61" r="2" fill="#ff9020"/><circle cx="97" cy="50" r="4" fill="#ffd700"/><circle cx="97" cy="56" r="3" fill="#ffba55"/><circle cx="97" cy="61" r="2" fill="#ff9020"/>',
+    crystal_wand:   '<line x1="50" y1="103" x2="65" y2="80" stroke="#c0a0ff" stroke-width="3" stroke-linecap="round"/><circle cx="65" cy="78" r="7" fill="rgba(180,140,255,0.28)" stroke="#c8b0ff" stroke-width="2"/><circle cx="62.5" cy="75.5" r="3.2" fill="rgba(255,255,255,0.55)"/><polygon points="65,68 66.5,73 71.5,73 67.5,76 69,81 65,78 61,81 62.5,76 58.5,73 63.5,73" fill="#ffe840" opacity="0.9"/>',
+    rainbow_ribbon: '<path d="M82 20 Q88 13 92 20 Q88 27 82 21Z" fill="#ff5252"/><path d="M102 20 Q96 13 92 20 Q96 27 102 21Z" fill="#7c4dff"/><circle cx="92" cy="20.5" r="5" fill="#ff9800"/><circle cx="92" cy="20.5" r="3" fill="#ffe050"/><circle cx="89" cy="17" r="1.8" fill="#80ffcc" opacity="0.85"/><circle cx="95" cy="17" r="1.8" fill="#80d4ff" opacity="0.85"/>',
   };
   const AV_CAT_EXPR = {
     happy:   '<ellipse cx="63" cy="44" rx="5.8" ry="7" fill="#120a02"/><ellipse cx="77" cy="44" rx="5.8" ry="7" fill="#120a02"/><ellipse cx="63" cy="44" rx="4.2" ry="6" fill="#3c1e06"/><ellipse cx="77" cy="44" rx="4.2" ry="6" fill="#3c1e06"/><ellipse cx="63" cy="44" rx="2" ry="5.5" fill="#0a0402"/><ellipse cx="77" cy="44" rx="2" ry="5.5" fill="#0a0402"/><circle cx="65.5" cy="40.5" r="2.6" fill="white"/><circle cx="79.5" cy="40.5" r="2.6" fill="white"/><circle cx="60.5" cy="47" r="1.3" fill="white" opacity="0.55"/><circle cx="74.5" cy="47" r="1.3" fill="white" opacity="0.55"/>',
@@ -6067,7 +6138,9 @@ function updateStatusBadge(type) {
     wink:    '<ellipse cx="63" cy="44" rx="5.8" ry="7" fill="#120a02"/><ellipse cx="63" cy="44" rx="4.2" ry="6" fill="#3c1e06"/><ellipse cx="63" cy="44" rx="2" ry="5.5" fill="#0a0402"/><circle cx="65.5" cy="40.5" r="2.6" fill="white"/><circle cx="60.5" cy="47" r="1.3" fill="white" opacity="0.55"/><path d="M71 44 Q77 51.5 83 44" stroke="#120a02" stroke-width="3.4" fill="none" stroke-linecap="round"/>',
     sleepy:  '<path d="M57 46 Q63 38 69 46" fill="#120a02"/><path d="M71 46 Q77 38 83 46" fill="#120a02"/><path d="M58 46 Q63 40.5 68 46 Q63 42 58 46Z" fill="#3c1e06"/><path d="M72 46 Q77 40.5 82 46 Q77 42 72 46Z" fill="#3c1e06"/><circle cx="65" cy="43" r="1.8" fill="white" opacity="0.7"/><circle cx="79" cy="43" r="1.8" fill="white" opacity="0.7"/>',
     love:    '<path d="M63 47 C58 42.5 56 38 60 37 C61.5 36.5 63 39 63 39 C63 39 64.5 36.5 66 37 C70 38 68 42.5 63 47Z" fill="#ff4080"/><path d="M77 47 C72 42.5 70 38 74 37 C75.5 36.5 77 39 77 39 C77 39 78.5 36.5 80 37 C84 38 82 42.5 77 47Z" fill="#ff4080"/>',
-    star:    '<polygon points="63,37 64.8,42 70,42 65.6,45 67.5,50 63,47 58.5,50 60.4,45 56,42 61.2,42" fill="#ffd700"/><polygon points="77,37 78.8,42 84,42 79.6,45 81.5,50 77,47 72.5,50 74.4,45 70,42 75.2,42" fill="#ffd700"/>',
+    star:    '<polygon points="63,37 64.8,42 70,42 65.6,45 67.5,50 63,47 58.5,50 60.4,45 56,42 61.2,42" fill="#ffd700"/><polygon points="77,37 78.8,42 84,42 79.6,45 81.5,50 77,47 72.5,50 74.4,45 70,42 75.2,42" fill="#ffd700"/><circle cx="63" cy="43" r="2.5" fill="rgba(255,240,120,0.45)"/><circle cx="77" cy="43" r="2.5" fill="rgba(255,240,120,0.45)"/>',
+    sparkle: '<ellipse cx="63" cy="44" rx="5.8" ry="7" fill="#120a02"/><ellipse cx="77" cy="44" rx="5.8" ry="7" fill="#120a02"/><ellipse cx="63" cy="44" rx="4" ry="5.5" fill="#1a0850"/><ellipse cx="77" cy="44" rx="4" ry="5.5" fill="#1a0850"/><circle cx="65.5" cy="40.5" r="2.8" fill="white"/><circle cx="79.5" cy="40.5" r="2.8" fill="white"/><circle cx="63" cy="43" r="2" fill="#c040ff" opacity="0.55"/><circle cx="77" cy="43" r="2" fill="#40b0ff" opacity="0.55"/><path d="M63 35 L63 37 M61 36 L65 36" stroke="#ffe040" stroke-width="1.3" stroke-linecap="round"/><path d="M77 35 L77 37 M75 36 L79 36" stroke="#ff80b0" stroke-width="1.3" stroke-linecap="round"/>',
+    rainbow: '<ellipse cx="63" cy="44" rx="5.8" ry="7" fill="#120a02"/><ellipse cx="77" cy="44" rx="5.8" ry="7" fill="#120a02"/><ellipse cx="63" cy="44" rx="4.2" ry="5.5" fill="#ff3060" opacity="0.5"/><ellipse cx="63" cy="44" rx="3" ry="4.5" fill="#ff9020" opacity="0.7"/><ellipse cx="63" cy="44" rx="1.8" ry="3.5" fill="#ffe030"/><circle cx="65.5" cy="40.5" r="2.5" fill="white"/><ellipse cx="77" cy="44" rx="4.2" ry="5.5" fill="#3060ff" opacity="0.5"/><ellipse cx="77" cy="44" rx="3" ry="4.5" fill="#a020ff" opacity="0.7"/><ellipse cx="77" cy="44" rx="1.8" ry="3.5" fill="#ff40c0"/><circle cx="79.5" cy="40.5" r="2.5" fill="white"/>',
   };
   const AV_BICHON_EXPR = {
     happy:   '<circle cx="63" cy="44" r="6" fill="#1a0a08"/><circle cx="77" cy="44" r="6" fill="#1a0a08"/><circle cx="65" cy="41.5" r="2.4" fill="white"/><circle cx="79" cy="41.5" r="2.4" fill="white"/><circle cx="60.5" cy="47" r="1.2" fill="white" opacity="0.5"/><circle cx="74.5" cy="47" r="1.2" fill="white" opacity="0.5"/>',
@@ -6088,11 +6161,52 @@ function updateStatusBadge(type) {
     royal:        '<path d="M32 107 Q32 80 70 78 Q108 80 108 107Z" fill="#8d1a2e"/><path d="M32 80 Q70 74 108 80 L108 86 Q70 80 32 86Z" fill="#c8a000"/><path d="M70 78 L64 90 L76 90Z" fill="#c8a000"/><circle cx="70" cy="88" r="4" fill="#c8a000"/><path d="M35 96 Q70 90 105 96" stroke="#c8a000" stroke-width="1.5" fill="none" stroke-linecap="round"/>',
     galaxy:       '<path d="M28 107 Q28 76 70 74 Q112 76 112 107Z" fill="#1a0a40"/><path d="M50 90 Q60 82 70 90 Q80 98 90 90" stroke="rgba(150,80,255,0.35)" stroke-width="8" fill="none"/><circle cx="45" cy="85" r="2" fill="white" opacity="0.8"/><circle cx="60" cy="92" r="1.5" fill="#60d4ff" opacity="0.9"/><circle cx="70" cy="82" r="2.5" fill="#c060ff" opacity="0.7"/><circle cx="80" cy="95" r="2" fill="#ff80ff" opacity="0.8"/><circle cx="95" cy="86" r="1.5" fill="white" opacity="0.7"/><circle cx="52" cy="99" r="1.5" fill="#60d4ff" opacity="0.6"/><circle cx="88" cy="100" r="2" fill="#c060ff" opacity="0.7"/>',
     striped:      '<path d="M31 107 Q31 80 70 78 Q109 80 109 107Z" fill="#4a90d9"/><path d="M32 86 Q70 82 108 86 L108 90 Q70 86 32 90Z" fill="white" opacity="0.65"/><path d="M31 94 Q70 90 109 94 L109 98 Q70 94 31 98Z" fill="white" opacity="0.65"/><path d="M31 102 Q70 98 109 102 L109 106 Q70 102 31 106Z" fill="white" opacity="0.65"/>',
+    aurora:       '<path d="M28 107 Q28 76 70 74 Q112 76 112 107Z" fill="#060c28"/><path d="M32 88 Q52 78 72 86 Q88 93 108 82" stroke="#00e5cc" stroke-width="5" fill="none" opacity="0.68" stroke-linecap="round"/><path d="M30 97 Q52 88 72 96 Q90 103 112 93" stroke="#8040ff" stroke-width="4" fill="none" opacity="0.62" stroke-linecap="round"/><path d="M28 106 Q50 97 72 105 Q92 112 112 103" stroke="#ff60a0" stroke-width="3.5" fill="none" opacity="0.55" stroke-linecap="round"/><circle cx="44" cy="80" r="2.2" fill="#00e5cc" opacity="0.85"/><circle cx="62" cy="77" r="1.8" fill="white" opacity="0.7"/><circle cx="80" cy="80" r="2.2" fill="#8040ff" opacity="0.85"/><circle cx="97" cy="85" r="1.8" fill="#ff80ff" opacity="0.75"/>',
+  };
+  /* ─── Background Halo SVG (캐릭터 뒤에 렌더) ─── */
+  const AV_HALO_SVG = {
+    none: '',
+    halo_mini:
+      '<ellipse cx="70" cy="62" rx="54" ry="50" fill="rgba(255,160,235,0.48)" style="filter:blur(14px)"/>'+
+      '<ellipse cx="70" cy="53" rx="32" ry="30" fill="rgba(255,220,255,0.38)" style="filter:blur(8px)"/>',
+    halo_sparkle:
+      '<ellipse cx="70" cy="62" rx="57" ry="53" fill="rgba(200,150,255,0.46)" style="filter:blur(15px)"/>'+
+      '<ellipse cx="70" cy="62" rx="34" ry="31" fill="rgba(255,255,255,0.38)" style="filter:blur(7px)"/>'+
+      '<circle cx="22" cy="27" r="3" fill="#ffe840" opacity="0.92"/><circle cx="118" cy="21" r="2.5" fill="#60ffcc" opacity="0.9"/>'+
+      '<circle cx="16" cy="82" r="2.5" fill="#ff88cc" opacity="0.88"/><circle cx="124" cy="90" r="3" fill="#80ccff" opacity="0.92"/>'+
+      '<circle cx="40" cy="8" r="2.2" fill="#ff80b0" opacity="0.85"/><circle cx="102" cy="107" r="2.2" fill="#80ffb0" opacity="0.8"/>'+
+      '<path d="M22 13 L23.5 18 L28 19.5 L23.5 21 L22 25.5 L20.5 21 L16 19.5 L20.5 18Z" fill="#ffe840" opacity="0.92"/>'+
+      '<path d="M118 7 L119.5 11.5 L124 13 L119.5 14.5 L118 19 L116.5 14.5 L112 13 L116.5 11.5Z" fill="#80ccff" opacity="0.9"/>',
+    halo_rainbow:
+      '<ellipse cx="70" cy="62" rx="46" ry="43" fill="rgba(255,255,255,0.18)" style="filter:blur(10px)"/>'+
+      '<ellipse cx="70" cy="62" rx="64" ry="60" fill="none" stroke="#ff4040" stroke-width="4" opacity="0.65"/>'+
+      '<ellipse cx="70" cy="62" rx="57" ry="53" fill="none" stroke="#ffaa00" stroke-width="3.5" opacity="0.65"/>'+
+      '<ellipse cx="70" cy="62" rx="50" ry="46" fill="none" stroke="#aaff00" stroke-width="3.2" opacity="0.62"/>'+
+      '<ellipse cx="70" cy="62" rx="43" ry="39" fill="none" stroke="#00ccff" stroke-width="2.8" opacity="0.62"/>'+
+      '<ellipse cx="70" cy="62" rx="36" ry="32" fill="none" stroke="#aa00ff" stroke-width="2.5" opacity="0.58"/>',
+    halo:
+      '<ellipse cx="70" cy="62" rx="56" ry="52" fill="rgba(255,215,60,0.52)" style="filter:blur(17px)"/>'+
+      '<ellipse cx="70" cy="54" rx="34" ry="31" fill="rgba(255,250,180,0.45)" style="filter:blur(9px)"/>'+
+      '<line x1="70" y1="1" x2="70" y2="122" stroke="#ffe870" stroke-width="2" opacity="0.1"/>'+
+      '<line x1="1" y1="62" x2="159" y2="62" stroke="#ffe870" stroke-width="2" opacity="0.1"/>'+
+      '<line x1="18" y1="9" x2="122" y2="115" stroke="#ffe870" stroke-width="1.5" opacity="0.09"/>'+
+      '<line x1="122" y1="9" x2="18" y2="115" stroke="#ffe870" stroke-width="1.5" opacity="0.09"/>'+
+      '<line x1="38" y1="2" x2="102" y2="122" stroke="#ffe870" stroke-width="1.2" opacity="0.08"/>'+
+      '<line x1="102" y1="2" x2="38" y2="122" stroke="#ffe870" stroke-width="1.2" opacity="0.08"/>',
+    halo_galaxy:
+      '<ellipse cx="70" cy="62" rx="57" ry="53" fill="rgba(160,40,255,0.52)" style="filter:blur(18px)"/>'+
+      '<ellipse cx="70" cy="54" rx="34" ry="31" fill="rgba(80,0,200,0.38)" style="filter:blur(10px)"/>'+
+      '<circle cx="15" cy="17" r="2.2" fill="white" opacity="0.93"/><circle cx="42" cy="6" r="1.8" fill="white" opacity="0.87"/>'+
+      '<circle cx="98" cy="10" r="2.5" fill="#c8c8ff" opacity="0.92"/><circle cx="132" cy="25" r="1.8" fill="white" opacity="0.9"/>'+
+      '<circle cx="142" cy="72" r="2.2" fill="#ffd0ff" opacity="0.92"/><circle cx="128" cy="108" r="1.8" fill="white" opacity="0.8"/>'+
+      '<circle cx="12" cy="95" r="2.2" fill="#c8e0ff" opacity="0.88"/><circle cx="148" cy="45" r="2" fill="white" opacity="0.87"/>'+
+      '<circle cx="25" cy="113" r="1.8" fill="white" opacity="0.82"/><circle cx="8" cy="50" r="1.8" fill="#ffccff" opacity="0.85"/>'+
+      '<path d="M98 4 L99.5 9 L104 10.5 L99.5 12 L98 17 L96.5 12 L92 10.5 L96.5 9Z" fill="white" opacity="0.92"/>',
   };
   const CHARACTER_CONFIGS = {
     cat: {
       id:'cat', labelKo:'고양이', emoji:'🐱',
-      defaults:{ bodyColor:'orange', earColor:'pink', hat:'none', accessory:'none', expression:'happy', outfit:'none' },
+      defaults:{ bodyColor:'orange', earColor:'pink', hat:'none', accessory:'none', expression:'happy', outfit:'none', halo:'none' },
       colorGroups:[
         { key:'bodyColor', label:'몸 색상', options:[
           {id:'orange',color:'linear-gradient(135deg,#ffc870,#c07030)',label:'오렌지'},
@@ -6112,7 +6226,7 @@ function updateStatusBadge(type) {
     },
     bichon: {
       id:'bichon', labelKo:'비숑', emoji:'🐶',
-      defaults:{ coatColor:'white', hat:'none', accessory:'none', expression:'happy', outfit:'none' },
+      defaults:{ coatColor:'white', hat:'none', accessory:'none', expression:'happy', outfit:'none', halo:'none' },
       colorGroups:[
         { key:'coatColor', label:'털 색상', options:[
           {id:'white', color:'linear-gradient(135deg,#ffffff,#e8e8f0)',label:'퓨어 화이트',outline:true},
@@ -6132,8 +6246,15 @@ function updateStatusBadge(type) {
       {id:'flower_crown',emoji:'🌸',label:'꽃왕관',requiredLevel:2},
       {id:'headphones',emoji:'🎧',label:'헤드폰',requiredLevel:3},
       {id:'graduation',emoji:'🎓',label:'학사모',requiredLevel:4},
-      {id:'halo',emoji:'😇',label:'후광',requiredLevel:5},
       {id:'rainbow_crown',emoji:'🌈',label:'무지개왕관',requiredLevel:6},
+    ]},
+    { key:'halo', label:'후광', options:[
+      {id:'none',emoji:'—',label:'없음'},
+      {id:'halo_mini',emoji:'💫',label:'미니후광',requiredLevel:2},
+      {id:'halo_sparkle',emoji:'✨',label:'반짝후광',requiredLevel:3},
+      {id:'halo_rainbow',emoji:'🌈',label:'무지개후광',requiredLevel:4},
+      {id:'halo',emoji:'😇',label:'신성후광',requiredLevel:5},
+      {id:'halo_galaxy',emoji:'🌌',label:'은하후광',requiredLevel:6},
     ]},
     { key:'outfit', label:'옷', options:[
       {id:'none',emoji:'—',label:'없음'},{id:'hoodie',emoji:'👕',label:'후드티'},
@@ -6143,6 +6264,7 @@ function updateStatusBadge(type) {
       {id:'royal',emoji:'👸',label:'왕복',requiredLevel:3},
       {id:'galaxy',emoji:'🌌',label:'갤럭시',requiredLevel:4},
       {id:'striped',emoji:'🎽',label:'스트라이프',requiredLevel:5},
+      {id:'aurora',emoji:'🌌',label:'오로라',requiredLevel:6},
     ]},
     { key:'accessory', label:'악세서리', options:[
       {id:'none',emoji:'—',label:'없음'},{id:'glasses',emoji:'👓',label:'안경'},
@@ -6151,12 +6273,16 @@ function updateStatusBadge(type) {
       {id:'star_badge',emoji:'⭐',label:'별 배지',requiredLevel:2},
       {id:'monocle',emoji:'🧐',label:'모노클',requiredLevel:3},
       {id:'earrings',emoji:'💎',label:'귀걸이',requiredLevel:4},
+      {id:'crystal_wand',emoji:'💎',label:'크리스탈 완드',requiredLevel:5},
+      {id:'rainbow_ribbon',emoji:'🌈',label:'무지개 리본',requiredLevel:6},
     ]},
     { key:'expression', label:'표정', options:[
       {id:'happy',emoji:'😊',label:'행복'},{id:'focused',emoji:'😤',label:'집중'},
       {id:'wink',emoji:'😉',label:'윙크'},{id:'sleepy',emoji:'😴',label:'졸린'},
       {id:'love',emoji:'😍',label:'사랑',requiredLevel:2},
       {id:'star',emoji:'🤩',label:'반짝',requiredLevel:3},
+      {id:'sparkle',emoji:'✨',label:'빛나기',requiredLevel:4},
+      {id:'rainbow',emoji:'🌈',label:'무지개',requiredLevel:5},
     ]},
   ];
   const AV_TAB_POS = {
@@ -6171,19 +6297,45 @@ function updateStatusBadge(type) {
   /* ─── AvatarLevel ─── */
   const AvatarLevel = (() => {
     const THRESHOLDS = [0, 60, 180, 360, 600, 900, 1200, 1800, 2400, 3600];
-    let _level = 1, _minutes = 0;
+    let _level = 1, _minutes = 0, _initialized = false;
     function _compute(m) {
       let lv = 1;
       for (let i = 1; i < THRESHOLDS.length; i++) { if (m >= THRESHOLDS[i]) lv = i+1; else break; }
       return lv;
+    }
+    function _getNewItems(lv) {
+      return SHARED_OPTIONS.flatMap(g =>
+        g.options.filter(o => o.requiredLevel === lv).map(o => o.emoji + ' ' + o.label)
+      );
+    }
+    function _showLevelUpModal(newLv) {
+      const newItems = _getNewItems(newLv);
+      const el = document.getElementById('levelup-modal');
+      if (!el) return;
+      document.getElementById('levelup-lv').textContent = newLv;
+      const list = document.getElementById('levelup-items');
+      list.innerHTML = newItems.length
+        ? newItems.map(i => `<span class="lu-item">${i}</span>`).join('')
+        : '<span class="lu-item">🎉 새로운 능력!</span>';
+      el.classList.add('active');
+      setTimeout(() => el.classList.remove('active'), 5000);
     }
     async function load() {
       try {
         const r = await fetch('/me/total');
         if (!r.ok) return;
         const d = await r.json();
-        _minutes = d.total_minutes || 0;
-        _level = _compute(_minutes);
+        const newMinutes = d.total_minutes || 0;
+        const newLevel = _compute(newMinutes);
+        if (_initialized && newLevel > _level) {
+          _minutes = newMinutes;
+          _level = newLevel;
+          _showLevelUpModal(newLevel);
+        } else {
+          _minutes = newMinutes;
+          _level = newLevel;
+        }
+        _initialized = true;
       } catch(e) {}
     }
     function get() { return _level; }
@@ -6334,8 +6486,10 @@ function updateStatusBadge(type) {
       const hat  = _scaledHatSVG(pos, cust.hat||'none');
       const acc  = _scaledAccSVG(pos, cust.accessory||'none');
       const outfit = _scaledOutfitSVG(pos, cust.outfit||'none');
+      const haloSVG = _scaledHaloSVG(pos, cust.halo||'none');
 
-      return '<g id="'+p+'-bichon-body">'+body+'</g>'+
+      return '<g id="'+p+'-bichon-halo">'+haloSVG+'</g>'+
+             '<g id="'+p+'-bichon-body">'+body+'</g>'+
              '<g id="'+p+'-bichon-outfit">'+outfit+'</g>'+
              '<g id="'+p+'-bichon-head">'+
              '<circle cx="'+earLX+'" cy="'+earY+'" r="'+earR+'" fill="url(#'+gid+')"/>'+
@@ -6373,6 +6527,7 @@ function updateStatusBadge(type) {
           '</linearGradient>'+
           '<filter id="bDrop"><feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="rgba(0,0,0,0.28)"/></filter>'+
         '</defs>'+
+        '<g id="bichon-halo-overlay">'+(AV_HALO_SVG[cust.halo]||'')+'</g>'+
         '<!-- 노트북 베이스 -->'+
         '<rect x="13" y="82" width="106" height="9" rx="4.5" fill="url(#bLap)" filter="url(#bDrop)"/>'+
         '<rect x="48" y="85.5" width="36" height="4" rx="2" fill="rgba(0,0,0,0.14)"/>'+
@@ -6440,10 +6595,12 @@ function updateStatusBadge(type) {
         const hat    = AV_HAT_SVG[cust.hat]||'';
         const acc    = AV_ACC_SVG[cust.accessory]||'';
         const outfit = AV_OUTFIT_SVG[cust.outfit]||'';
+        const halo   = AV_HALO_SVG[cust.halo]||'';
         return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 122" width="140" height="140">'+
           '<defs><radialGradient id="'+p+'bh" gradientUnits="userSpaceOnUse" cx="50" cy="15" r="95">'+
           '<stop offset="0%" stop-color="'+c0+'"/><stop offset="55%" stop-color="'+c1+'"/><stop offset="100%" stop-color="'+c2+'"/>'+
           '</radialGradient></defs>'+
+          halo+
           '<ellipse cx="70" cy="86" rx="38" ry="19" fill="url(#'+p+'bh)"/>'+
           '<ellipse cx="44" cy="84" rx="14" ry="8" fill="url(#'+p+'bh)"/>'+
           '<ellipse cx="96" cy="84" rx="14" ry="8" fill="url(#'+p+'bh)"/>'+
@@ -6470,6 +6627,7 @@ function updateStatusBadge(type) {
       const hat    = AV_HAT_SVG[cust.hat]||'';
       const acc    = AV_ACC_SVG[cust.accessory]||'';
       const outfit = AV_OUTFIT_SVG[cust.outfit]||'';
+      const halo   = AV_HALO_SVG[cust.halo]||'';
       return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 122" width="140" height="140">'+
         '<defs>'+
         '<radialGradient id="'+p+'H" cx="35%" cy="35%" r="65%"><stop offset="0%" stop-color="'+c0+'"/><stop offset="55%" stop-color="'+c1+'"/><stop offset="100%" stop-color="'+c2+'"/></radialGradient>'+
@@ -6477,6 +6635,7 @@ function updateStatusBadge(type) {
         '<radialGradient id="'+p+'E" cx="50%" cy="50%" r="60%"><stop offset="0%" stop-color="'+e0+'"/><stop offset="100%" stop-color="'+e1+'"/></radialGradient>'+
         '<radialGradient id="'+p+'I" cx="40%" cy="38%" r="65%"><stop offset="0%" stop-color="'+ear[0]+'"/><stop offset="100%" stop-color="'+ear[1]+'"/></radialGradient>'+
         '</defs>'+
+        halo+
         '<ellipse cx="70" cy="86" rx="32" ry="16" fill="url(#'+p+'B)"/>'+
         '<ellipse cx="44" cy="84" rx="13.5" ry="7.5" fill="url(#'+p+'B)"/>'+
         '<ellipse cx="96" cy="85" rx="13.5" ry="7.5" fill="url(#'+p+'B)"/>'+
@@ -6512,6 +6671,30 @@ function updateStatusBadge(type) {
       Object.keys(AV_TAB_POS).forEach(p => {
         const g = document.getElementById(p+'-eyes-ov'); if (!g) return;
         g.innerHTML = _catExprSVG(AV_TAB_POS[p], expr);
+      });
+    }
+    function _scaledHaloSVG(pos, haloKey) {
+      const h = AV_HALO_SVG[haloKey]; if (!h) return '';
+      const s = pos.r/27, tx = (pos.cx-70*s).toFixed(2), ty = (pos.cy-45*s).toFixed(2);
+      return '<g transform="translate('+tx+','+ty+') scale('+s+')">'+h+'</g>';
+    }
+    function _applyCatHalo(state) {
+      const halo = state.customization.cat.halo||'none';
+      const raw = AV_HALO_SVG[halo]||'';
+      const mh = document.getElementById('cat-halo-overlay'); if (mh) mh.innerHTML = raw;
+      Object.keys(AV_TAB_POS).forEach(p => {
+        const svgEl = document.getElementById(p+'-wrap'); if (!svgEl) return;
+        let g = document.getElementById(p+'-halo-ov');
+        if (!g) {
+          g = document.createElementNS('http://www.w3.org/2000/svg','g');
+          g.id = p+'-halo-ov';
+          const firstNonDefs = Array.from(svgEl.children).find(c => c.tagName.toLowerCase() !== 'defs');
+          svgEl.insertBefore(g, firstNonDefs || svgEl.firstChild);
+        }
+        const pos = AV_TAB_POS[p];
+        const s = pos.r/27, tx = (pos.cx-70*s).toFixed(2), ty = (pos.cy-45*s).toFixed(2);
+        g.setAttribute('transform','translate('+tx+','+ty+') scale('+s+')');
+        g.innerHTML = raw;
       });
     }
     function _applyCatHat(state) {
@@ -6572,6 +6755,7 @@ function updateStatusBadge(type) {
         } else {
           _ensureGrad(svgEl, p+'_bh', coat.h);
           const eg = document.getElementById(p+'-bichon-eyes'); if (eg) eg.innerHTML = _bichonEyesSVG(pos, cust.expression||'happy');
+          const haloG = document.getElementById(p+'-bichon-halo'); if (haloG) haloG.innerHTML = _scaledHaloSVG(pos, cust.halo||'none');
           const hg = document.getElementById(p+'-bichon-hat');  if (hg) hg.innerHTML = _scaledHatSVG(pos, cust.hat||'none');
           const ag = document.getElementById(p+'-bichon-acc');  if (ag) ag.innerHTML = _scaledAccSVG(pos, cust.accessory||'none');
           const og = document.getElementById(p+'-bichon-outfit');
@@ -6590,7 +6774,7 @@ function updateStatusBadge(type) {
     function applyAll(state) {
       const charId = state.selectedCharacter;
       _toggleTabs(charId);
-      if (charId==='cat') { _applyCatColors(state); _applyCatExpression(state); _applyCatHat(state); _applyCatAcc(state); _applyCatOutfit(state); }
+      if (charId==='cat') { _applyCatColors(state); _applyCatExpression(state); _applyCatHalo(state); _applyCatHat(state); _applyCatAcc(state); _applyCatOutfit(state); }
       else if (charId==='bichon') { _applyBichonMain(state); _applyBichonTabs(state); }
       _toggleMain(charId);
       renderStudyBuddy(state);
@@ -6608,6 +6792,8 @@ function updateStatusBadge(type) {
 
   /* ─── AvatarCustomizer ─── */
   const AvatarCustomizer = (() => {
+    let _previewLocked = null; // { key, val } 미리보기 중인 잠긴 아이템
+
     async function open() {
       const o = document.getElementById('avatar-customizer-overlay');
       if (!o) return;
@@ -6616,16 +6802,39 @@ function updateStatusBadge(type) {
       refresh();
     }
     function close() {
+      _previewLocked = null;
       const o = document.getElementById('avatar-customizer-overlay');
       if (o) o.classList.remove('av-open');
+      AvatarRenderer.renderPreview(AvatarSystem.get()); // 저장된 상태 복원
     }
     function refresh() {
       _updateCharTabs();
       _renderOptions();
-      AvatarRenderer.renderPreview(AvatarSystem.get());
+      _applyCurrentPreview();
       _updateLevelBadge();
     }
-    function refreshPreview() { AvatarRenderer.renderPreview(AvatarSystem.get()); _updateSelected(); }
+    function refreshPreview() {
+      _updateSelected();
+      _applyCurrentPreview();
+    }
+    function _applyCurrentPreview() {
+      if (_previewLocked) {
+        const s = AvatarSystem.get(), charId = s.selectedCharacter;
+        const tempState = { ...s, customization: { ...s.customization, [charId]: { ...s.customization[charId], [_previewLocked.key]: _previewLocked.val } } };
+        AvatarRenderer.renderPreview(tempState);
+      } else {
+        AvatarRenderer.renderPreview(AvatarSystem.get());
+      }
+    }
+    function previewLocked(key, val) {
+      if (_previewLocked && _previewLocked.key === key && _previewLocked.val === val) {
+        _previewLocked = null; // 같은 아이템 다시 클릭하면 미리보기 해제
+      } else {
+        _previewLocked = { key, val };
+      }
+      _renderOptions(); // 하이라이트 갱신
+      _applyCurrentPreview();
+    }
     function _updateLevelBadge() {
       const lv = AvatarLevel.get();
       const mins = AvatarLevel.getMinutes();
@@ -6688,11 +6897,13 @@ function updateStatusBadge(type) {
           const reqLv = opt.requiredLevel || 1;
           const locked = reqLv > curLv;
           if (locked) {
-            html += '<div class="av-card av-card-locked" title="레벨 '+reqLv+' 도달 시 해금">'+
+            const isPrev = _previewLocked && _previewLocked.key === group.key && _previewLocked.val === opt.id;
+            const prevClass = isPrev ? ' av-card-previewing' : '';
+            html += '<button class="av-card av-card-locked'+prevClass+'" title="클릭하면 미리보기 (Lv.'+reqLv+' 해금)" onclick="AvatarCustomizer.previewLocked(\''+group.key+'\',\''+opt.id+'\')">'+
                     '<span class="av-card-emoji">'+opt.emoji+'</span>'+
                     '<span class="av-card-label">'+opt.label+'</span>'+
-                    '<span class="av-card-lock">🔒 Lv.'+reqLv+'</span>'+
-                    '</div>';
+                    '<span class="av-card-lock">'+(isPrev ? '👁 미리보기' : '🔒 Lv.'+reqLv)+'</span>'+
+                    '</button>';
           } else {
             const sel = cust[group.key]===opt.id ? ' selected' : '';
             html += '<button class="av-card'+sel+'" data-av-key="'+group.key+'" data-av-val="'+opt.id+'" onclick="AvatarSystem.setOption(\''+group.key+'\',\''+opt.id+'\')">'+
@@ -6703,7 +6914,7 @@ function updateStatusBadge(type) {
       });
       panel.innerHTML = html;
     }
-    return { open, close, refresh, refreshPreview };
+    return { open, close, refresh, refreshPreview, previewLocked };
   })();
 
   // 페이지 로드 후 아바타 상태 초기화 (두 번째 스크립트 블록 끝에서 호출)
@@ -6741,4 +6952,18 @@ function updateStatusBadge(type) {
     }
   })();
   </script>
+
+  <!-- Level-up modal -->
+  <div id="levelup-modal">
+    <div class="lu-backdrop" onclick="document.getElementById('levelup-modal').classList.remove('active')"></div>
+    <div class="lu-box">
+      <div class="lu-stars">✨🌟✨</div>
+      <div class="lu-title">LEVEL UP!</div>
+      <div class="lu-level">Lv.<span id="levelup-lv">2</span></div>
+      <div class="lu-subtitle">레벨이 올랐어요! 새 아이템이 해금됐습니다</div>
+      <div class="lu-unlocked-label">새로 해금된 아이템</div>
+      <div class="lu-items" id="levelup-items"></div>
+      <button class="lu-close" onclick="document.getElementById('levelup-modal').classList.remove('active')">확인 🎉</button>
+    </div>
+  </div>
 </body>
