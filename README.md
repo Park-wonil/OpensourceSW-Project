@@ -141,7 +141,7 @@ GROQ_API_KEY=gsk_...
 python3 -m Backend.server
 ```
 
-브라우저에서 `http://localhost:5000` 접속
+브라우저에서 `http://localhost:5001` 접속
 
 ---
 
