@@ -3745,7 +3745,179 @@
       statusTag.innerText = "OFF";
       statusTag.style.color = "var(--text-sub)";
       if (monitoring) clearInterval(monitoring);
+      _bgStop();
     }
+
+    // ===== 가상 배경 / 배경 블러 =====
+    let _bgEffect      = 'none';
+    let _bgColor       = '#1a1a2e';
+    let _bgImage       = null;
+    let _bgBlurCanvas  = null;
+    let _bgFirstFrame  = false;
+    let _bgSeg     = null;
+    let _bgRafId   = null;
+    let _bgSrcType = null;   // 'flask' | 'browser'
+    let _bgMask    = null;
+    let _bgBusy    = false;
+
+    function _bgGetSrc() {
+      return _bgSrcType === 'browser'
+        ? document.getElementById('browser-cam-video')
+        : document.getElementById('video');
+    }
+
+    async function _bgInit() {
+      if (_bgSeg) return;
+      try {
+        _bgSeg = new SelfieSegmentation({
+          locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${f}`
+        });
+        _bgSeg.setOptions({ modelSelection: 1 });
+        _bgSeg.onResults(_bgOnResults);
+        await _bgSeg.initialize();
+        _bgMask = document.createElement('canvas');
+      } catch(e) {
+        console.warn('[BG] MediaPipe 초기화 실패:', e);
+        _bgSeg = null;
+      }
+    }
+
+    function _bgOnResults(results) {
+      _bgBusy = false;
+      const canvas = document.getElementById('bg-canvas');
+      if (!canvas) return;
+
+      // 첫 프레임이 나올 때 원본 숨기고 캔버스로 전환
+      if (!_bgFirstFrame) {
+        _bgFirstFrame = true;
+        const imgSrc = document.getElementById('video');
+        const vidSrc = document.getElementById('browser-cam-video');
+        if (imgSrc) imgSrc.style.display = 'none';
+        if (vidSrc) vidSrc.style.display = 'none';
+        canvas.style.display = 'block';
+      }
+
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width, h = canvas.height;
+      ctx.save();
+      ctx.clearRect(0, 0, w, h);
+
+      if (_bgEffect === 'blur') {
+        if (!_bgBlurCanvas) { _bgBlurCanvas = document.createElement('canvas'); }
+        const bw = Math.floor(w / 14), bh = Math.floor(h / 14);
+        _bgBlurCanvas.width = bw; _bgBlurCanvas.height = bh;
+        const bCtx = _bgBlurCanvas.getContext('2d');
+        bCtx.drawImage(results.image, 0, 0, bw, bh);
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(_bgBlurCanvas, 0, 0, w, h);
+      } else if (_bgEffect === 'image' && _bgImage) {
+        ctx.drawImage(_bgImage, 0, 0, w, h);
+      } else {
+        ctx.fillStyle = _bgColor;
+        ctx.fillRect(0, 0, w, h);
+      }
+
+      // 사람 영역만 오려서 배경 위에 합성
+      _bgMask.width = w; _bgMask.height = h;
+      const mCtx = _bgMask.getContext('2d');
+      mCtx.clearRect(0, 0, w, h);
+      mCtx.drawImage(results.image, 0, 0, w, h);
+      mCtx.globalCompositeOperation = 'destination-in';
+      mCtx.drawImage(results.segmentationMask, 0, 0, w, h);
+
+      ctx.drawImage(_bgMask, 0, 0);
+      ctx.restore();
+    }
+
+
+    async function _bgLoop() {
+      if (!_bgBusy && _bgEffect !== 'none' && _bgSeg) {
+        const src = _bgGetSrc();
+        const ready = src && (src.tagName !== 'VIDEO' || src.readyState >= 2);
+        if (ready) {
+          const canvas = document.getElementById('bg-canvas');
+          const sw = src.tagName === 'VIDEO' ? (src.videoWidth  || 640) : (src.naturalWidth  || 640);
+          const sh = src.tagName === 'VIDEO' ? (src.videoHeight || 480) : (src.naturalHeight || 480);
+          if (canvas.width !== sw || canvas.height !== sh) {
+            canvas.width = sw; canvas.height = sh;
+          }
+          _bgBusy = true;
+          try { await _bgSeg.send({ image: src }); } catch(e) { _bgBusy = false; }
+        }
+      }
+      _bgRafId = requestAnimationFrame(_bgLoop);
+    }
+
+    async function _bgStart(srcType) {
+      _bgSrcType = srcType;
+      const canvas = document.getElementById('bg-canvas');
+      canvas.width = 640; canvas.height = 480;
+      document.getElementById('bg-controls').style.display = 'flex';
+      if (_bgEffect !== 'none') {
+        await _bgInit();
+        if (_bgSeg) {
+          canvas.style.display = 'block';
+          if (!_bgRafId) _bgLoop();
+        }
+      }
+    }
+
+    function _bgStop() {
+      if (_bgRafId) { cancelAnimationFrame(_bgRafId); _bgRafId = null; }
+      const canvas = document.getElementById('bg-canvas');
+      if (canvas) canvas.style.display = 'none';
+      document.getElementById('bg-controls').style.display = 'none';
+    }
+
+    async function setBgEffect(effect) {
+      _bgEffect = effect;
+      document.querySelectorAll('.bg-btn').forEach(b => b.classList.remove('active'));
+      const btn = document.getElementById('bg-btn-' + effect);
+      if (btn) btn.classList.add('active');
+
+      const canvas  = document.getElementById('bg-canvas');
+      const imgSrc  = document.getElementById('video');
+      const vidSrc  = document.getElementById('browser-cam-video');
+
+      if (effect === 'none') {
+        canvas.style.display = 'none';
+        if (_bgSrcType === 'browser' && vidSrc) vidSrc.style.display = 'block';
+        if (_bgSrcType === 'flask'   && imgSrc) imgSrc.style.display = 'block';
+        return;
+      }
+
+      // 첫 프레임 전까지 원본 유지 (검정화면 방지)
+      _bgFirstFrame = false;
+      await _bgInit();
+      if (_bgSeg && !_bgRafId) _bgLoop();
+    }
+
+    function setBgColor(color) {
+      _bgColor = color;
+      const dot = document.getElementById('bg-color-dot');
+      if (dot) dot.style.background = color;
+      if (_bgEffect !== 'color') setBgEffect('color');
+    }
+
+    function setBgImage(input) {
+      const file = input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        const img = new Image();
+        img.onload = () => {
+          _bgImage = img;
+          setBgEffect('image');
+          // 버튼 active 상태 표시
+          document.querySelectorAll('.bg-btn').forEach(b => b.classList.remove('active'));
+          document.getElementById('bg-btn-image').classList.add('active');
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+    // ===== 가상 배경 끝 =====
 
     function checkAll() {
       // 외부접속은 서버 분석 불가
