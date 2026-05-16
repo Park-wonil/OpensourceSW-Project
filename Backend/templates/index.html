@@ -1207,6 +1207,25 @@
           <img id="video" src="" alt="Live Feed" style="display:none;">
           <video id="browser-cam-video" autoplay playsinline muted
             style="display:none; width:100%; height:100%; object-fit:cover; position:absolute; inset:0;"></video>
+          <canvas id="bg-canvas" style="display:none; width:100%; height:100%; object-fit:cover; position:absolute; inset:0;"></canvas>
+        </div>
+
+        <!-- 가상 배경 컨트롤 -->
+        <div id="bg-controls" style="display:none; margin-top:10px; gap:6px; flex-wrap:wrap; align-items:center;">
+          <span style="font-size:11px; color:var(--text-sub); font-weight:700; letter-spacing:0.5px;">배경</span>
+          <button id="bg-btn-none"   class="bg-btn active" onclick="setBgEffect('none')">끄기</button>
+          <button id="bg-btn-blur"   class="bg-btn"        onclick="setBgEffect('blur')">🌫️ 블러</button>
+          <div style="position:relative;">
+            <button id="bg-btn-color" class="bg-btn" onclick="setBgEffect('color'); document.getElementById('bg-color-picker').click()">
+              🎨 단색 <span id="bg-color-dot" style="display:inline-block; width:11px; height:11px; border-radius:50%; background:#1a1a2e; vertical-align:middle; margin-left:3px; border:1px solid rgba(255,255,255,0.35);"></span>
+            </button>
+            <input type="color" id="bg-color-picker" value="#1a1a2e" oninput="setBgColor(this.value)"
+              style="position:absolute; bottom:100%; left:50%; transform:translateX(-50%); width:1px; height:1px; opacity:0; border:none; padding:0;">
+          </div>
+          <label id="bg-btn-image" class="bg-btn" style="cursor:pointer;">
+            🖼️ 내 사진
+            <input type="file" accept="image/*" onchange="setBgImage(this)" style="display:none;">
+          </label>
         </div>
 
         <!-- 온라인 유저 목록 -->
