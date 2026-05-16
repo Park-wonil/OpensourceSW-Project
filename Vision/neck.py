@@ -1,7 +1,8 @@
 """
 거북목(Forward Head Posture) 감지 모듈
 ======================================
-MediaPipe Pose를 사용해 귀-어깨 벡터와 수직축 사이의 각도로 거북목을 판정
+MediaPipe Pose를 사용해 귀-어깨 벡터와 수직축 사이의 각도로 거북목을 판정.
+추가로 좌우 어깨 높이 차이(어깨 불균형)도 함께 감지한다.
 
 측정 원리
   - 좌우 귀(landmark 7, 8) 중점과 좌우 어깨(landmark 11, 12) 중점을 잇는 벡터를
@@ -10,9 +11,12 @@ MediaPipe Pose를 사용해 귀-어깨 벡터와 수직축 사이의 각도로 �
   - 각도가 클수록 목이 앞으로 기울어진 거북목 자세
 
 자세 판정 기준
-  - Good  :  0° ~ 20°
-  - Warn  : 20° ~ 35°
-  - Bad   : 35° 이상  → ALERT_HOLD_S 초 지속 시 알림 발생
+  - Good  :  0° ~ 15°
+  - Warn  : 15° ~ 25°
+  - Bad   : 25° 이상  → ALERT_HOLD_S 초 지속 시 알림 발생
+
+어깨 불균형 판정
+  - 좌우 어깨 y좌표 차이(정규화)가 SHOULDER_TILT_THRESH 이상이면 warn 이상으로 처리
 """
 
 import math
@@ -22,10 +26,11 @@ import numpy as np
 import mediapipe as mp
 
 # --- 판정값 ---
-NECK_WARN_ANGLE  = 20.0   # 도(°) — 이 이상이면 경고
-NECK_BAD_ANGLE   = 35.0   # 도(°) — 이 이상이면 나쁜 자세
-ALERT_HOLD_S     = 10.0   # 나쁜 자세 지속 n초 후 알림
-ALERT_COOLDOWN_S = 300.0  # 알림 재발생 최소 간격 (초)
+NECK_WARN_ANGLE      = 15.0   # 도(°) — 이 이상이면 경고
+NECK_BAD_ANGLE       = 25.0   # 도(°) — 이 이상이면 나쁜 자세
+SHOULDER_TILT_THRESH = 0.04   # 좌우 어깨 y좌표 차이(정규화) — 이 이상이면 어깨 불균형
+ALERT_HOLD_S         = 10.0   # 나쁜 자세 지속 n초 후 알림
+ALERT_COOLDOWN_S     = 300.0  # 알림 재발생 최소 간격 (초)
 
 # --- MediaPipe Pose 초기화 (첫 사용 시 lazy 로딩) ---
 _mp_pose = mp.solutions.pose
@@ -108,12 +113,16 @@ class NeckPostureDetector:
         self.neck_angle = angle
         now = time.time()
 
+        # 어깨 수평 체크: 좌우 어깨 y좌표 차이
+        shoulder_tilt = abs(lm[11].y - lm[12].y)
+        shoulder_uneven = shoulder_tilt >= SHOULDER_TILT_THRESH
+
         if angle >= NECK_BAD_ANGLE:
             self.status = "bad"
             if self._bad_start is None:
                 self._bad_start = now
             self.bad_seconds = now - self._bad_start
-        elif angle >= NECK_WARN_ANGLE:
+        elif angle >= NECK_WARN_ANGLE or shoulder_uneven:
             self.status = "warn"
             self._bad_start = None
             self.bad_seconds = 0.0
@@ -131,12 +140,13 @@ class NeckPostureDetector:
             self._last_alert = now
             self.alert_count += 1
 
-        return self._make(True, angle, should_alert)
+        return self._make(True, angle, shoulder_tilt, should_alert)
 
-    def _make(self, detected: bool, angle: float = 0.0, should_alert: bool = False) -> dict:
+    def _make(self, detected: bool, angle: float = 0.0, shoulder_tilt: float = 0.0, should_alert: bool = False) -> dict:
         return {
             "pose_detected":      detected,
             "neck_angle":         round(angle, 1),
+            "shoulder_tilt":      round(shoulder_tilt, 3),
             "neck_status":        self.status if detected else "unknown",
             "neck_bad_seconds":   round(self.bad_seconds, 1),
             "neck_should_alert":  should_alert,
@@ -160,11 +170,12 @@ _STATUS_LABEL = {
 
 
 def draw_neck_overlay(frame: np.ndarray, neck_data: dict) -> None:
-    """캡처 프레임에 거북목 상태 텍스트를 그린다."""
-    status = neck_data.get("neck_status", "unknown")
-    angle  = neck_data.get("neck_angle", 0.0)
-    color  = _STATUS_COLOR.get(status, (150, 150, 150))
-    label  = _STATUS_LABEL.get(status, "--")
+    """캡처 프레임에 거북목·어깨 상태 텍스트를 그린다."""
+    status         = neck_data.get("neck_status", "unknown")
+    angle          = neck_data.get("neck_angle", 0.0)
+    shoulder_tilt  = neck_data.get("shoulder_tilt", 0.0)
+    color          = _STATUS_COLOR.get(status, (150, 150, 150))
+    label          = _STATUS_LABEL.get(status, "--")
     cv2.putText(
         frame,
         f"Neck: {angle}deg ({label})",
@@ -172,6 +183,14 @@ def draw_neck_overlay(frame: np.ndarray, neck_data: dict) -> None:
         cv2.FONT_HERSHEY_SIMPLEX,
         0.6, color, 2,
     )
+    if shoulder_tilt >= SHOULDER_TILT_THRESH:
+        cv2.putText(
+            frame,
+            f"Shoulder tilt: {shoulder_tilt:.3f} (!)",
+            (10, 80),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.5, (0, 165, 255), 1,
+        )
 
 
 # ---------------------------------------------------------------------------
