@@ -3610,6 +3610,7 @@
       statusTag.style.color = "var(--accent-green)";
       if (monitoring) clearInterval(monitoring);
       monitoring = setInterval(checkAll, 1000);
+      _bgStart('flask');
     }
 
     async function startBrowserCam() {
@@ -3628,6 +3629,7 @@
         statusTag.style.color = "var(--accent-green)";
         // 외부접속은 분석 불가 안내
         showToastMsg('📷 카메라 ON (외부접속: 얼굴 분석 미지원)');
+        _bgStart('browser');
       } catch(e) {
         showToastMsg('❌ 카메라 권한이 필요합니다.');
       }
@@ -3651,6 +3653,7 @@
         statusTag.innerText = "OFF";
         statusTag.style.color = "var(--text-sub)";
         if (monitoring) clearInterval(monitoring);
+        _bgStop();
       });
     }
 
