@@ -4,5 +4,6 @@ numpy
 flask
 flask-socketio
 openai
+Pillow
 
 # Python 3.11 사용 권장
