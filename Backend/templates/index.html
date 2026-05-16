@@ -494,6 +494,17 @@
     body.light-mode input:not(.auth-input)::placeholder { color: rgba(0,0,0,0.3) !important; }
 
     /* 커뮤니티 탭 */
+    .bg-btn {
+      padding: 5px 11px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.13);
+      background: rgba(255,255,255,0.07); color: var(--text-main); font-size: 12px;
+      font-weight: 600; cursor: pointer; transition: all 0.15s;
+    }
+    .bg-btn:hover { background: rgba(255,255,255,0.15); }
+    .bg-btn.active { background: var(--accent-green); color: #111; border-color: transparent; }
+    body.light-mode .bg-btn { border-color: rgba(0,0,0,0.13); background: rgba(0,0,0,0.05); color: #222; }
+    body.light-mode .bg-btn:hover { background: rgba(0,0,0,0.1); }
+    body.light-mode .bg-btn.active { background: var(--accent-green); color: #111; }
+
     .community-tab {
       background: rgba(255,255,255,0.08) !important;
       color: rgba(255,255,255,0.8) !important;
