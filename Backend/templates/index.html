@@ -6974,7 +6974,7 @@ function updateStatusBadge(type) {
       Object.keys(AV_TAB_POS).forEach(p => {
         const pos = AV_TAB_POS[p];
         const g = document.getElementById(p+'-outfit-ov'); if (!g) return;
-        const s=pos.r/27, tx=(pos.cx-70*s).toFixed(2), ty=(pos.cy-45*s).toFixed(2);
+        const s=pos.r/27, tx=(pos.cx-70*s).toFixed(2), ty=(pos.cy-50*s+(pos.catODy||0)).toFixed(2);
         g.setAttribute('transform','translate('+tx+','+ty+') scale('+s+')');
         g.innerHTML = raw;
       });
