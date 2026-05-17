@@ -2835,10 +2835,10 @@
   <div id="write-form" class="write-form" style="display: none;">
     <input type="text" id="post-title" placeholder="제목을 입력하세요" maxlength="100">
     <textarea id="post-content" placeholder="내용을 입력하세요" rows="8"></textarea>
-    <label style="margin-top:10px;">
-  <input type="checkbox" id="anonymous-check">
-  익명으로 작성
-</label>
+    <label style="display: flex; align-items: center; gap: 8px; margin-top: 10px; cursor: pointer;">
+      <input type="checkbox" id="anonymous-check" style="margin: 0; width: auto; cursor: pointer;">
+      <span style="font-size: 14px; font-weight: 500; color: var(--text-main);">익명으로 작성</span>
+    </label>
     <div class="write-actions">
       <button class="btn-submit" onclick="submitPost()">작성하기</button>
       <button class="btn-cancel" onclick="cancelWrite()">취소</button>
@@ -5454,6 +5454,11 @@ window.onload = checkLogin;
       if (el) el.innerText = n;
     }
     socket.on('user_online',  d => { window._onlineUsers[d.sid]=d.nickname; _updateLobbyCount(); });
+    // 스터디룸 삭제 이벤트 수신 시 목록 새로고침
+    socket.on('room_deleted', function(data) {
+      // 전체 방 목록을 서버에 다시 요청하여 화면 업데이트
+      socket.emit('get_rooms'); 
+    });
     socket.on('user_offline', d => { delete window._onlineUsers[d.sid]; _updateLobbyCount(); });
     socket.on('online_users', d => {
       window._onlineUsers={};
@@ -5512,14 +5517,22 @@ window.onload = checkLogin;
               <span>👑 ${r.host}</span>
               <span>👥 ${r.count}명 참여 중</span>
             </div>
-          </div>
+          </div> <div style="display:flex; gap:8px; align-items:center; flex-shrink:0; margin-left:12px;">
           <button onclick="joinRoom('${r.id}', ${r.locked})"
             style="padding:10px 22px; background:${r.locked ? 'rgba(240,153,123,0.15)' : 'var(--accent-green)'};
             color:${r.locked ? 'var(--accent-red)' : '#111'};
             border:${r.locked ? '1.5px solid var(--accent-red)' : 'none'};
             border-radius:12px; font-weight:700; cursor:pointer; font-size:13px; flex-shrink:0; margin-left:12px;">
             ${r.locked ? '🔒 입장' : '입장'}
-          </button>
+          <button onclick="deleteRoom('${r.id}')"
+              style="padding:10px 16px; 
+              background: transparent; 
+              color: var(--accent-green); 
+              border: 1.5px solid var(--accent-green);
+              border-radius:12px; font-weight:700; cursor:pointer; font-size:13px; transition: all 0.2s;">
+              삭제
+            </button>
+        </div>
         </div>
       `).join('');
     }
@@ -5534,6 +5547,18 @@ window.onload = checkLogin;
     }
 
     let _pendingJoinRoomId = null;
+    function deleteRoom(roomId) {
+      if (!window.currentUser) { 
+        showToastMsg('⚠️ 로그인 후 이용하세요.'); 
+        return; 
+      }
+      
+      // 사용자에게 다시 한번 확인
+      if (confirm('정말로 이 스터디룸을 삭제하시겠습니까?')) {
+        // 서버로 삭제 이벤트 전송
+        socket.emit('delete_room', { room_id: roomId });
+      }
+    }
 
     function joinRoom(roomId, locked) {
       if (!window.currentUser) { showToastMsg('⚠️ 로그인 후 이용하세요.'); return; }
