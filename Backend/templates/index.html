@@ -1798,9 +1798,6 @@
                 <!-- ── 옷 오버레이 (몸 위, 머리 아래) ── -->
                 <g id="cat-outfit-overlay"></g>
 
-                <!-- ── 목 (머리-몸통 연결) ── -->
-                <ellipse cx="70" cy="73" rx="14" ry="7" fill="url(#cBody)"/>
-
                 <!-- ── 머리 ── -->
                 <circle cx="70" cy="45" r="27" fill="url(#cHead)" filter="url(#cDrop)"/>
                 <!-- 구체 하이라이트 (왼쪽 위) -->
@@ -2219,7 +2216,6 @@
           <ellipse cx="48" cy="55" rx="10" ry="5.5" fill="url(#wc_b)" filter="url(#wc_s)"/>
           <!-- 오른발 -->
           <ellipse cx="82" cy="55" rx="10" ry="5.5" fill="url(#wc_b)" filter="url(#wc_s)"/>
-          <g id="wc-outfit-ov" transform=""></g>
           <!-- 머리 -->
           <circle cx="65" cy="30" r="21" fill="url(#wc_h)" filter="url(#wc_s)"/>
           <ellipse cx="56" cy="21" rx="11" ry="8" fill="rgba(255,235,180,0.36)"/>
@@ -2319,7 +2315,6 @@
           <ellipse cx="56" cy="44" rx="14" ry="5.5" fill="rgba(255,220,160,0.28)"/>
           <ellipse cx="49" cy="52" rx="10" ry="5.5" fill="url(#rc_b)" filter="url(#rc_s)"/>
           <ellipse cx="81" cy="52" rx="10" ry="5.5" fill="url(#rc_b)" filter="url(#rc_s)"/>
-          <g id="rc-outfit-ov" transform="translate(10.5,3) scale(0.778)"></g>
           <!-- 머리 -->
           <circle cx="65" cy="38" r="21" fill="url(#rc_h)" filter="url(#rc_s)"/>
           <ellipse cx="55" cy="29" rx="11" ry="8" fill="rgba(255,235,180,0.36)"/>
@@ -6540,13 +6535,13 @@ function updateStatusBadge(type) {
     ]},
   ];
   const AV_TAB_POS = {
-    gc:{ cx:83,cy:36,r:23,bodyCx:83,bodyCy:78,bodyRx:28,bodyRy:13,hatTx:23.4,hatTy:-2.3,hatS:0.852 },
-    sc:{ cx:49,cy:34,r:21,bodyCx:49,bodyCy:78,bodyRx:22,bodyRy:12,hatTx:-5.5,hatTy:-1,  hatS:0.778 },
-    wc:{ cx:65,cy:30,r:21,bodyCx:65,bodyCy:53,bodyRx:24,bodyRy:9, hatTx:10.5,hatTy:-5,  hatS:0.778 },
-    rc:{ cx:65,cy:38,r:21,bodyCx:65,bodyCy:50,bodyRx:24,bodyRy:9, hatTx:10.5,hatTy:3,   hatS:0.778 },
-    ec:{ cx:58,cy:36,r:21,bodyCx:58,bodyCy:78,bodyRx:26,bodyRy:13,hatTx:3.5, hatTy:1,   hatS:0.778 },
-    cc:{ cx:65,cy:38,r:22,bodyCx:65,bodyCy:80,bodyRx:26,bodyRy:12,hatTx:8,   hatTy:1.3, hatS:0.815 },
-    mc:{ cx:65,cy:32,r:22,bodyCx:65,bodyCy:62,bodyRx:25,bodyRy:11,hatTx:8,   hatTy:-4.7,hatS:0.815 },
+    gc:{ cx:83,cy:36,r:23,bodyCx:83,bodyCy:78,bodyRx:28,bodyRy:13,hatTx:23.4,hatTy:-2.3,hatS:0.852, catODy:5, bichonODy:3 },
+    sc:{ cx:49,cy:34,r:21,bodyCx:49,bodyCy:78,bodyRx:22,bodyRy:12,hatTx:-5.5,hatTy:-1,  hatS:0.778, catODy:5, bichonODy:3 },
+    wc:{ cx:65,cy:30,r:21,bodyCx:65,bodyCy:53,bodyRx:24,bodyRy:9, hatTx:10.5,hatTy:-5,  hatS:0.778, catODy:0, bichonODy:0 },
+    rc:{ cx:65,cy:38,r:21,bodyCx:65,bodyCy:50,bodyRx:24,bodyRy:9, hatTx:10.5,hatTy:3,   hatS:0.778, catODy:0, bichonODy:0 },
+    ec:{ cx:58,cy:36,r:21,bodyCx:58,bodyCy:78,bodyRx:26,bodyRy:13,hatTx:3.5, hatTy:1,   hatS:0.778, catODy:5, bichonODy:3 },
+    cc:{ cx:65,cy:38,r:22,bodyCx:65,bodyCy:80,bodyRx:26,bodyRy:12,hatTx:8,   hatTy:1.3, hatS:0.815, catODy:5, bichonODy:3 },
+    mc:{ cx:65,cy:32,r:22,bodyCx:65,bodyCy:62,bodyRx:25,bodyRy:11,hatTx:8,   hatTy:-4.7,hatS:0.815, catODy:-5,bichonODy:-5},
   };
   /* ─── AvatarLevel ─── */
   const AvatarLevel = (() => {
@@ -6710,7 +6705,7 @@ function updateStatusBadge(type) {
     }
     function _scaledOutfitSVG(pos, outfitKey) {
       const o = AV_OUTFIT_SVG[outfitKey]; if (!o) return '';
-      const s = pos.r/27, tx = pos.cx-70*s, ty = pos.cy-45*s;
+      const s = pos.r/27, tx = pos.cx-70*s, ty = pos.cy-50*s+(pos.bichonODy||0);
       return '<g transform="translate('+tx.toFixed(2)+','+ty.toFixed(2)+') scale('+s+')">'+o+'</g>';
     }
     function _buildBichonTab(p, pos, cust) {
@@ -6810,7 +6805,7 @@ function updateStatusBadge(type) {
         '<ellipse cx="44" cy="84" rx="14" ry="8" fill="url(#bHead)" filter="url(#bDrop)"/>'+
         '<ellipse cx="96" cy="84" rx="14" ry="8" fill="url(#bHead)" filter="url(#bDrop)"/>'+
         '<!-- 옷 (몸 위, 머리 아래) -->'+
-        '<g id="bichon-outfit-overlay">'+outfit+'</g>'+
+        '<g id="bichon-outfit-overlay"></g>'+
         '<!-- 귀 플러프 -->'+
         '<circle cx="51" cy="24" r="15" fill="url(#bHead)" filter="url(#bDrop)"/>'+
         '<circle cx="89" cy="24" r="15" fill="url(#bHead)" filter="url(#bDrop)"/>'+
@@ -6850,7 +6845,7 @@ function updateStatusBadge(type) {
         const acc    = AV_ACC_SVG[cust.accessory]||'';
         const outfit = AV_OUTFIT_SVG[cust.outfit]||'';
         const halo   = AV_HALO_SVG[cust.halo]||'';
-        return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 122" width="140" height="140">'+
+        return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="-12 -4 184 132" width="140" height="140">'+
           '<defs><radialGradient id="'+p+'bh" gradientUnits="userSpaceOnUse" cx="50" cy="15" r="95">'+
           '<stop offset="0%" stop-color="'+c0+'"/><stop offset="55%" stop-color="'+c1+'"/><stop offset="100%" stop-color="'+c2+'"/>'+
           '</radialGradient></defs>'+
@@ -6858,7 +6853,7 @@ function updateStatusBadge(type) {
           '<ellipse cx="70" cy="86" rx="38" ry="19" fill="url(#'+p+'bh)"/>'+
           '<ellipse cx="44" cy="84" rx="14" ry="8" fill="url(#'+p+'bh)"/>'+
           '<ellipse cx="96" cy="84" rx="14" ry="8" fill="url(#'+p+'bh)"/>'+
-          outfit+
+          '<g transform="translate(0,-12)">'+outfit+'</g>'+
           '<circle cx="51" cy="24" r="15" fill="url(#'+p+'bh)"/>'+
           '<circle cx="89" cy="24" r="15" fill="url(#'+p+'bh)"/>'+
           '<circle cx="70" cy="48" r="28" fill="url(#'+p+'bh)"/>'+
@@ -6893,8 +6888,7 @@ function updateStatusBadge(type) {
         '<ellipse cx="70" cy="86" rx="32" ry="16" fill="url(#'+p+'B)"/>'+
         '<ellipse cx="44" cy="84" rx="13.5" ry="7.5" fill="url(#'+p+'B)"/>'+
         '<ellipse cx="96" cy="85" rx="13.5" ry="7.5" fill="url(#'+p+'B)"/>'+
-        outfit+
-        '<ellipse cx="70" cy="73" rx="14" ry="7" fill="url(#'+p+'B)"/>'+
+        '<g transform="translate(0,-8)">'+outfit+'</g>'+
         '<path d="M48 28 Q40 10 60 24 Q56 29 50 32Z" fill="url(#'+p+'E)"/>'+
         '<path d="M92 28 Q100 10 80 24 Q84 29 90 32Z" fill="url(#'+p+'E)"/>'+
         '<path d="M49 27 Q43 14 58 23 Q55 27 51 30Z" fill="url(#'+p+'I)"/>'+
@@ -6976,11 +6970,11 @@ function updateStatusBadge(type) {
     function _applyCatOutfit(state) {
       const outfit = state.customization.cat.outfit||'none';
       const raw = AV_OUTFIT_SVG[outfit]||'';
-      const mo = document.getElementById('cat-outfit-overlay'); if (mo) mo.innerHTML = raw;
+      const mo = document.getElementById('cat-outfit-overlay'); if (mo) mo.innerHTML = '';
       Object.keys(AV_TAB_POS).forEach(p => {
         const pos = AV_TAB_POS[p];
         const g = document.getElementById(p+'-outfit-ov'); if (!g) return;
-        const s=pos.r/27, tx=(pos.cx-70*s).toFixed(2), ty=(pos.cy-45*s).toFixed(2);
+        const s=pos.r/27, tx=(pos.cx-70*s).toFixed(2), ty=(pos.cy-50*s+(pos.catODy||0)).toFixed(2);
         g.setAttribute('transform','translate('+tx+','+ty+') scale('+s+')');
         g.innerHTML = raw;
       });
@@ -7004,8 +6998,10 @@ function updateStatusBadge(type) {
         const pos  = AV_TAB_POS[p];
         const coat = AV_BICHON_COAT[cust.coatColor]||AV_BICHON_COAT.white;
         _ensureGrad(svgEl, p+'_bh', coat.h);
+        const noOutfit = p === 'wc' || p === 'rc';
         if (!g.dataset.rendered) {
-          g.innerHTML = _buildBichonTab(p, pos, cust); g.dataset.rendered = '1';
+          const custForTab = noOutfit ? Object.assign({}, cust, {outfit:'none'}) : cust;
+          g.innerHTML = _buildBichonTab(p, pos, custForTab); g.dataset.rendered = '1';
         } else {
           _ensureGrad(svgEl, p+'_bh', coat.h);
           const eg = document.getElementById(p+'-bichon-eyes'); if (eg) eg.innerHTML = _bichonEyesSVG(pos, cust.expression||'happy');
@@ -7013,7 +7009,7 @@ function updateStatusBadge(type) {
           const hg = document.getElementById(p+'-bichon-hat');  if (hg) hg.innerHTML = _scaledHatSVG(pos, cust.hat||'none');
           const ag = document.getElementById(p+'-bichon-acc');  if (ag) ag.innerHTML = _scaledAccSVG(pos, cust.accessory||'none');
           const og = document.getElementById(p+'-bichon-outfit');
-          if (og) og.innerHTML = _scaledOutfitSVG(pos, cust.outfit||'none');
+          if (og) og.innerHTML = noOutfit ? '' : _scaledOutfitSVG(pos, cust.outfit||'none');
         }
       });
     }
