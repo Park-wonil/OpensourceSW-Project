@@ -678,7 +678,28 @@ def on_room_answer(data):
 @socketio.on("room_ice")
 def on_room_ice(data):
     emit("room_ice", {"sid": request.sid, "candidate": data["candidate"]}, to=data["target"])
-
+@socketio.on('delete_room')
+def handle_delete_room(data):
+    room_id = data.get('room_id')
+    
+    # rooms를 모두 study_rooms로 변경!
+    if room_id in study_rooms: 
+        del study_rooms[room_id]
+        emit('room_deleted', {'room_id': room_id}, broadcast=True)
+        print(f"✅ 방 삭제 완료: {room_id}")
+        
+    elif room_id.isdigit() and int(room_id) in study_rooms:
+        del study_rooms[int(room_id)]
+        emit('room_deleted', {'room_id': room_id}, broadcast=True)
+        print(f"✅ 방 삭제 완료 (숫자로 변환 후 삭제): {room_id}")
+        
+    elif str(room_id) in study_rooms:
+        del study_rooms[str(room_id)]
+        emit('room_deleted', {'room_id': room_id}, broadcast=True)
+        print(f"✅ 방 삭제 완료 (문자로 변환 후 삭제): {room_id}")
+        
+    else:
+        print(f"❌ [오류] 삭제하려는 방 ID({room_id})를 찾을 수 없습니다.")
 # disconnect 시 방에서도 자동 퇴장 처리 (기존 on_disconnect 수정)
 # =========================
 #  중요: 반드시 맨 아래
