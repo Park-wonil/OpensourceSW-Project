@@ -162,4 +162,6 @@ git push origin feature/본인브랜치
 # PR: compare → feature/본인브랜치 / base → dev
 ```
 
+팀원 별 기여도
 
+![박원일 GitHub stats](https://github-readme-stats.vercel.app/api?username=Park-wonil&show_icons=true&theme=radical)
