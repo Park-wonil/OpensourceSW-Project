@@ -3946,6 +3946,12 @@
           badge.innerHTML = "<span></span> 자리 비움";
           row.style.display = "flex";
           document.getElementById("current-absence-time").innerText = `${data.current_absence_s}초`;
+          if (running) {
+            running = false;
+            clearInterval(timerInterval);
+            _timerAutoPaused = true;
+            updateTimerBarUI();
+          }
         } else if (data.state === "sleepy") {
           badge.className = "state-badge drowsy";
           badge.innerHTML = "<span></span> 졸음 감지";
