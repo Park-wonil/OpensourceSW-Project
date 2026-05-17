@@ -6805,7 +6805,7 @@ function updateStatusBadge(type) {
         '<ellipse cx="44" cy="84" rx="14" ry="8" fill="url(#bHead)" filter="url(#bDrop)"/>'+
         '<ellipse cx="96" cy="84" rx="14" ry="8" fill="url(#bHead)" filter="url(#bDrop)"/>'+
         '<!-- 옷 (몸 위, 머리 아래) -->'+
-        '<g id="bichon-outfit-overlay">'+outfit+'</g>'+
+        '<g id="bichon-outfit-overlay"></g>'+
         '<!-- 귀 플러프 -->'+
         '<circle cx="51" cy="24" r="15" fill="url(#bHead)" filter="url(#bDrop)"/>'+
         '<circle cx="89" cy="24" r="15" fill="url(#bHead)" filter="url(#bDrop)"/>'+
@@ -6970,7 +6970,7 @@ function updateStatusBadge(type) {
     function _applyCatOutfit(state) {
       const outfit = state.customization.cat.outfit||'none';
       const raw = AV_OUTFIT_SVG[outfit]||'';
-      const mo = document.getElementById('cat-outfit-overlay'); if (mo) mo.innerHTML = raw;
+      const mo = document.getElementById('cat-outfit-overlay'); if (mo) mo.innerHTML = '';
       Object.keys(AV_TAB_POS).forEach(p => {
         const pos = AV_TAB_POS[p];
         const g = document.getElementById(p+'-outfit-ov'); if (!g) return;
