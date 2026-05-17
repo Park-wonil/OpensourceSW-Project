@@ -6998,8 +6998,10 @@ function updateStatusBadge(type) {
         const pos  = AV_TAB_POS[p];
         const coat = AV_BICHON_COAT[cust.coatColor]||AV_BICHON_COAT.white;
         _ensureGrad(svgEl, p+'_bh', coat.h);
+        const noOutfit = p === 'wc' || p === 'rc';
         if (!g.dataset.rendered) {
-          g.innerHTML = _buildBichonTab(p, pos, cust); g.dataset.rendered = '1';
+          const custForTab = noOutfit ? Object.assign({}, cust, {outfit:'none'}) : cust;
+          g.innerHTML = _buildBichonTab(p, pos, custForTab); g.dataset.rendered = '1';
         } else {
           _ensureGrad(svgEl, p+'_bh', coat.h);
           const eg = document.getElementById(p+'-bichon-eyes'); if (eg) eg.innerHTML = _bichonEyesSVG(pos, cust.expression||'happy');
@@ -7007,7 +7009,7 @@ function updateStatusBadge(type) {
           const hg = document.getElementById(p+'-bichon-hat');  if (hg) hg.innerHTML = _scaledHatSVG(pos, cust.hat||'none');
           const ag = document.getElementById(p+'-bichon-acc');  if (ag) ag.innerHTML = _scaledAccSVG(pos, cust.accessory||'none');
           const og = document.getElementById(p+'-bichon-outfit');
-          if (og) og.innerHTML = _scaledOutfitSVG(pos, cust.outfit||'none');
+          if (og) og.innerHTML = noOutfit ? '' : _scaledOutfitSVG(pos, cust.outfit||'none');
         }
       });
     }
