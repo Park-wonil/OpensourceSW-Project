@@ -3952,6 +3952,20 @@
             _timerAutoPaused = true;
             updateTimerBarUI();
           }
+        } else if (data.is_absent === false && _timerAutoPaused) {
+          _timerAutoPaused = false;
+          running = true;
+          updateTimerBarUI();
+          timerInterval = setInterval(() => {
+            if (seconds > 0) { seconds--; updateTimerDisplay(); }
+            else {
+              clearInterval(timerInterval);
+              running = false;
+              updateTimerBarUI();
+              showToastMsg("⏰ 타이머가 종료됐습니다!");
+            }
+          }, 1000);
+          row.style.display = "none";
         } else if (data.state === "sleepy") {
           badge.className = "state-badge drowsy";
           badge.innerHTML = "<span></span> 졸음 감지";
