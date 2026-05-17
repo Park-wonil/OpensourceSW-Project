@@ -6705,7 +6705,7 @@ function updateStatusBadge(type) {
     }
     function _scaledOutfitSVG(pos, outfitKey) {
       const o = AV_OUTFIT_SVG[outfitKey]; if (!o) return '';
-      const s = pos.r/27, tx = pos.cx-70*s, ty = pos.cy-45*s;
+      const s = pos.r/27, tx = pos.cx-70*s, ty = pos.cy-50*s+(pos.bichonODy||0);
       return '<g transform="translate('+tx.toFixed(2)+','+ty.toFixed(2)+') scale('+s+')">'+o+'</g>';
     }
     function _buildBichonTab(p, pos, cust) {
