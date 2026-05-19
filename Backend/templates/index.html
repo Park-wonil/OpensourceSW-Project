@@ -2825,7 +2825,64 @@
     <button class="community-tab active" onclick="switchCategory('tutor', event)">📚 과외 구인</button>
     <button class="community-tab" onclick="switchCategory('free', event)">💬 자유게시판</button>
   </div>
-  
+  <!-- 🔥 인기글 영역 -->
+<div id="popular-posts-box" class="community-popular-box">
+  <div class="community-popular-header">
+    <span>🔥 인기글</span>
+    <small>조회수 높은 글 TOP 3</small>
+  </div>
+
+  <div id="popular-posts-list" class="community-popular-list">
+    <div class="community-empty-small">아직 인기글이 없습니다.</div>
+  </div>
+</div>
+
+  <!-- 🔍 검색 / 정렬 영역 -->
+  <div class="community-toolbar">
+    <div class="community-search-box">
+      <input
+        type="text"
+        id="community-search-input"
+        placeholder="제목, 작성자, 내용 검색..."
+        oninput="handleCommunitySearch()"
+      >
+
+      <button type="button" onclick="clearCommunitySearch()">
+        초기화
+      </button>
+    </div>
+
+    <div class="community-sort-box">
+  <span class="community-sort-label">정렬</span>
+
+  <button
+    type="button"
+    class="community-sort-btn active"
+    data-sort="latest"
+    onclick="setCommunitySort('latest', this)"
+  >
+    최신순
+  </button>
+
+  <button
+    type="button"
+    class="community-sort-btn"
+    data-sort="views"
+    onclick="setCommunitySort('views', this)"
+  >
+    조회순
+  </button>
+
+  <button
+    type="button"
+    class="community-sort-btn"
+    data-sort="comments"
+    onclick="setCommunitySort('comments', this)"
+  >
+    댓글순
+  </button>
+</div>
+  </div>
   <!-- 글쓰기 폼 (모달) -->
   <div id="write-form" class="write-form" style="display: none;">
     <input type="text" id="post-title" placeholder="제목을 입력하세요" maxlength="100">
@@ -4666,16 +4723,34 @@
     // 커뮤니티
     // 커뮤니티 JavaScript - 버그 수정
 
+// ===============================
+// 커뮤니티 검색 / 정렬 / 인기글
+// ===============================
+
+// currentCategory는 기존에 이미 있으면 다시 선언하지 마세요.
+// 예: let currentCategory = 'tutor';
+let communityPosts = [];
+let communitySearchKeyword = '';
+let communitySortType = 'latest';
+
 function switchCategory(category, event) {
   currentCategory = category;
-  
-  // 탭 활성화
+
   document.querySelectorAll('.community-tab').forEach(btn => {
     btn.classList.remove('active');
   });
-  event.target.classList.add('active');
-  
-  // 목록 새로고침
+
+  if (event && event.target) {
+    event.target.classList.add('active');
+  }
+
+  communitySearchKeyword = '';
+
+  const searchInput = document.getElementById('community-search-input');
+  if (searchInput) {
+    searchInput.value = '';
+  }
+
   loadPosts();
 }
 
@@ -4683,29 +4758,214 @@ function loadPosts() {
   fetch(`/community/posts?category=${currentCategory}`)
     .then(res => res.json())
     .then(data => {
-      const container = document.getElementById('posts-list');
-      
-      if (!data.posts || data.posts.length === 0) {
-        container.innerHTML = '<div class="empty-state">아직 작성된 글이 없습니다</div>';
-        return;
-      }
-      
-      container.innerHTML = data.posts.map(post => `
-        <div class="post-item" onclick="viewPost(${post.id})">
-          <div class="post-item-main">
-            <div class="post-item-title">${escapeHtml(post.title)}</div>
-            <div class="post-item-meta">
-              <span>👤 ${escapeHtml(post.author)}</span>
-              <span>🕐 ${post.created_at}</span>
-            </div>
-          </div>
-          <div class="post-item-views">👁️ ${post.views}</div>
-        </div>
-      `).join('');
+      communityPosts = data.posts || [];
+
+      renderPopularPosts();
+      renderCommunityPosts();
     })
     .catch(err => {
       console.error('게시글 로드 실패:', err);
+
+      const container = document.getElementById('posts-list');
+      if (container) {
+        container.innerHTML = `
+          <div class="empty-state">
+            게시글을 불러오지 못했습니다.
+          </div>
+        `;
+      }
     });
+}
+
+function handleCommunitySearch() {
+  const input = document.getElementById('community-search-input');
+
+  communitySearchKeyword = input
+    ? input.value.trim().toLowerCase()
+    : '';
+
+  renderCommunityPosts();
+}
+
+function clearCommunitySearch() {
+  communitySearchKeyword = '';
+
+  const input = document.getElementById('community-search-input');
+  if (input) {
+    input.value = '';
+  }
+
+  renderCommunityPosts();
+}
+
+function setCommunitySort(sortType, button) {
+  communitySortType = sortType;
+
+  document.querySelectorAll('.community-sort-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+
+  if (button) {
+    button.classList.add('active');
+  }
+
+  renderCommunityPosts();
+}
+
+function getCommentCount(post) {
+  if (Array.isArray(post.comments)) {
+    return post.comments.length;
+  }
+
+  if (typeof post.comment_count === 'number') {
+    return post.comment_count;
+  }
+
+  if (typeof post.comments_count === 'number') {
+    return post.comments_count;
+  }
+
+  return 0;
+}
+
+function getPostTimeValue(post) {
+  const time = new Date(post.created_at).getTime();
+  return Number.isNaN(time) ? 0 : time;
+}
+
+function getFilteredAndSortedPosts() {
+  let result = [...communityPosts];
+
+  // 검색
+  if (communitySearchKeyword) {
+    result = result.filter(post => {
+      const title = String(post.title || '').toLowerCase();
+      const author = String(post.author || '').toLowerCase();
+      const content = String(post.content || '').toLowerCase();
+
+      return (
+        title.includes(communitySearchKeyword) ||
+        author.includes(communitySearchKeyword) ||
+        content.includes(communitySearchKeyword)
+      );
+    });
+  }
+
+  // 정렬
+  result.sort((a, b) => {
+    if (communitySortType === 'views') {
+      return (b.views || 0) - (a.views || 0);
+    }
+
+    if (communitySortType === 'comments') {
+      return getCommentCount(b) - getCommentCount(a);
+    }
+
+    return getPostTimeValue(b) - getPostTimeValue(a);
+  });
+
+  return result;
+}
+
+function renderCommunityPosts() {
+  const container = document.getElementById('posts-list');
+  if (!container) return;
+
+  const posts = getFilteredAndSortedPosts();
+
+  if (communityPosts.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        📝 아직 작성된 글이 없습니다<br>
+        <span style="font-size:13px; opacity:0.7;">
+          첫 번째 글을 작성해보세요!
+        </span>
+      </div>
+    `;
+    return;
+  }
+
+  if (posts.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        🔍 검색 결과가 없습니다<br>
+        <span style="font-size:13px; opacity:0.7;">
+          다른 검색어로 다시 찾아보세요.
+        </span>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = posts.map(post => {
+    const commentCount = getCommentCount(post);
+
+    return `
+      <div class="post-item" onclick="viewPost(${post.id})">
+        <div class="post-item-main">
+          <div class="post-item-title">
+            ${escapeCommunityHtml(post.title)}
+          </div>
+
+          <div class="post-item-meta">
+            <span>👤 ${escapeCommunityHtml(post.author)}</span>
+            <span>🕐 ${escapeCommunityHtml(post.created_at)}</span>
+            <span>💬 ${commentCount}</span>
+          </div>
+        </div>
+
+        <div class="post-item-views">
+          👁️ ${post.views || 0}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderPopularPosts() {
+  const popularList = document.getElementById('popular-posts-list');
+  if (!popularList) return;
+
+  const popularPosts = [...communityPosts]
+    .filter(post => (post.views || 0) > 0)
+    .sort((a, b) => (b.views || 0) - (a.views || 0))
+    .slice(0, 3);
+
+  if (popularPosts.length === 0) {
+    popularList.innerHTML = `
+      <div class="community-empty-small">
+        아직 인기글이 없습니다.
+      </div>
+    `;
+    return;
+  }
+
+  popularList.innerHTML = popularPosts.map((post, index) => `
+    <div class="popular-post-item" onclick="viewPost(${post.id})">
+      <div class="popular-rank">${index + 1}</div>
+
+      <div class="popular-info">
+        <div class="popular-title">
+          ${escapeCommunityHtml(post.title)}
+        </div>
+
+        <div class="popular-meta">
+          👤 ${escapeCommunityHtml(post.author)}
+          · 👁️ ${post.views || 0}
+          · 💬 ${getCommentCount(post)}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function escapeCommunityHtml(value) {
+  return String(value || '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
 }
 
 function showWriteForm() {
