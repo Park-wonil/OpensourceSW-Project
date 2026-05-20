@@ -4723,3 +4723,309 @@ body::after {
   opacity: 0.72 !important;
 }
 
+/* =========================================
+   커뮤니티 검색 / 정렬 / 인기글 개선
+   ========================================= */
+
+.community-toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin: 18px 0 22px;
+  padding: 14px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 18px;
+}
+
+.community-search-box {
+  flex: 1;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.community-search-box input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px !important;
+  border-radius: 14px !important;
+}
+
+.community-search-box button {
+  padding: 11px 16px;
+  border-radius: 14px !important;
+  background: rgba(255,255,255,0.08);
+  color: var(--text-main);
+  border: 1px solid rgba(255,255,255,0.1);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.community-search-box button:hover {
+  background: rgba(255,255,255,0.14);
+  transform: translateY(-1px);
+}
+
+#community-sort-select {
+  min-width: 120px;
+  padding: 12px 14px !important;
+  border-radius: 14px !important;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* 인기글 박스 */
+.community-popular-box {
+  margin: 18px 0;
+  padding: 18px;
+  border-radius: 20px;
+  background:
+    linear-gradient(135deg, rgba(255,170,92,0.12), rgba(110,231,192,0.06)),
+    rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.09);
+}
+
+.community-popular-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.community-popular-header span {
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--text-main);
+}
+
+.community-popular-header small {
+  font-size: 12px;
+  color: var(--text-sub);
+  font-weight: 600;
+}
+
+.community-popular-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.popular-post-item {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.popular-post-item:hover {
+  border-color: var(--theme-primary, #6ee7c0);
+  background: rgba(110,231,192,0.08);
+  transform: translateY(-2px);
+}
+
+.popular-rank {
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--theme-primary, #6ee7c0);
+  color: #111;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.popular-info {
+  min-width: 0;
+}
+
+.popular-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text-main);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.popular-meta {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--text-sub);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.community-empty-small {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 18px;
+  color: var(--text-sub);
+  font-size: 13px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 14px;
+}
+
+/* 라이트모드 */
+body.light-mode .community-toolbar,
+body.light-mode .community-popular-box {
+  background: rgba(255,255,255,0.85);
+  border-color: rgba(0,0,0,0.07);
+}
+
+body.light-mode .community-search-box button {
+  background: rgba(0,0,0,0.05);
+  color: #1a1a2e;
+  border-color: rgba(0,0,0,0.1);
+}
+
+body.light-mode .community-search-box button:hover {
+  background: rgba(0,0,0,0.09);
+}
+
+body.light-mode .popular-post-item {
+  background: rgba(255,255,255,0.9);
+  border-color: rgba(0,0,0,0.07);
+}
+
+body.light-mode .popular-title {
+  color: #1a1a2e;
+}
+
+body.light-mode .popular-meta,
+body.light-mode .community-empty-small {
+  color: #555877;
+}
+
+body.light-mode .community-empty-small {
+  background: rgba(0,0,0,0.04);
+}
+
+/* 모바일 대응 */
+@media (max-width: 768px) {
+  .community-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px;
+  }
+
+  .community-search-box {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .community-search-box button,
+  #community-sort-select {
+    width: 100%;
+  }
+
+  .community-popular-list {
+    grid-template-columns: 1fr;
+  }
+
+  .community-popular-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}
+/* =========================================
+   커뮤니티 정렬 버튼 UI 개선
+   ========================================= */
+
+.community-sort-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  flex-shrink: 0;
+}
+
+.community-sort-label {
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-sub);
+  white-space: nowrap;
+}
+
+.community-sort-btn {
+  padding: 9px 13px;
+  border-radius: 12px !important;
+  border: 1px solid transparent !important;
+  background: transparent;
+  color: var(--text-sub);
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+  box-shadow: none !important;
+}
+
+.community-sort-btn:hover {
+  background: rgba(255,255,255,0.08);
+  color: var(--text-main);
+  transform: translateY(-1px);
+}
+
+.community-sort-btn.active {
+  background: var(--theme-primary, #6ee7c0);
+  color: #111;
+  border-color: var(--theme-primary, #6ee7c0) !important;
+  box-shadow: 0 4px 14px var(--theme-glow, rgba(110,231,192,0.28)) !important;
+}
+
+.community-sort-btn.active:hover {
+  color: #111;
+}
+
+/* 라이트모드 */
+body.light-mode .community-sort-box {
+  background: rgba(0,0,0,0.04);
+  border-color: rgba(0,0,0,0.08);
+}
+
+body.light-mode .community-sort-label {
+  color: #555877;
+}
+
+body.light-mode .community-sort-btn {
+  color: #555877;
+}
+
+body.light-mode .community-sort-btn:hover {
+  background: rgba(0,0,0,0.06);
+  color: #1a1a2e;
+}
+
+body.light-mode .community-sort-btn.active {
+  color: #111;
+}
+
+/* 모바일 */
+@media (max-width: 768px) {
+  .community-sort-box {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .community-sort-btn {
+    flex: 1;
+    text-align: center;
+  }
+}
