@@ -33,7 +33,8 @@ ALERT_HOLD_S         = 10.0   # 나쁜 자세 지속 n초 후 알림
 ALERT_COOLDOWN_S     = 300.0  # 알림 재발생 최소 간격 (초)
 
 # --- MediaPipe Pose 초기화 (첫 사용 시 lazy 로딩) ---
-_mp_pose = mp.solutions.pose
+# mp.solutions.pose는 mediapipe가 동적으로 등록하는 속성이라 Pylance가 인식 못함 → 무시
+_mp_pose = mp.solutions.pose  # type: ignore[attr-defined]
 _pose = None   # 첫 update() 호출 시 초기화
 
 def _get_pose():
