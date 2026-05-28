@@ -3589,24 +3589,30 @@
 
     // Flask 카메라 중단 후 브라우저 캠 획득
     async function acquireBrowserCam() {
-      // Flask 카메라가 켜져 있으면 먼저 끄기
-      const camStatus = document.getElementById('cam-status');
-      if (camStatus && camStatus.innerText === 'LIVE') {
-        await fetch('/stop');
-        const videoTag = document.getElementById('video');
-        if (videoTag) { videoTag.src = ''; videoTag.style.display = 'none'; }
-        const ph = document.getElementById('cam-placeholder');
-        if (ph) ph.style.display = 'flex';
-        camStatus.innerText = 'OFF';
-        camStatus.style.color = 'var(--text-sub)';
-        if (monitoring) { clearInterval(monitoring); monitoring = null; }
-        // 카메라 릴리즈 대기
-        await new Promise(r => setTimeout(r, 800));
+      // 로컬 접속일 때만 Flask 카메라 끄기 (외부/모바일 접속 시 Flask 캠 없음)
+      if (!isExternalAccess) {
+        const camStatus = document.getElementById('cam-status');
+        if (camStatus && camStatus.innerText === 'LIVE') {
+          await fetch('/stop');
+          const videoTag = document.getElementById('video');
+          if (videoTag) { videoTag.src = ''; videoTag.style.display = 'none'; }
+          const ph = document.getElementById('cam-placeholder');
+          if (ph) ph.style.display = 'flex';
+          camStatus.innerText = 'OFF';
+          camStatus.style.color = 'var(--text-sub)';
+          if (monitoring) { clearInterval(monitoring); monitoring = null; }
+          // 카메라 릴리즈 대기
+          await new Promise(r => setTimeout(r, 800));
+        }
       }
       // 브라우저 캠 획득
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        showToast('❌ 이 브라우저는 카메라를 지원하지 않습니다. HTTPS 환경을 확인해주세요.');
+        return null;
+      }
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { width:640, height:480, facingMode:'user' },
+          video: { width:{ideal:640}, height:{ideal:480}, facingMode:'user' },
           audio: false
         });
         return stream;
@@ -3669,7 +3675,7 @@
     async function startBrowserCam() {
       try {
         browserCamStream = await navigator.mediaDevices.getUserMedia({
-          video: { width:640, height:480, facingMode:'user' },
+          video: { width:{ideal:640}, height:{ideal:480}, facingMode:'user' },
           audio: false
         });
         const bcv = document.getElementById('browser-cam-video');
@@ -5958,24 +5964,36 @@ window.onload = checkLogin;
     // ── 캠 ──
     async function toggleRoomCam() {
       if (roomCamOn) { stopRoomCam(); return; }
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        showToastMsg('❌ 카메라를 사용하려면 HTTPS 환경이 필요합니다.');
+        return;
+      }
       try {
-        // Flask 카메라가 켜져 있으면 먼저 끄기 (카메라 충돌 방지)
-        const camStatus = document.getElementById('cam-status');
-        if (camStatus && camStatus.innerText === 'LIVE') {
-          await fetch('/stop');
-          const videoTag = document.getElementById('video');
-          if (videoTag) { videoTag.src = ''; videoTag.style.display = 'none'; }
-          const ph = document.getElementById('cam-placeholder');
-          if (ph) ph.style.display = 'flex';
-          camStatus.innerText = 'OFF';
-          camStatus.style.color = 'var(--text-sub)';
-          // 잠시 대기 (Flask 카메라 릴리즈)
-          await new Promise(r => setTimeout(r, 800));
+        if (isExternalAccess) {
+          // 외부 접속: 대시보드 브라우저 캠이 켜져 있으면 먼저 완전히 해제
+          // (Windows 웹캠 드라이버는 동시 getUserMedia를 허용하지 않음)
+          if (browserCamStream) {
+            stopBrowserCam();
+            await new Promise(r => setTimeout(r, 300));
+          }
+        } else {
+          // 로컬 접속: Flask 카메라 끄기
+          const camStatus = document.getElementById('cam-status');
+          if (camStatus && camStatus.innerText === 'LIVE') {
+            await fetch('/stop');
+            const videoTag = document.getElementById('video');
+            if (videoTag) { videoTag.src = ''; videoTag.style.display = 'none'; }
+            const ph = document.getElementById('cam-placeholder');
+            if (ph) ph.style.display = 'flex';
+            camStatus.innerText = 'OFF';
+            camStatus.style.color = 'var(--text-sub)';
+            await new Promise(r => setTimeout(r, 800));
+          }
         }
 
-        // 브라우저 캠 스트림
+        // 브라우저 캠 스트림 (ideal 제약 사용 → iOS/Windows 호환)
         roomLocalStream = await navigator.mediaDevices.getUserMedia({
-          video: { width:1280, height:720, facingMode:'user' },
+          video: { width:{ideal:1280}, height:{ideal:720}, facingMode:'user' },
           audio: false
         });
         const vid = document.getElementById('room-local-video');
@@ -6012,7 +6030,7 @@ window.onload = checkLogin;
         }
       } catch(e) {
         console.error('캠 오류:', e);
-        showToastMsg('❌ 카메라 권한이 필요합니다. (chrome://flags 설정 확인)');
+        showToastMsg('❌ 카메라 권한이 필요합니다. 브라우저 설정에서 카메라 권한을 허용해주세요.');
       }
     }
 
