@@ -378,6 +378,167 @@ def _detect_face(frame) : 프레임에서 얼굴 존재 여부를 반환하는 �
 current_absence_s : 현재 이탈 경과 시간(이탈 중 아니면 0)
 def _detect_face(frame) : 프레임에서 얼굴 존재 여부를 반환하는 함수 (bool)
 
+1. 카메라 캡처 / 스트리밍 (Vision/vision.py)
+
+cap : OpenCV VideoCapture 객체 (전역).
+
+is_running : 캡처 루프 동작 여부 플래그.
+
+capture_thread : _capture_loop를 실행하는 데몬 스레드.
+
+latest_frame : 가장 최근 인코딩된 JPEG 바이트 (스트리밍용).
+
+latest_data : 가장 최근 분석 결과 dict (얼굴/EAR/자리비움/거북목 등).
+
+lock : latest_frame / latest_data 동시 접근 보호용 threading.Lock.
+
+current_subject / current_username : 현재 학습 세션 컨텍스트.
+
+_camera_start_time : 카메라 시작 시각 (스트레칭 인터벌 계산).
+
+_stretch_shown_at : 스트레칭 오버레이 마지막 표시 시각.
+
+start_camera() : 캡처 시작 (VideoCapture 열고 스레드 기동).
+
+stop_camera() : 캡처 중단 및 cap.release().
+
+_capture_loop() : 프레임 루프 — 얼굴/EAR/자리비움/거북목 분석 + 오버레이 + DB 저장.
+
+generate_frames() : MJPEG 스트림용 yield 제너레이터.
+
+get_focus_data() : 현재 분석 결과(latest_data) 스냅샷 반환.
+
+set_current_subject(subject) / set_current_username(username) : 세션 컨텍스트 갱신.
+
+2. 얼굴 / EAR 분석 (vision.py)
+
+LEFT_EYE / RIGHT_EYE : MediaPipe FaceMesh 눈 landmark 인덱스 리스트.
+
+BUFFER_SIZE : 얼굴 검출 디바운싱용 buffer 길이 (=5).
+
+ABSENCE_THRESHOLD_S : 이탈 판정 임계 시간(초) (=2.0).
+
+RETURN_CONFIRM_S : 복귀 확정 대기 시간(초) (=1.0).
+
+_get_face_mesh() : MediaPipe FaceMesh 모델 lazy 로더.
+
+calculate_ear(landmarks, eye_indices, w, h) : EAR(Eye Aspect Ratio) 계산. 0.2 미만이면 졸음 판정.
+
+3. 자리비움 감지 — AbsenceDetector (vision.py)
+
+class AbsenceDetector : 얼굴 존재 여부 시계열을 이용한 자리비움 상태머신.
+
+self.is_absent : 현재 이탈 중 여부 (bool).
+
+self.absence_start : 이탈 시작 시각 (timestamp).
+
+self.return_since : 복귀 후 확정 대기 시작 시각.
+
+self.last_seen_ts : 마지막으로 얼굴이 보였던 시각.
+
+self.buffer : 최근 N프레임 얼굴 검출 결과 deque (디바운싱).
+
+self.absence_count : 누적 이탈 횟수.
+
+self.total_absence_s : 누적 이탈 시간(초).
+
+update(face_present) : 매 프레임 호출, 상태 전이.
+
+get_current_absence_duration() : 현재 이탈 경과 시간 반환 (아니면 0.0).
+
+4. 거북목 / 어깨 감지 (Vision/neck.py)
+
+NECK_WARN_ANGLE : 경고(warn) 임계 각도 (=15°).
+
+NECK_BAD_ANGLE  : 불량(bad) 임계 각도 (=25°).
+
+SHOULDER_TILT_THRESH : 어깨 좌우 y 차이 임계 (=0.04, 정규화 좌표).
+
+ALERT_HOLD_S : 나쁜 자세 지속 시 알림 발생까지 대기(초) (=10.0).
+
+ALERT_COOLDOWN_S : 알림 재발생 최소 간격(초) (=300.0).
+
+class NeckPostureDetector : MediaPipe Pose 기반 거북목 판정기.
+
+self.neck_angle : 최신 목 각도(°).
+
+self.status : "good" | "warn" | "bad" | "unknown".
+
+self._bad_start : "bad" 상태 시작 시각 (내부).
+
+self.bad_seconds : 현재 "bad" 지속 시간(초).
+
+self._last_alert : 마지막 알림 발생 시각.
+
+self.alert_count : 누적 알림 발생 수.
+
+update(frame_rgb) : 프레임을 받아 거북목 dict 반환 (current_data에 ** 스프레드).
+
+_make(...) : update 반환 dict 빌더 (내부 헬퍼).
+
+_get_pose() : MediaPipe Pose 모델 lazy 로더.
+
+_calc_neck_angle(lm) : 귀-어깨 landmark로 목 기울기 각도 계산.
+
+draw_neck_overlay(frame, neck_data) : 프레임에 거북목 상태 텍스트 오버레이.
+
+5. 거북목 응답 필드 (current_data 병합)
+
+pose_detected : 포즈 추정 성공 여부 (bool).
+
+neck_angle : 목 각도(°).
+
+shoulder_tilt : 좌우 어깨 정규화 y 차이.
+
+neck_status : "good"/"warn"/"bad"/"unknown".
+
+neck_bad_seconds : 현재 "bad" 지속 시간(초).
+
+neck_should_alert : 이번 프레임에 알림을 띄울지 여부.
+
+neck_alert_count : 누적 알림 수.
+
+6. 스트레칭 가이드 / 알림 (neck.py + vision.py)
+
+STRETCHING_GUIDE : 스트레칭 동작 dict 리스트 (title, desc) — 프론트에서 조회.
+
+STRETCH_INTERVAL_S : 스트레칭 알림 발생 간격(초) (=3600).
+
+STRETCH_SHOW_S : 알림 오버레이 표시 지속 시간(초) (=8.0).
+
+stretch_reminder : current_data에 병합되는 boolean 필드 (현재 알림 표시 중 여부).
+
+_STATUS_COLOR / _STATUS_LABEL : 거북목 상태별 OpenCV 색상/텍스트 매핑 (내부 상수).
+
+7. 한글 오버레이 (vision.py)
+
+_KOREAN_FONT_PATHS : 한글 폰트 후보 경로 리스트.
+
+_get_korean_fonts() : 시스템에서 한글 폰트 로드 (Pillow ImageFont).
+
+_draw_korean_overlay(frame, line1, line2) : 한글 텍스트를 PIL로 그려 OpenCV 프레임에 합성.
+
+8. 명명 규칙 (CV Prefix 컨벤션)
+
+대문자 + 언더스코어 (UPPER_SNAKE) : 모듈 전역 상수 — 임계값/인덱스/시간 등 (NECK_WARN_ANGLE, ABSENCE_THRESHOLD_S, LEFT_EYE).
+
+class XxxDetector : 시계열 상태머신 형태의 감지기 클래스 (AbsenceDetector, NeckPostureDetector).
+
+_get_xxx() : 외부 모델/리소스의 lazy 로더 (_get_face_mesh, _get_pose, _get_korean_fonts).
+
+_calc_xxx() : 단발 수치 계산 헬퍼 (_calc_neck_angle).
+
+calculate_xxx() : 공용 수치 계산 (calculate_ear).
+
+draw_xxx_overlay() : OpenCV 프레임 위에 시각화 텍스트/도형 그리기 (draw_neck_overlay).
+
+_capture_loop / _make / _draw_xxx (언더스코어 prefix) : 모듈 내부 헬퍼 — 외부에서 직접 호출 금지.
+
+is_xxx / xxx_count / total_xxx_s / current_xxx_s : 상태 플래그 / 누적 카운트 / 누적·현재 경과 시간(초) 명명 패턴.
+
+xxx_should_alert : 이번 프레임에 클라이언트에 알림을 띄울지 결정하는 1회성 boolean.
+
+
 database function
 # 데이터베이스 관련 함수
 
