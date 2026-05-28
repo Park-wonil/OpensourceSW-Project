@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(awk -F'function |const |let |var ' '{print $2}')",
+      "Bash(awk '{print $1}')",
+      "Bash(awk -F'id=\"' '{print $2}')",
+      "Bash(awk -F'\"' '{print $1}')",
+      "Bash(awk -F: '{print $1, $2}')"
+    ]
+  }
+}
