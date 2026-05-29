@@ -88,7 +88,8 @@ _camera_start_time  = None
 _stretch_shown_at   = 0.0   # 마지막으로 알림 표시를 시작한 시각
 
 # --- Mediapipe 초기화 (카메라 시작 후 lazy loading) ---
-mp_face_mesh = mp.solutions.face_mesh
+# mp.solutions.face_mesh는 mediapipe가 동적으로 등록하는 속성이라 Pylance가 인식 못함 → 무시
+mp_face_mesh = mp.solutions.face_mesh  # type: ignore[attr-defined]
 face_mesh = None
 
 def _get_face_mesh():
