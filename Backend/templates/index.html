@@ -3626,7 +3626,11 @@
     async function restoreFlaskCam() {
       await new Promise(r => setTimeout(r, 300));
       // Flask 카메라 자동 재시작
-      await fetch('/start');
+      const response = await fetch('/start');
+      if (!response.ok) {
+        showToastMsg('카메라를 사용할 수 없습니다. 연결 상태와 권한을 확인해주세요.');
+        return;
+      }
       const videoTag = document.getElementById('video');
       if (videoTag) {
         videoTag.style.display = 'block';
@@ -3659,7 +3663,11 @@
     }
 
     async function startFlaskCam() {
-      await fetch('/start', {credentials:'include'});
+      const response = await fetch('/start', {credentials:'include'});
+      if (!response.ok) {
+        showToastMsg('카메라를 사용할 수 없습니다. 연결 상태와 권한을 확인해주세요.');
+        return;
+      }
       const videoTag = document.getElementById("video");
       videoTag.style.display = "block";
       videoTag.src = "/video?t=" + Date.now();
@@ -4835,6 +4843,9 @@ function getCommentCount(post) {
 }
 
 function getPostTimeValue(post) {
+  if (typeof post.created_at_ts === 'number') {
+    return post.created_at_ts;
+  }
   const time = new Date(post.created_at).getTime();
   return Number.isNaN(time) ? 0 : time;
 }
@@ -5808,6 +5819,7 @@ window.onload = checkLogin;
             border:${r.locked ? '1.5px solid var(--accent-red)' : 'none'};
             border-radius:12px; font-weight:700; cursor:pointer; font-size:13px; flex-shrink:0; margin-left:12px;">
             ${r.locked ? '🔒 입장' : '입장'}
+          </button>
           <button onclick="deleteRoom('${r.id}')"
               style="padding:10px 16px; 
               background: transparent; 
@@ -6049,7 +6061,7 @@ window.onload = checkLogin;
     }
 
     // 스터디룸 퇴장 시 Flask 카메라 상태 복원 (필요하면)
-    async function restoreFlaskCam() {
+    async function restoreAfterRoomCam() {
       // 스터디룸 나가면 대시보드 카메라는 사용자가 직접 켜도록 안내만
       stopRoomCam();
       showToastMsg('📷 대시보드에서 카메라를 다시 켤 수 있습니다.');

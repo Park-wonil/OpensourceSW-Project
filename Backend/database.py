@@ -663,14 +663,22 @@ def get_posts(category=None, limit=50):
         c = conn.cursor()
         if category:
             c.execute("""
-            SELECT id, category, author, title, created_at, views
-            FROM posts WHERE category = ?
-            ORDER BY created_at DESC LIMIT ?
+            SELECT p.id, p.category, p.author, p.title, p.content, p.created_at, p.views,
+                   COUNT(c.id) AS comment_count
+            FROM posts p
+            LEFT JOIN comments c ON c.post_id = p.id
+            WHERE p.category = ?
+            GROUP BY p.id
+            ORDER BY p.created_at DESC LIMIT ?
             """, (category, limit))
         else:
             c.execute("""
-            SELECT id, category, author, title, created_at, views
-            FROM posts ORDER BY created_at DESC LIMIT ?
+            SELECT p.id, p.category, p.author, p.title, p.content, p.created_at, p.views,
+                   COUNT(c.id) AS comment_count
+            FROM posts p
+            LEFT JOIN comments c ON c.post_id = p.id
+            GROUP BY p.id
+            ORDER BY p.created_at DESC LIMIT ?
             """, (limit,))
         rows = c.fetchall()
         conn.close()
@@ -682,8 +690,11 @@ def get_posts(category=None, limit=50):
                 "category": row[1],
                 "author": row[2],
                 "title": row[3],
-                "created_at": time.strftime("%m/%d %H:%M", time.localtime(row[4])),
-                "views": row[5]
+                "content": row[4],
+                "created_at": time.strftime("%m/%d %H:%M", time.localtime(row[5])),
+                "created_at_ts": row[5],
+                "views": row[6],
+                "comment_count": row[7],
             })
         return result
     except Exception as e:
