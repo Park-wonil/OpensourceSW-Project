@@ -177,11 +177,11 @@ def get_score(start_time=None, username=""):
         rows = c.fetchall()
         conn.close()
         
-        # 데이터가 없으면 100점 반환
+        # 데이터가 없으면 0점부터 시작
         if len(rows) == 0:
-            return {"score": 100, "absence_count": 0, "absence_time": 0}
+            return {"score": 0, "absence_count": 0, "absence_time": 0}
         
-        score = 100.0
+        score = 0.0
         prev_absence = rows[0][1]
         total_absence_count = 0
         total_absence_time = 0
@@ -191,14 +191,14 @@ def get_score(start_time=None, username=""):
                 total_absence_count += (absence_count - prev_absence)
             prev_absence = absence_count
             if state == "absent":
-                score -= 2.0
+                score -= 1.0
                 total_absence_time += 1
             elif state == "sleepy":
-                score -= 1.0
+                score -= 0.5
             elif state == "focused":
-                score += 0.3
+                score += 1.0
         
-        score = max(0, score)  # 하한선만 0으로 제한
+        score = max(0, min(100, score))  # 0점부터 시작, 100점 만점
         
         return {
             "score": round(score, 1),
@@ -233,15 +233,15 @@ def get_stats(username=""):
         m = (focused_seconds % 3600) // 60
         s = focused_seconds % 60
         total_focus_time = f"{h:02d}:{m:02d}:{s:02d}"
-        score = 100.0
+        score = 0.0
         for row in rows:
             state = row[0]
             if state == "absent":
-                score -= 2.0
-            elif state == "sleepy":
                 score -= 1.0
+            elif state == "sleepy":
+                score -= 0.5
             elif state == "focused":
-                score += 0.3
+                score += 1.0
         avg_score = round(max(0, min(100, score)), 1)
         subject_map = {}
         for row in rows:
@@ -422,14 +422,16 @@ def get_goals(username=""):
         return []
 
 def delete_goal(subject, username=""):
-    """목표 삭제 (유저별)"""
+    """목표 + 저장 과목 함께 삭제 (유저별)"""
     try:
         conn = get_conn()
         c = conn.cursor()
         if username:
             c.execute("DELETE FROM goals WHERE subject = ? AND username = ?", (subject, username))
+            c.execute("DELETE FROM saved_subjects WHERE subject = ? AND username = ?", (subject, username))
         else:
             c.execute("DELETE FROM goals WHERE subject = ?", (subject,))
+            c.execute("DELETE FROM saved_subjects WHERE subject = ?", (subject,))
         conn.commit()
         conn.close()
         return True

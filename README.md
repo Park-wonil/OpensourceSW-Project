@@ -1,104 +1,167 @@
-# 🧠 오픈소스SW 프로젝트
+# Focus AI — AI 기반 스마트 학습 관리 시스템
 
-## 프로젝트명
-**Focus AI**
-
----
-
-## 📖 프로젝트 소개
-AI 기반 컴퓨터 비전 기술을 활용한 **집중도 분석 스터디 타이머**입니다.  
-사용자의 얼굴, 눈 상태, 그리고 자세(거북목)를 실시간으로 분석하여  
-학습 집중도를 정량적으로 측정하고, 이를 기반으로 타이머를 자동 제어합니다.  
-
-또한 사용자 계정 시스템을 통해 학습 데이터를 저장하고,  
-커뮤니티 및 랭킹 기능을 통해 학습 동기 부여를 강화하는  
-**통합형 스마트 학습 관리 시스템**입니다.
+> 컴퓨터 비전으로 집중도를 측정하고, AI 튜터·스터디룸·커뮤니티까지 하나로 연결한 통합 학습 플랫폼
 
 ---
 
-## 🎯 프로젝트 목표
+## 프로젝트 소개
 
-- 👤 얼굴 인식을 통한 사용자 존재 여부 판단  
-- 😴 눈 감김 여부를 통한 졸음 상태 감지  
-- 🧍 목 기울기(거북목) 분석을 통한 자세 기반 집중도 판단  
-- ⏱️ AI 기반 상태 분석을 통한 자동 타이머 제어 (시작/정지)  
-- 📊 사용자별 학습 시간 및 집중도 데이터 기록  
-- 🏆 닉네임 기반 랭킹 시스템으로 학습 경쟁 유도  
-- 💬 커뮤니티 기능을 통한 학습 경험 공유 및 동기 부여  
-- 🕶️ 익명/닉네임 선택 게시글 작성 기능 제공  
-- 🌙 다크모드 및 UI 최적화를 통한 사용자 경험 향상  
+**Focus AI**는 웹캠으로 사용자의 얼굴·눈 상태·자세(거북목)를 실시간 분석하여 집중 여부를 판단하고, 타이머를 자동 제어하는 **AI 집중도 분석 스터디 타이머**입니다.
+
+단순한 타이머를 넘어, AI 튜터 채팅·실시간 스터디룸·커뮤니티·랭킹·아바타 커스터마이징까지 갖춘 **통합형 스마트 학습 관리 시스템**입니다.
 
 ---
 
-## 🚀 주요 기능
+## 주요 기능
 
-- 🔐 회원가입 / 로그인 시스템 (세션 기반 인증)  
-- 🏅 닉네임 기반 실시간 랭킹 시스템  
-- 📝 커뮤니티 게시판 (익명/닉네임 선택 가능)  
-- 🌙 다크모드 UI 지원  
-- ⚠️ 거북목 감지 및 경고 알림 기능  
-- 📈 집중 시간 자동 기록 및 분석  
+### 집중도 분석 (AI 비전)
+- 웹캠 기반 얼굴 인식 — 자리 이탈 감지 시 타이머 자동 정지
+- 눈 감김 감지 — 졸음 상태 판단 및 경고
+- 거북목(목 기울기) 분석 — 나쁜 자세 감지 및 스트레칭 가이드 제공
+- MediaPipe 기반 포즈/얼굴 랜드마크 처리
+
+### 학습 관리
+- 과목별 집중 시간 자동 기록 및 일간/주간/월간 통계
+- 과목별 목표 설정 및 달성률 추적
+- 학습 점수 자동 산출
+
+### AI 튜터 (깜찍이)
+- Groq (Llama 3.1) 서버 사이드 AI — API 키를 프론트에 노출하지 않음
+- 현재 공부 중인 과목 컨텍스트 자동 반영
+- 대화 히스토리 유지 (최근 10턴)
+
+### 실시간 스터디룸
+- Socket.IO 기반 실시간 채팅
+- WebRTC 화상 통화 (같은 Wi-Fi LAN 환경)
+- 방 생성·입장·초대 시스템
+
+### 커뮤니티
+- 게시글 작성/조회/삭제 (익명·닉네임 선택)
+- 댓글 기능
+
+### 아바타 & 레벨 시스템
+- 캐릭터(고양이·비숑·공부메이트) 선택 및 색상 커스터마이징
+- 모자·옷·악세서리·표정 꾸미기
+- 누적 공부 시간 기반 레벨 시스템 (Lv.1~10) — 특정 레벨 달성 시 아이템 해금
+- 내비게이션 바 레벨 뱃지 표시
+
+### 기타
+- 회원가입·로그인 (세션 기반 인증)
+- 닉네임 기반 글로벌 랭킹
+- 친구 추가 기능
+- 다크모드 / 라이트모드 전환
+- 반응형 UI
 
 ---
+
+## 프로젝트 구조
+
+```
+OpensourceSW-Project/
+├── Backend/
+│   ├── __init__.py
+│   ├── server.py            # Flask 앱, REST API, Socket.IO 이벤트 핸들러
+│   ├── database.py          # SQLite DB 연동 (유저·통계·목표·랭킹·커뮤니티)
+│   ├── static/
+│   │   └── css/
+│   │       └── style.css
+│   └── templates/
+│       └── index.html       # SPA 단일 페이지 (모든 탭 포함)
+│
+├── Vision/
+│   ├── __init__.py
+│   ├── vision.py            # 웹캠 스트리밍, 얼굴·눈 감김 감지, 집중도 판단
+│   ├── pose_detection.py    # MediaPipe 포즈 기반 자세 분석
+│   └── neck.py              # 거북목 감지 및 스트레칭 가이드 데이터
+│
+├── Data/                    # 학습 데이터 저장 디렉토리
+├── Docs/
+│   └── naming_rules.md      # 팀 코딩 컨벤션
+│
+├── focus.db                 # SQLite 데이터베이스
+├── requirements.txt
+├── .env                     # API 키 설정 (git 제외)
+└── README.md
+```
+
 ---
-# OpensourceSW-Project
-## 프로젝트 실행 방법 (macOS 기준)
 
-이 프로젝트의 원활한 실행을 위해 아래 단계를 차례대로 따라해 주세요.
+## 기술 스택
 
-### 1. Python 환경 확인
-본 프로젝트는 **Python 3.11** 환경에서 최적화되어 있습니다.
+| 분류 | 기술 |
+|------|------|
+| Backend | Python 3.11, Flask, Flask-SocketIO |
+| AI 비전 | MediaPipe|
+| AI 튜터 | Groq API (Llama 3.1) |
+| Frontend | Vanilla JS, SVG 아바타 렌더링 |
+| DB | SQLite |
+| 실시간 통신 | Socket.IO, WebRTC |
+
+---
+
+## 실행 방법
+
+### 1. 저장소 클론
+
 ```bash
-brew install python@3.11
-git clone [https://github.com/Park-wonil/OpensourceSW-Project.git](https://github.com/Park-wonil/OpensourceSW-Project.git)
+git clone https://github.com/Park-wonil/OpensourceSW-Project.git
 cd OpensourceSW-Project
 ```
-### 2. 프로젝트 클론
+
+### 2. Python 가상환경 생성 (Python 3.11 권장)
+
 ```bash
-git clone [https://github.com/Park-wonil/OpensourceSW-Project.git](https://github.com/Park-wonil/OpensourceSW-Project.git)
-cd OpensourceSW-Project
-```
-### 3. 가상환경설정
-```bash
-conda deactivate
 python3.11 -m venv venv
-source venv/bin/activate
+source venv/bin/activate        # macOS/Linux
+# venv\Scripts\activate         # Windows
 ```
-### 4.필수 라이브러리 설치
+
+### 3. 의존성 설치
+
 ```bash
 pip install --upgrade pip
-pip install mediapipe==0.10.8 opencv-python numpy flask
-pip install flask-socketio
+pip install -r requirements.txt
+pip install openai              # AI 튜터 기능 사용 시
 ```
 
-### 5. 서버실행 Flask
+### 4. AI 튜터 API 키 설정 (선택)
+
+프로젝트 루트에 `.env` 파일 생성:
+
+```env
+# Groq (무료) — console.groq.com → API Keys → Create API Key
+GROQ_API_KEY=gsk_...
+```
+
+> 키가 없으면 AI 튜터 기능만 비활성화되고 나머지 기능은 정상 동작합니다.
+
+### 5. 서버 실행
+
 ```bash
 python3 -m Backend.server
 ```
 
+브라우저에서 `http://localhost:5001` 접속
 
-### 다시작업시작할 때 
+---
+
+## 팀 개발 브랜치 전략
+
 ```bash
-cd OpensourceSW-Project(해당폴더로이동)
-git checkout dev (dev 최신화)
-git pull origin dev
-git checkout feature/본인feature브랜치
-git merge dev (최신코드가져옴)
-
-
-작업후
-git add .
-git commit -m "작업내용"
-git push origin feature/본인
-
-
-5. PR(풀리퀘스트요청)
-PR후 merge 끝나면
+# 작업 시작 전
 git checkout dev
 git pull origin dev
+git checkout feature/본인브랜치
+git merge dev
+
+# 작업 후
+git add .
+git commit -m "작업 내용"
+git push origin feature/본인브랜치
+
+# PR: compare → feature/본인브랜치 / base → dev
 ```
 
+팀원 별 기여도
 
-PR시 조심할점 
-compare: 본인 feature
-base: dev
+![박원일 GitHub stats](https://github-readme-stats.vercel.app/api?username=Park-wonil&show_icons=true&theme=radical)
