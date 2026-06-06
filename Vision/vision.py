@@ -70,6 +70,7 @@ RIGHT_EYE = [362, 385, 387, 263, 373, 380]
 # --- 상수 ---
 STRETCH_INTERVAL_S = 3600.0   # 1시간마다 스트레칭 알림
 STRETCH_SHOW_S     = 8.0      # 오버레이 표시 지속 시간
+SAVE_INTERVAL_S    = 1.0      # 통계 함수가 레코드 1개를 1초로 집계함
 
 # --- 전역 상태 및 스레드 락 ---
 cap = None
@@ -251,24 +252,31 @@ def _capture_loop():
                 "잠시 스트레칭 해보는것은 어떨까요?!",
             )
 
+        now = time.time()
+        current_data["subject"] = current_subject
+        current_data["username"] = current_username
+
         with lock:
             _, buffer = cv2.imencode('.jpg', frame)
             latest_frame = buffer.tobytes()
+            latest_data = current_data.copy()
 
-        now = time.time()
-        if now - last_save_time >= 3:
-            with lock:
-                current_data["subject"] = current_subject
-                current_data["username"] = current_username
-                latest_data = current_data
-                save_data(current_data)
+        if now - last_save_time >= SAVE_INTERVAL_S:
+            save_data(current_data)
             last_save_time = now
 
 def start_camera():
-    global cap, is_running, capture_thread, _camera_start_time, _stretch_shown_at
+    global cap, is_running, capture_thread, detector, neck_detector
+    global _camera_start_time, _stretch_shown_at
 
     if not is_running:
+        detector = AbsenceDetector()
+        neck_detector = NeckPostureDetector()
         cap = cv2.VideoCapture(0)
+        if not cap.isOpened():
+            cap.release()
+            cap = None
+            return False
         is_running = True
         _camera_start_time = time.time()
         _stretch_shown_at  = 0.0

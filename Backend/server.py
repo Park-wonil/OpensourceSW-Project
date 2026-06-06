@@ -155,10 +155,11 @@ def start():
     # 세션 없으면 카메라 켜지 않음 (다른 사용자가 원격으로 켜는 문제 방지)
     if not session.get('user'):
         return jsonify({"error": "unauthorized"}), 401
+    set_current_username(get_current_username())
+    if not start_camera():
+        return jsonify({"error": "camera unavailable"}), 503
     if start_time is None:
         start_time = time.time()
-    set_current_username(get_current_username())
-    start_camera()
     return jsonify({"msg": "camera on"})
 
 @app.route('/stop')
@@ -626,11 +627,12 @@ def on_get_rooms():
     """방 목록 요청"""
     room_list = [
         {
-            "id":      rid,
-            "name":    r["name"],
-            "host":    r["host_nickname"],
-            "count":   len(r["members"]),
-            "members": [m["nickname"] for m in r["members"]],
+            "id":       rid,
+            "name":     r["name"],
+            "host":     r["host_nickname"],
+            "count":    len(r["members"]),
+            "members":  [m["nickname"] for m in r["members"]],
+            "locked":   bool(r.get("password")),
         }
         for rid, r in study_rooms.items()
     ]
@@ -680,26 +682,18 @@ def on_room_ice(data):
     emit("room_ice", {"sid": request.sid, "candidate": data["candidate"]}, to=data["target"])
 @socketio.on('delete_room')
 def handle_delete_room(data):
-    room_id = data.get('room_id')
-    
-    # rooms를 모두 study_rooms로 변경!
-    if room_id in study_rooms: 
-        del study_rooms[room_id]
-        emit('room_deleted', {'room_id': room_id}, broadcast=True)
-        print(f"✅ 방 삭제 완료: {room_id}")
-        
-    elif room_id.isdigit() and int(room_id) in study_rooms:
-        del study_rooms[int(room_id)]
-        emit('room_deleted', {'room_id': room_id}, broadcast=True)
-        print(f"✅ 방 삭제 완료 (숫자로 변환 후 삭제): {room_id}")
-        
-    elif str(room_id) in study_rooms:
-        del study_rooms[str(room_id)]
-        emit('room_deleted', {'room_id': room_id}, broadcast=True)
-        print(f"✅ 방 삭제 완료 (문자로 변환 후 삭제): {room_id}")
-        
-    else:
-        print(f"❌ [오류] 삭제하려는 방 ID({room_id})를 찾을 수 없습니다.")
+    room_id = str(data.get('room_id', ''))
+    room = study_rooms.get(room_id)
+    if not room:
+        emit("room_error", {"msg": "존재하지 않는 방입니다."})
+        return
+    if room["host_sid"] != request.sid:
+        emit("room_error", {"msg": "방장만 스터디룸을 삭제할 수 있습니다."})
+        return
+
+    del study_rooms[room_id]
+    emit('room_deleted', {'room_id': room_id}, broadcast=True)
+    _broadcast_room_list()
 # disconnect 시 방에서도 자동 퇴장 처리 (기존 on_disconnect 수정)
 # =========================
 #  중요: 반드시 맨 아래
