@@ -5,3 +5,5 @@ __pycache__/
 .venv/
 venv/
 venv311/.claude/
+server-run.err.log
+server-run.out.log
